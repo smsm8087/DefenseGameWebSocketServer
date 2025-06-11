@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
@@ -23,14 +24,32 @@ app.MapControllers();
 #region  websocket
 app.UseWebSockets();
 var sockets = new ConcurrentDictionary<string, WebSocket>();
+var playerPositions = new ConcurrentDictionary<string, (float x, float y)>();
 
 app.Map("/ws", async context =>
 {
     if (context.WebSockets.IsWebSocketRequest)
     {
-        var socketId = Guid.NewGuid().ToString();
+        var playerId = Guid.NewGuid().ToString();
         var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-        sockets.TryAdd(socketId, webSocket);
+        sockets[playerId] = webSocket;
+        playerPositions[playerId] = (0, 0); // 처음 위치 (0,0)으로
+
+        // 입장 알림: 접속자 모두에게
+        var joinMsg = Encoding.UTF8.GetBytes($"{{\"type\":\"player_join\",\"playerId\":\"{playerId}\"}}");
+        foreach (var sock in sockets.Values)
+        {
+            if (sock.State == WebSocketState.Open)
+                await sock.SendAsync(joinMsg, WebSocketMessageType.Text, true, CancellationToken.None);
+        }
+
+        // 접속한 유저에게 전체 플레이어 리스트 전송
+        var playerListMsg = JsonSerializer.Serialize(new
+        {
+            type = "player_list",
+            players = sockets.Keys.ToArray()
+        });
+        await webSocket.SendAsync(Encoding.UTF8.GetBytes(playerListMsg), WebSocketMessageType.Text, true, CancellationToken.None);
 
         var buffer = new byte[1024 * 4];
         try
@@ -42,32 +61,46 @@ app.Map("/ws", async context =>
                 {
                     var msg = Encoding.UTF8.GetString(buffer, 0, result.Count);
 
-                    // broadCasting
-                    foreach (var pair in sockets)
+                    // (3) 메시지 파싱
+                    using var doc = JsonDocument.Parse(msg);
+                    var root = doc.RootElement;
+                    var type = root.GetProperty("type").GetString();
+
+                    if (type == "move")
                     {
-                        if (pair.Value.State == WebSocketState.Open)
+                        // (3-1) 좌표 정보 받기
+                        var x = root.GetProperty("x").GetSingle();
+                        var y = root.GetProperty("y").GetSingle();
+                        playerPositions[playerId] = (x, y);
+
+                        // (3-2) 모든 플레이어에 위치 정보 브로드캐스트
+                        var moveMsg = JsonSerializer.Serialize(new { type = "move", playerId, x, y });
+                        foreach (var pair in sockets)
                         {
-                            await pair.Value.SendAsync(
-                                Encoding.UTF8.GetBytes(msg),
-                                WebSocketMessageType.Text,
-                                true,
-                                CancellationToken.None
-                            );
+                            if (pair.Value.State == WebSocketState.Open)
+                                await pair.Value.SendAsync(Encoding.UTF8.GetBytes(moveMsg), WebSocketMessageType.Text, true, CancellationToken.None);
                         }
                     }
                 }
                 else if (result.MessageType == WebSocketMessageType.Close)
                 {
-                    await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "����", CancellationToken.None);
+                    await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "닫힘", CancellationToken.None);
                 }
             }
         }
         finally
         {
             // remove socket
-            sockets.TryRemove(socketId, out _);
+            sockets.TryRemove(playerId, out _);
+            playerPositions.TryRemove(playerId, out _);
+
+            var leaveMsg = JsonSerializer.Serialize(new { type = "player_leave", playerId });
+            foreach (var pair in sockets)
+            {
+                if (pair.Value.State == WebSocketState.Open)
+                    await pair.Value.SendAsync(Encoding.UTF8.GetBytes(leaveMsg), WebSocketMessageType.Text, true, CancellationToken.None);
+            }
             webSocket.Dispose();
-            Console.WriteLine($"{socketId} ���� ����");
         }
     }
     else

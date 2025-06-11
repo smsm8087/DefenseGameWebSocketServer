@@ -29,3 +29,4 @@ C:\Users\apdlv\Desktop\DefenseGameServer\DefenseGameWebSocketServer\DefenseGameW
 C:\Users\apdlv\Desktop\DefenseGameServer\DefenseGameWebSocketServer\DefenseGameWebSocketServer\obj\Debug\net8.0\DefenseGameWebSocketServer.pdb
 C:\Users\apdlv\Desktop\DefenseGameServer\DefenseGameWebSocketServer\DefenseGameWebSocketServer\obj\Debug\net8.0\DefenseGameWebSocketServer.genruntimeconfig.cache
 C:\Users\apdlv\Desktop\DefenseGameServer\DefenseGameWebSocketServer\DefenseGameWebSocketServer\obj\Debug\net8.0\ref\DefenseGameWebSocketServer.dll
+C:\Users\apdlv\Desktop\DefenseGameServer\DefenseGameWebSocketServer\DefenseGameWebSocketServer\obj\Debug\net8.0\DefenseGameWebSocketServer.sourcelink.json
