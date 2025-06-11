@@ -1,0 +1,50 @@
+## 빌드 결과물
+/bin/
+/obj/
+/out/
+
+## 사용자별 설정
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+
+## VSCode 설정 (옵션)
+.vscode/
+
+## 환경 설정
+*.env
+*.local.json
+secrets.json
+
+## ASP.NET Core 환경설정 파일
+appsettings.Development.json
+appsettings.Production.json
+appsettings.*.json
+
+## 인증 관련
+*.pfx
+*.pem
+*.key
+*.cert
+
+## publish 결과
+publish/
+*.Publish.xml
+
+## Rider / JetBrains
+.idea/
+*.sln.iml
+
+## Logs
+*.log
+logs/
+
+## 백업 및 임시 파일
+*.bak
+*.tmp
+*.swp
+
+## 시스템 파일
+.DS_Store
+Thumbs.db
