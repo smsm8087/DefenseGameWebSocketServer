@@ -16,7 +16,8 @@ var broadcaster = new WebSocketBroadcaster();
 builder.Services.AddSingleton<IWebSocketBroadcaster>(broadcaster);
 
 var cts = new CancellationTokenSource();
-var waveScheduler = new WaveScheduler(broadcaster, cts.Token);
+var handlerFactory = new HandlerFactory();
+var waveScheduler = new WaveScheduler(handlerFactory, broadcaster, cts.Token);
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -69,17 +70,29 @@ app.Map("/ws", async context =>
                 if (result.MessageType == WebSocketMessageType.Text)
                 {
                     var msg = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    var baseMsg = JsonSerializer.Deserialize<BaseMessage>(msg);
-                    if (baseMsg == null || string.IsNullOrEmpty(baseMsg.type)) continue;
+                    var rawMessage = Encoding.UTF8.GetString(buffer, 0, result.Count);
 
-                    var handler = HandlerFactory.GetHandler(baseMsg.type);
-                    if (handler != null)
+                    try
                     {
-                        await handler.HandleAsync(playerId, msg, broadcaster, playerPositions);
+                        var root = JsonDocument.Parse(rawMessage).RootElement;
+                        var typeString = root.GetProperty("type").GetString();
+                        var msgType = MessageTypeHelper.Parse(typeString);
+
+                        var handler = msgType switch
+                        {
+                            MessageType.Move => handlerFactory.GetHandler("move"),
+                            MessageType.SpawnEnemy => handlerFactory.GetHandler("spawn_enemy"),
+                            _ => null
+                        };
+
+                        if (handler != null)
+                        {
+                            await handler.HandleAsync(playerId, rawMessage, broadcaster, playerPositions);
+                        }
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        Console.WriteLine($"[Warning] No handler found for type: {baseMsg.type}");
+                        Console.WriteLine($"[WebSocket] JSON 처리 중 오류: {ex.Message}");
                     }
                 }
                 else if (result.MessageType == WebSocketMessageType.Close)

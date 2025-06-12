@@ -7,9 +7,7 @@
     public enum MessageType
     {
         Move,
-        PlayerJoin,
-        PlayerList,
-        PlayerLeave,
+        SpawnEnemy,
         Unknown
     }
     public static class MessageTypeHelper
@@ -19,9 +17,7 @@
             return type switch
             {
                 "move" => MessageType.Move,
-                "player_join" => MessageType.PlayerJoin,
-                "player_list" => MessageType.PlayerList,
-                "player_leave" => MessageType.PlayerLeave,
+                "spawn_enemy" => MessageType.SpawnEnemy,
                 _ => MessageType.Unknown,
             };
         }

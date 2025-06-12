@@ -1,14 +1,22 @@
-﻿public static class HandlerFactory
-{
-    private static readonly Dictionary<string, IMessageHandler> _handlers = new()
-    {
-        //여기에 메시지 타입과 핸들러를 추가
-        { "move", new MoveHandler() },
-    };
+﻿using System.Collections.Concurrent;
+using DefenseGameWebSocketServer.Model;
 
-    public static IMessageHandler? GetHandler(string type)
+public class HandlerFactory
+{
+    private readonly Dictionary<string, IMessageHandler> _handlers;
+
+    public HandlerFactory()
     {
-        _handlers.TryGetValue(type, out var handler);
-        return handler;
+        _handlers = new Dictionary<string, IMessageHandler>
+        {
+            //여기에 새로운 핸들러타입 추가
+            { "move", new MoveHandler() },
+            { "spawn_enemy", new SpawnEnemyHandler() }
+        };
+    }
+
+    public IMessageHandler? GetHandler(string type)
+    {
+        return _handlers.TryGetValue(type, out var handler) ? handler : null;
     }
 }
