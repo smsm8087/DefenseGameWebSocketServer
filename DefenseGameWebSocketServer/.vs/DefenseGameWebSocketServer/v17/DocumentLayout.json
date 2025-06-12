@@ -72,7 +72,11 @@
               "RelativeDocumentMoniker": "DefenseGameWebSocketServer\\Program.cs",
               "ToolTip": "C:\\Users\\apdlv\\Desktop\\DefenseGameServer\\DefenseGameWebSocketServer\\DefenseGameWebSocketServer\\Program.cs",
               "RelativeToolTip": "DefenseGameWebSocketServer\\Program.cs",
+<<<<<<< Updated upstream
               "ViewState": "AgIAAB4AAAAAAAAAAAAmwCoAAAAQAAAAAAAAAA==",
+=======
+              "ViewState": "AgIAADwAAAAAAAAAAAAAAFIAAAB4AAAAAAAAAA==",
+>>>>>>> Stashed changes
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-06-11T07:14:04.337Z",
               "EditorCaption": ""

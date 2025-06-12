@@ -76,9 +76,11 @@ app.Map("/ws", async context =>
                         var x = root.GetProperty("x").GetSingle();
                         var y = root.GetProperty("y").GetSingle();
                         playerPositions[playerId] = (x, y);
+                        var isJumping = root.GetProperty("isJumping").GetBoolean();
+                        var isRunning = root.GetProperty("isRunning").GetBoolean();
 
                         // (3-2) 모든 플레이어에 위치 정보 브로드캐스트
-                        var moveMsg = JsonSerializer.Serialize(new { type = "move", playerId, x, y });
+                        var moveMsg = JsonSerializer.Serialize(new { type = "move", playerId, x, y, isJumping, isRunning });
                         foreach (var pair in sockets)
                         {
                             if (pair.Value.State == WebSocketState.Open)
