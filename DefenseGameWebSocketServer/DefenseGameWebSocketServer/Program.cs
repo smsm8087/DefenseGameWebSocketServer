@@ -1,3 +1,4 @@
+using DefenseGameWebSocketServer.Model;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
@@ -11,7 +12,11 @@ builder.WebHost.ConfigureKestrel(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+var broadcaster = new WebSocketBroadcaster();
+builder.Services.AddSingleton<IWebSocketBroadcaster>(broadcaster);
 
+var cts = new CancellationTokenSource();
+var waveScheduler = new WaveScheduler(broadcaster, cts.Token);
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -27,7 +32,6 @@ app.MapControllers();
 //WEBSOCKET
 #region  websocket
 app.UseWebSockets();
-var sockets = new ConcurrentDictionary<string, WebSocket>();
 var playerPositions = new ConcurrentDictionary<string, (float x, float y)>();
 
 app.Map("/ws", async context =>
@@ -36,24 +40,25 @@ app.Map("/ws", async context =>
     {
         var playerId = Guid.NewGuid().ToString();
         var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-        sockets[playerId] = webSocket;
+
+        broadcaster.Register(playerId, webSocket);
         playerPositions[playerId] = (0, 0); // 처음 위치 (0,0)으로
 
-        // 입장 알림: 접속자 모두에게
-        var joinMsg = Encoding.UTF8.GetBytes($"{{\"type\":\"player_join\",\"playerId\":\"{playerId}\"}}");
-        foreach (var sock in sockets.Values)
+        // 전체 브로드캐스트 (join 알림)
+        await broadcaster.BroadcastAsync(new { type = "player_join", playerId });
+
+        //한명이상 접속했을때 웨이브 시작
+        if (broadcaster.ConnectedCount >= 1)
         {
-            if (sock.State == WebSocketState.Open)
-                await sock.SendAsync(joinMsg, WebSocketMessageType.Text, true, CancellationToken.None);
+            waveScheduler.TryStart();
         }
 
-        // 접속한 유저에게 전체 플레이어 리스트 전송
-        var playerListMsg = JsonSerializer.Serialize(new
+        // 접속자에게 player_list만 개별 전송
+        await broadcaster.SendToAsync(playerId, new
         {
             type = "player_list",
-            players = sockets.Keys.ToArray()
+            players = broadcaster.GetPlayerIds()
         });
-        await webSocket.SendAsync(Encoding.UTF8.GetBytes(playerListMsg), WebSocketMessageType.Text, true, CancellationToken.None);
 
         var buffer = new byte[1024 * 4];
         try
@@ -64,28 +69,17 @@ app.Map("/ws", async context =>
                 if (result.MessageType == WebSocketMessageType.Text)
                 {
                     var msg = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                    var baseMsg = JsonSerializer.Deserialize<BaseMessage>(msg);
+                    if (baseMsg == null || string.IsNullOrEmpty(baseMsg.type)) continue;
 
-                    // (3) 메시지 파싱
-                    using var doc = JsonDocument.Parse(msg);
-                    var root = doc.RootElement;
-                    var type = root.GetProperty("type").GetString();
-
-                    if (type == "move")
+                    var handler = HandlerFactory.GetHandler(baseMsg.type);
+                    if (handler != null)
                     {
-                        // (3-1) 좌표 정보 받기
-                        var x = root.GetProperty("x").GetSingle();
-                        var y = root.GetProperty("y").GetSingle();
-                        playerPositions[playerId] = (x, y);
-                        var isJumping = root.GetProperty("isJumping").GetBoolean();
-                        var isRunning = root.GetProperty("isRunning").GetBoolean();
-
-                        // (3-2) 모든 플레이어에 위치 정보 브로드캐스트
-                        var moveMsg = JsonSerializer.Serialize(new { type = "move", playerId, x, y, isJumping, isRunning });
-                        foreach (var pair in sockets)
-                        {
-                            if (pair.Value.State == WebSocketState.Open)
-                                await pair.Value.SendAsync(Encoding.UTF8.GetBytes(moveMsg), WebSocketMessageType.Text, true, CancellationToken.None);
-                        }
+                        await handler.HandleAsync(playerId, msg, broadcaster, playerPositions);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[Warning] No handler found for type: {baseMsg.type}");
                     }
                 }
                 else if (result.MessageType == WebSocketMessageType.Close)
@@ -97,15 +91,9 @@ app.Map("/ws", async context =>
         finally
         {
             // remove socket
-            sockets.TryRemove(playerId, out _);
+            broadcaster.Unregister(playerId);
             playerPositions.TryRemove(playerId, out _);
-
-            var leaveMsg = JsonSerializer.Serialize(new { type = "player_leave", playerId });
-            foreach (var pair in sockets)
-            {
-                if (pair.Value.State == WebSocketState.Open)
-                    await pair.Value.SendAsync(Encoding.UTF8.GetBytes(leaveMsg), WebSocketMessageType.Text, true, CancellationToken.None);
-            }
+            await broadcaster.BroadcastAsync(new { type = "player_leave", playerId });
             webSocket.Dispose();
         }
     }
@@ -115,5 +103,10 @@ app.Map("/ws", async context =>
     }
 });
 #endregion
-
+// 서버 종료 시 안전하게 취소
+app.Lifetime.ApplicationStopping.Register(() =>
+{
+    Console.WriteLine("서버 종료 요청됨 - 웨이브 중지");
+    cts.Cancel();
+});
 app.Run();
