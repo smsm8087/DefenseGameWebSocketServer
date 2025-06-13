@@ -17,7 +17,7 @@ builder.Services.AddSingleton<IWebSocketBroadcaster>(broadcaster);
 
 var cts = new CancellationTokenSource();
 var handlerFactory = new HandlerFactory();
-var waveScheduler = new WaveScheduler(broadcaster, cts.Token);
+var waveScheduler = new WaveScheduler(broadcaster, cts, ()=> broadcaster.HasPlayers());
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())

@@ -3,7 +3,7 @@
 public class WaveScheduler
 {
     private readonly IWebSocketBroadcaster _broadcaster;
-    private readonly CancellationToken _token;
+    private readonly CancellationTokenSource _cts;
     private int _wave = 0;
     private readonly Random _rand = new();
     private bool _isRunning = false;
@@ -11,11 +11,14 @@ public class WaveScheduler
     private List<Enemy> enemies = new List<Enemy>();
     private List<(float, float)> enemiesSpawnList = new List<(float, float)>();
     private (float,float) targetPosition = (0f, -2.9f);
+    private readonly Func<bool> _hasPlayerCount;
+    private EnemySyncScheduler enemySyncScheduler;
 
-    public WaveScheduler(IWebSocketBroadcaster broadcaster, CancellationToken token)
+    public WaveScheduler(IWebSocketBroadcaster broadcaster, CancellationTokenSource cts, Func<bool> hasPlayerCount)
     {
         _broadcaster = broadcaster;
-        _token = token;
+        _cts = cts;
+        _hasPlayerCount = hasPlayerCount;
     }
     public void TryStart()
     {
@@ -28,8 +31,26 @@ public class WaveScheduler
             _ = StartAsync();
 
             //enemy sync 스케줄러 시작
-            var enemySyncScheduler = new EnemySyncScheduler(enemies, _broadcaster, _token);
+            enemySyncScheduler = new EnemySyncScheduler(enemies, _broadcaster, _cts.Token, _hasPlayerCount);
             _ = enemySyncScheduler.StartAsync();
+        }
+    }
+    public void Stop()
+    {
+        lock (_lock)
+        {
+            if (!_isRunning) return;
+            _isRunning = false;
+            //init wave
+            enemies.Clear();
+            enemiesSpawnList.Clear();
+            _wave = 0;
+
+            //init enemy sync scheduler
+            enemySyncScheduler.Stop();
+
+            Console.WriteLine("[WaveScheduler] 접속자가 없어서 중지됨");
+            _cts.Cancel(); // Cancel the token to stop the scheduler
         }
     }
 
@@ -38,8 +59,22 @@ public class WaveScheduler
         Console.WriteLine("[WaveScheduler] 웨이브 스케줄러 시작됨");
         enemiesSpawnList.Add((-41.74f, -2.07f));
         enemiesSpawnList.Add((49.88f, -2.07f));
-        while (!_token.IsCancellationRequested)
+        for (int i = 0; i < 5; i++)
         {
+            // 웨이브 시작 전 잠시 대기
+            if (_cts.Token.IsCancellationRequested || !_hasPlayerCount()) return;
+            await Task.Delay(1000, _cts.Token);
+            Console.WriteLine($"[WaveScheduler] 웨이브 {_wave} 시작 전 대기 중...{i + 1}초");
+        }
+        while (!_cts.Token.IsCancellationRequested)
+        {
+            // 접속자 없으면 웨이브 스탑
+            if (!_hasPlayerCount())
+            {
+                Stop();
+                break;
+            }
+
             _wave++;
             Console.WriteLine($"[WaveScheduler] 웨이브 {_wave} 시작");
 
@@ -73,10 +108,10 @@ public class WaveScheduler
                 );
 
                 await _broadcaster.BroadcastAsync(msg);
-                await Task.Delay(1000, _token);
+                await Task.Delay(1000, _cts.Token);
             }
 
-            await Task.Delay(8000, _token);
+            await Task.Delay(8000, _cts.Token);
         }
 
         Console.WriteLine("[WaveScheduler] 웨이브 스케줄러 종료됨");
