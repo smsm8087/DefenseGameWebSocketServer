@@ -11,7 +11,6 @@ public class HandlerFactory
         {
             //여기에 새로운 핸들러타입 추가
             { "move", new MoveHandler() },
-            { "spawn_enemy", new SpawnEnemyHandler() }
         };
     }
 

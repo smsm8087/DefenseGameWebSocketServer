@@ -17,7 +17,7 @@ builder.Services.AddSingleton<IWebSocketBroadcaster>(broadcaster);
 
 var cts = new CancellationTokenSource();
 var handlerFactory = new HandlerFactory();
-var waveScheduler = new WaveScheduler(handlerFactory, broadcaster, cts.Token);
+var waveScheduler = new WaveScheduler(broadcaster, cts.Token);
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -81,7 +81,6 @@ app.Map("/ws", async context =>
                         var handler = msgType switch
                         {
                             MessageType.Move => handlerFactory.GetHandler("move"),
-                            MessageType.SpawnEnemy => handlerFactory.GetHandler("spawn_enemy"),
                             _ => null
                         };
 
