@@ -7,7 +7,6 @@
     public enum MessageType
     {
         Move,
-        SpawnEnemy,
         Unknown
     }
     public static class MessageTypeHelper
@@ -17,7 +16,6 @@
             return type switch
             {
                 "move" => MessageType.Move,
-                "spawn_enemy" => MessageType.SpawnEnemy,
                 _ => MessageType.Unknown,
             };
         }

@@ -2,6 +2,7 @@
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using Newtonsoft.Json;
 public interface IWebSocketBroadcaster
 {
     Task BroadcastAsync(object message);
@@ -27,7 +28,7 @@ public class WebSocketBroadcaster : IWebSocketBroadcaster
 
     public async Task BroadcastAsync(object message)
     {
-        string json = JsonSerializer.Serialize(message);
+        string json = JsonConvert.SerializeObject(message);
         var buffer = Encoding.UTF8.GetBytes(json);
 
         foreach (var kvp in _sockets)
@@ -57,7 +58,7 @@ public class WebSocketBroadcaster : IWebSocketBroadcaster
     {
         if (_sockets.TryGetValue(playerId, out var socket) && socket.State == WebSocketState.Open)
         {
-            string json = JsonSerializer.Serialize(message);
+            string json = JsonConvert.SerializeObject(message);
             var buffer = Encoding.UTF8.GetBytes(json);
             await socket.SendAsync(
                 new ArraySegment<byte>(buffer),

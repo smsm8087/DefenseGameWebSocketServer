@@ -17,10 +17,6 @@ public class WaveScheduler
         _broadcaster = broadcaster;
         _token = token;
     }
-    public List<Enemy> getEnemies()
-    {
-        return enemies;
-    }
     public void TryStart()
     {
         lock (_lock)

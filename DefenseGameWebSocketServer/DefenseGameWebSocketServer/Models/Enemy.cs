@@ -35,4 +35,10 @@
             Y += moveY;
         }
     }
+    public bool CheckArrived(float radius = 2.125f)
+    {
+        float dx = targetX - X;
+        float dy = targetY - Y;
+        return dx * dx + dy * dy <= radius * radius;
+    }
 }
