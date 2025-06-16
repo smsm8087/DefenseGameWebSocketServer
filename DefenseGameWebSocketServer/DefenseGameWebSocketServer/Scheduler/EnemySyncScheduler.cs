@@ -11,6 +11,7 @@ public class EnemySyncScheduler
     private readonly CancellationToken _token;
     private readonly object _lock = new();
     private readonly SharedHpManager _sharedHpManager;
+    private bool _isRunning = false;
 
     public EnemySyncScheduler(List<Enemy> enemies, IWebSocketBroadcaster broadcaster, CancellationToken token, SharedHpManager sharedHpManager)
     {
@@ -23,23 +24,17 @@ public class EnemySyncScheduler
     {
         lock (_lock)
         {
-            //cts 는 WaveScheduler 에서 관리하므로 여기서는 사용하지 않음
+            _isRunning = false;
             _enemies.Clear();
             _deadEnemies.Clear();
-            Console.WriteLine("[EnemySyncScheduler] 접속자가 없어서 중지됨");
-        }
-    }
-    public void Reset()
-    {
-        lock (_lock)
-        {
-            _enemies.Clear();
-            _deadEnemies.Clear();
-            Console.WriteLine("[EnemySyncScheduler] 적 초기화됨");
+            Console.WriteLine("[EnemySyncScheduler] 중지");
         }
     }
     public async Task StartAsync()
     {
+        if (_isRunning) return;
+        _isRunning = true;
+
         float targetFrameTime = 0.1f; // 100ms
         var sw = new Stopwatch();
         sw.Start();
@@ -96,6 +91,12 @@ public class EnemySyncScheduler
             await Task.Delay(sleepMs, _token);
         }
         Console.WriteLine("[EnemySyncScheduler] 스케줄러 종료됨");
+        _isRunning = false; 
+    }
+    public void Dispose()
+    {
+        Console.WriteLine("[EnemySyncScheduler] Dispose 호출됨");
+        Stop(); 
     }
 }
 

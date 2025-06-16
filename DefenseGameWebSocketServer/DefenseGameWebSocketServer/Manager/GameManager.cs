@@ -13,94 +13,120 @@ namespace DefenseGameWebSocketServer.Manager
         private PlayerManager _playerManager;
         private WebSocketBroadcaster _broadcaster;
         private string _playerId;
-        private readonly CancellationTokenSource _cts;
-        public GameManager(WebSocketBroadcaster broadcaster, CancellationTokenSource cts, Func<bool> hasPlayerCount)
+        private CancellationTokenSource _cts;
+        private Func<bool> _hasPlayerCount;
+        private bool _isGameLoopRunning = false;
+        private Task _gameLoopTask;
+
+        public GameManager(WebSocketBroadcaster broadcaster, Func<bool> hasPlayerCount)
         {
             _sharedHpManager = new SharedHpManager();
             _playerManager = new PlayerManager();
-            _waveScheduler = new WaveScheduler((IWebSocketBroadcaster)broadcaster, cts, hasPlayerCount, _sharedHpManager);
+            _cts = new CancellationTokenSource();
+            _hasPlayerCount = hasPlayerCount;
+            _waveScheduler = new WaveScheduler((IWebSocketBroadcaster)broadcaster, _cts, _hasPlayerCount, _sharedHpManager);
             _broadcaster = broadcaster;
-            this._cts = cts;
         }
-        
+
         public void SetPlayerData(string playerId)
         {
             _playerId = playerId;
-            SetPlayerPosition(playerId);
+            _playerManager.setPlayerPosition(playerId, 0, 0);
         }
+
         public async Task InitializeGame()
         {
-            // 전체 브로드캐스트 (join 알림)
             await _broadcaster.BroadcastAsync(new { type = "player_join", playerId = _playerId });
 
-            //한명이상 접속했을때 웨이브 시작
             if (_broadcaster.ConnectedCount >= 1)
             {
-                _waveScheduler.TryStart();
+                TryStartWave();
             }
 
-            // 접속자에게 player_list만 개별 전송
             await _broadcaster.SendToAsync(_playerId, new
             {
                 type = "player_list",
                 players = _broadcaster.GetPlayerIds()
             });
         }
-        public void RestartGame()
+
+        public void TryStartWave()
         {
-            //한명이상 접속했을때 웨이브 시작
-            if (_broadcaster.ConnectedCount >= 1)
-            {
-                _waveScheduler.TryStart();
-                StartGame();
-            }
+            _waveScheduler.TryStart();
+            StartGameLoop();
         }
-        public bool checkGameOver()
+
+        private void StartGameLoop()
         {
-            return _sharedHpManager.isGameOver();
-        }
-        public async Task StartGame()
-        {
-            while (!_cts.Token.IsCancellationRequested)
+            if (_isGameLoopRunning) return;
+
+            _isGameLoopRunning = true;
+            _gameLoopTask = Task.Run(async () =>
             {
-                if (checkGameOver()) 
+                while (!_cts.Token.IsCancellationRequested)
                 {
-                    await GameOver();
-                    break;
+                    if (_sharedHpManager.isGameOver())
+                    {
+                        await GameOver();
+                        break;
+                    }
+
+                    await Task.Delay(100, _cts.Token);
                 }
-                await Task.Delay(100, _cts.Token); // 1초 대기 후 다시 확인
-            }
+            });
         }
+
         public async Task GameOver()
         {
-            //웨이브 리셋
-            _waveScheduler.Reset();
+            _isGameLoopRunning = false;
 
             var msg = new GameOverMessage("game_over", "Game Over!!");
             await _broadcaster.BroadcastAsync(msg);
             await Task.Delay(1000);
+
             RestartGame();
         }
+
+        public void RestartGame()
+        {
+            Stop();                         
+            _waveScheduler?.Dispose();       
+            _cts.Dispose();                  
+
+            _cts = new CancellationTokenSource();
+
+            _sharedHpManager = new SharedHpManager();
+            _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount, _sharedHpManager);
+
+            TryStartWave();                 
+        }
+        public void Dispose()
+        {
+            Stop();
+            _cts.Dispose();
+            _waveScheduler.Dispose();
+        }
+        public void Stop()
+        {
+            _cts.Cancel();
+            _waveScheduler.Stop();
+        }
+
+        public async Task RemovePlayer(string playerId)
+        {
+            _playerManager.TryRemove(playerId);
+            await _broadcaster.BroadcastAsync(new { type = "player_leave", playerId = playerId });
+        }
+
         public async Task ProcessHandler(MessageType msgType, string rawMessage)
         {
             switch (msgType)
             {
                 case MessageType.Move:
-                    {
-                        var moveHandler = new MoveHandler();
-                        await moveHandler.HandleAsync(_playerId, rawMessage, _broadcaster, _playerManager);
-                    }
+                    var moveHandler = new MoveHandler();
+                    await moveHandler.HandleAsync(_playerId, rawMessage, _broadcaster, _playerManager);
                     break;
             }
-        }
-        public void SetPlayerPosition(string playerId)
-        {
-            _playerManager.setPlayerPosition(playerId, 0, 0);
-        }
-        public async Task RemovePlayer(string playerId)
-        {
-            _playerManager.TryRemove(playerId);
-            await _broadcaster.BroadcastAsync(new { type = "player_leave", playerId = playerId });
         }
     }
 }

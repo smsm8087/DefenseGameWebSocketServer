@@ -54,28 +54,14 @@ public class WaveScheduler
             _wave = 0;
 
             //init enemy sync scheduler
-            _enemySyncScheduler.Stop();
+            _enemySyncScheduler.Dispose();
 
-            Console.WriteLine("[WaveScheduler] 접속자가 없어서 중지됨");
-            _cts.Cancel(); // Cancel the token to stop the scheduler
+            Console.WriteLine("[WaveScheduler] 중지");
 
             // Reset shared HP manager
             _sharedHpManager.Reset(); 
         }
     }
-    public void Reset()
-    {
-        lock (_lock)
-        {
-            _isRunning = false;
-            enemies.Clear();
-            enemiesSpawnList.Clear();
-            _wave = 0;
-            _enemySyncScheduler.Reset();
-            _sharedHpManager.Reset();
-        }
-    }
-
     public async Task StartAsync()
     {
         Console.WriteLine("[WaveScheduler] 웨이브 스케줄러 시작됨");
@@ -142,5 +128,10 @@ public class WaveScheduler
     {
         string[] types = { "Goblin", "Orc", "Skeleton" };
         return types[_rand.Next(types.Length)];
+    }
+    public void Dispose()
+    {
+        Console.WriteLine("[WaveScheduler] Dispose 호출됨");
+        Stop(); 
     }
 }

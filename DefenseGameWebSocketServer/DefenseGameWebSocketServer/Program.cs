@@ -16,8 +16,7 @@ builder.Services.AddSwaggerGen();
 var broadcaster = new WebSocketBroadcaster();
 builder.Services.AddSingleton<IWebSocketBroadcaster>(broadcaster);
 
-var cts = new CancellationTokenSource();
-var GameManager = new GameManager(broadcaster, cts, () => broadcaster.HasPlayers());
+var GameManager = new GameManager(broadcaster, () => broadcaster.HasPlayers());
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -44,7 +43,6 @@ app.Map("/ws", async context =>
         // 처음 위치 (0,0)으로
         GameManager.SetPlayerData(playerId);
         await GameManager.InitializeGame();
-        GameManager.StartGame();
 
         var buffer = new byte[1024 * 4];
         try
@@ -95,6 +93,6 @@ app.Map("/ws", async context =>
 app.Lifetime.ApplicationStopping.Register(() =>
 {
     Console.WriteLine("서버 종료 요청됨 - 웨이브 중지");
-    cts.Cancel();
+    GameManager.Dispose();
 });
 app.Run();
