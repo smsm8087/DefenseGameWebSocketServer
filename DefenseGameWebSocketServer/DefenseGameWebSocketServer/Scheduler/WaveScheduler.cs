@@ -62,13 +62,27 @@ public class WaveScheduler
         Console.WriteLine("[WaveScheduler] 웨이브 스케줄러 시작됨");
         enemiesSpawnList.Add((-41.74f, -2.07f));
         enemiesSpawnList.Add((49.88f, -2.07f));
+        //5초후 시작
+        await Task.Delay(5000, _cts.Token);
         for (int i = 0; i < 5; i++)
         {
             // 웨이브 시작 전 잠시 대기
             if (_cts.Token.IsCancellationRequested || !_hasPlayerCount()) return;
+
+            //웨이브 시작전 카운트다운 메시지 전송
+            var msg = new CountDownMesasge("countdown", 5 - i);
+            await _broadcaster.BroadcastAsync(msg);
+
             await Task.Delay(1000, _cts.Token);
-            Console.WriteLine($"[WaveScheduler] 웨이브 {_wave} 시작 전 대기 중...{i + 1}초");
+            Console.WriteLine($"[WaveScheduler] 웨이브 {_wave + 1} 시작 전 대기 중...{i + 1}초");
         }
+        //시작 메시지 전송
+        var start_msg = new CountDownMesasge("countdown", -1 , "start!!");
+        await _broadcaster.BroadcastAsync(start_msg);
+        await Task.Delay(1000, _cts.Token);
+        var deActive_msg = new CountDownMesasge("countdown", -1, string.Empty);
+        await _broadcaster.BroadcastAsync(deActive_msg);
+
         while (!_cts.Token.IsCancellationRequested)
         {
             // 접속자 없으면 웨이브 스탑
