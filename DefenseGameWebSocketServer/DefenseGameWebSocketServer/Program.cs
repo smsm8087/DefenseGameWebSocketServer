@@ -1,3 +1,4 @@
+using DefenseGameWebSocketServer.Manager;
 using DefenseGameWebSocketServer.Model;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
@@ -16,8 +17,9 @@ var broadcaster = new WebSocketBroadcaster();
 builder.Services.AddSingleton<IWebSocketBroadcaster>(broadcaster);
 
 var cts = new CancellationTokenSource();
-var handlerFactory = new HandlerFactory();
-var waveScheduler = new WaveScheduler(broadcaster, cts, ()=> broadcaster.HasPlayers());
+var playerManager = new PlayerManager();
+var sharedHpManager = new SharedHpManager();
+var waveScheduler = new WaveScheduler(broadcaster, cts, ()=> broadcaster.HasPlayers(),sharedHpManager);
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -33,8 +35,6 @@ app.MapControllers();
 //WEBSOCKET
 #region  websocket
 app.UseWebSockets();
-var playerPositions = new ConcurrentDictionary<string, (float x, float y)>();
-
 app.Map("/ws", async context =>
 {
     if (context.WebSockets.IsWebSocketRequest)
@@ -43,7 +43,8 @@ app.Map("/ws", async context =>
         var webSocket = await context.WebSockets.AcceptWebSocketAsync();
 
         broadcaster.Register(playerId, webSocket);
-        playerPositions[playerId] = (0, 0); // 처음 위치 (0,0)으로
+        // 처음 위치 (0,0)으로
+        playerManager.setPlayerPosition(playerId, 0, 0);
 
         // 전체 브로드캐스트 (join 알림)
         await broadcaster.BroadcastAsync(new { type = "player_join", playerId });
@@ -78,15 +79,14 @@ app.Map("/ws", async context =>
                         var typeString = root.GetProperty("type").GetString();
                         var msgType = MessageTypeHelper.Parse(typeString);
 
-                        var handler = msgType switch
+                        switch(msgType)
                         {
-                            MessageType.Move => handlerFactory.GetHandler("move"),
-                            _ => null
-                        };
-
-                        if (handler != null)
-                        {
-                            await handler.HandleAsync(playerId, rawMessage, broadcaster, playerPositions);
+                            case MessageType.Move:
+                                {
+                                    var moveHandler = new MoveHandler();
+                                    await moveHandler.HandleAsync(playerId, rawMessage, broadcaster, playerManager);
+                                }
+                                break;
                         }
                     }
                     catch (Exception ex)
@@ -104,7 +104,7 @@ app.Map("/ws", async context =>
         {
             // remove socket
             broadcaster.Unregister(playerId);
-            playerPositions.TryRemove(playerId, out _);
+            playerManager.TryRemove(playerId);
             await broadcaster.BroadcastAsync(new { type = "player_leave", playerId });
             webSocket.Dispose();
         }

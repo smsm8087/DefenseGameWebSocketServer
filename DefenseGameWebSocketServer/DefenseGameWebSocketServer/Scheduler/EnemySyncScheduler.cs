@@ -1,4 +1,5 @@
-﻿using DefenseGameWebSocketServer.Model;
+﻿using DefenseGameWebSocketServer.Manager;
+using DefenseGameWebSocketServer.Model;
 using System;
 using System.Diagnostics;
 
@@ -8,15 +9,15 @@ public class EnemySyncScheduler
     private readonly List<Enemy> _deadEnemies = new List<Enemy>();
     private readonly IWebSocketBroadcaster _broadcaster;
     private readonly CancellationToken _token;
-    private readonly Func<bool> _hasPlayerCount;
     private readonly object _lock = new();
+    private readonly SharedHpManager _sharedHpManager;
 
-    public EnemySyncScheduler(List<Enemy> enemies, IWebSocketBroadcaster broadcaster, CancellationToken token, Func<bool> hasPlayerCount)
+    public EnemySyncScheduler(List<Enemy> enemies, IWebSocketBroadcaster broadcaster, CancellationToken token, SharedHpManager sharedHpManager)
     {
         _enemies = enemies;
         _broadcaster = broadcaster;
         _token = token;
-        _hasPlayerCount = hasPlayerCount;
+        _sharedHpManager = sharedHpManager;
     }
     public void Stop()
     {
@@ -69,6 +70,14 @@ public class EnemySyncScheduler
             {
                 var dieMsg = new EnemyDieMessage("enemy_die", deadEnemiesList);
                 await _broadcaster.BroadcastAsync(dieMsg);
+
+                // 공유 HP 감소 처리
+                for (int i = 0; i < deadEnemiesList.Count; i++)
+                {
+                    _sharedHpManager.TakeDamage();
+                }
+                var sharedHpMsg = new SharedHpMessage("shared_hp_update", _sharedHpManager.getHpStatus().Item1, _sharedHpManager.getHpStatus().Item2);
+                await _broadcaster.BroadcastAsync(sharedHpMsg);
                 _deadEnemies.Clear();
             }
 

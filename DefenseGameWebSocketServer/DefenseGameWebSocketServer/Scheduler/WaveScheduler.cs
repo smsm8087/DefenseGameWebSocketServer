@@ -1,4 +1,5 @@
-﻿using DefenseGameWebSocketServer.Model;
+﻿using DefenseGameWebSocketServer.Manager;
+using DefenseGameWebSocketServer.Model;
 
 public class WaveScheduler
 {
@@ -12,13 +13,15 @@ public class WaveScheduler
     private List<(float, float)> enemiesSpawnList = new List<(float, float)>();
     private (float,float) targetPosition = (0f, -2.9f);
     private readonly Func<bool> _hasPlayerCount;
-    private EnemySyncScheduler enemySyncScheduler;
+    private EnemySyncScheduler _enemySyncScheduler;
+    private readonly SharedHpManager _sharedHpManager;
 
-    public WaveScheduler(IWebSocketBroadcaster broadcaster, CancellationTokenSource cts, Func<bool> hasPlayerCount)
+    public WaveScheduler(IWebSocketBroadcaster broadcaster, CancellationTokenSource cts, Func<bool> hasPlayerCount, SharedHpManager sharedHpManager)
     {
         _broadcaster = broadcaster;
         _cts = cts;
         _hasPlayerCount = hasPlayerCount;
+        _sharedHpManager = sharedHpManager;
     }
     public void TryStart()
     {
@@ -31,8 +34,8 @@ public class WaveScheduler
             _ = StartAsync();
 
             //enemy sync 스케줄러 시작
-            enemySyncScheduler = new EnemySyncScheduler(enemies, _broadcaster, _cts.Token, _hasPlayerCount);
-            _ = enemySyncScheduler.StartAsync();
+            _enemySyncScheduler = new EnemySyncScheduler(enemies, _broadcaster, _cts.Token, _sharedHpManager);
+            _ = _enemySyncScheduler.StartAsync();
         }
     }
     public void Stop()
@@ -47,7 +50,7 @@ public class WaveScheduler
             _wave = 0;
 
             //init enemy sync scheduler
-            enemySyncScheduler.Stop();
+            _enemySyncScheduler.Stop();
 
             Console.WriteLine("[WaveScheduler] 접속자가 없어서 중지됨");
             _cts.Cancel(); // Cancel the token to stop the scheduler
