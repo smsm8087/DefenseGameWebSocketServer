@@ -13,8 +13,9 @@ public class WaveScheduler
     private List<(float, float)> enemiesSpawnList = new List<(float, float)>();
     private (float,float) targetPosition = (0f, -2.9f);
     private readonly Func<bool> _hasPlayerCount;
-    private EnemySyncScheduler _enemySyncScheduler;
     private readonly SharedHpManager _sharedHpManager;
+    private  EnemySyncScheduler _enemySyncScheduler;
+    private  CountDownScheduler _countDownScheduler;
 
     public WaveScheduler(IWebSocketBroadcaster broadcaster, CancellationTokenSource cts, Func<bool> hasPlayerCount, SharedHpManager sharedHpManager)
     {
@@ -36,6 +37,9 @@ public class WaveScheduler
             //enemy sync 스케줄러 시작
             _enemySyncScheduler = new EnemySyncScheduler(enemies, _broadcaster, _cts.Token, _sharedHpManager);
             _ = _enemySyncScheduler.StartAsync();
+
+            //count down 스케줄러
+            _countDownScheduler = new CountDownScheduler(_broadcaster, _cts, _hasPlayerCount);
         }
     }
     public void Stop()
@@ -64,22 +68,10 @@ public class WaveScheduler
         enemiesSpawnList.Add((49.88f, -2.07f));
         //5초후 시작
         await Task.Delay(5000, _cts.Token);
-        for (int i = 0; i < 5; i++)
-        {
-            // 웨이브 시작 전 잠시 대기
-            if (_cts.Token.IsCancellationRequested || !_hasPlayerCount()) return;
 
-            //웨이브 시작전 카운트다운 메시지 전송
-            var msg = new CountDownMesasge("countdown", 5 - i);
-            await _broadcaster.BroadcastAsync(msg);
+        //countdown 시작
+        await _countDownScheduler.StartAsync();
 
-            await Task.Delay(1000, _cts.Token);
-            Console.WriteLine($"[WaveScheduler] 웨이브 {_wave + 1} 시작 전 대기 중...{i + 1}초");
-        }
-        //시작 메시지 전송
-        var start_msg = new CountDownMesasge("countdown", -1 , "start!!");
-        await _broadcaster.BroadcastAsync(start_msg);
-        await Task.Delay(1000, _cts.Token);
         var deActive_msg = new CountDownMesasge("countdown", -1, string.Empty);
         await _broadcaster.BroadcastAsync(deActive_msg);
 
