@@ -31,5 +31,8 @@ public class CountDownScheduler
         var start_msg = new CountDownMesasge("countdown", -1, "start!!");
         await _broadcaster.BroadcastAsync(start_msg);
         await Task.Delay(1000, _cts.Token);
+
+        var deActive_msg = new CountDownMesasge("countdown", -1, string.Empty);
+        await _broadcaster.BroadcastAsync(deActive_msg);
     }
 }

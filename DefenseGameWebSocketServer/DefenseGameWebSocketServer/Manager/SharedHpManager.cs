@@ -12,6 +12,10 @@ namespace DefenseGameWebSocketServer.Manager
         {
             sharedHp = new SharedHp(maxHp);
         }
+        public void Reset()
+        {
+            sharedHp.currentHp = sharedHp.maxHp = maxHp;
+        }
         public void TakeDamage()
         {
             if (sharedHp.currentHp > 0)

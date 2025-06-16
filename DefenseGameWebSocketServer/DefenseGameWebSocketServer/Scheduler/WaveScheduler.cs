@@ -58,6 +58,21 @@ public class WaveScheduler
 
             Console.WriteLine("[WaveScheduler] 접속자가 없어서 중지됨");
             _cts.Cancel(); // Cancel the token to stop the scheduler
+
+            // Reset shared HP manager
+            _sharedHpManager.Reset(); 
+        }
+    }
+    public void Reset()
+    {
+        lock (_lock)
+        {
+            _isRunning = false;
+            enemies.Clear();
+            enemiesSpawnList.Clear();
+            _wave = 0;
+            _enemySyncScheduler.Reset();
+            _sharedHpManager.Reset();
         }
     }
 
@@ -71,9 +86,6 @@ public class WaveScheduler
 
         //countdown 시작
         await _countDownScheduler.StartAsync();
-
-        var deActive_msg = new CountDownMesasge("countdown", -1, string.Empty);
-        await _broadcaster.BroadcastAsync(deActive_msg);
 
         while (!_cts.Token.IsCancellationRequested)
         {

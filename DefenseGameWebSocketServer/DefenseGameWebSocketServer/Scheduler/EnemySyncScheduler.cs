@@ -29,6 +29,15 @@ public class EnemySyncScheduler
             Console.WriteLine("[EnemySyncScheduler] 접속자가 없어서 중지됨");
         }
     }
+    public void Reset()
+    {
+        lock (_lock)
+        {
+            _enemies.Clear();
+            _deadEnemies.Clear();
+            Console.WriteLine("[EnemySyncScheduler] 적 초기화됨");
+        }
+    }
     public async Task StartAsync()
     {
         float targetFrameTime = 0.1f; // 100ms
@@ -79,15 +88,6 @@ public class EnemySyncScheduler
                 var sharedHpMsg = new SharedHpMessage("shared_hp_update", _sharedHpManager.getHpStatus().Item1, _sharedHpManager.getHpStatus().Item2);
                 await _broadcaster.BroadcastAsync(sharedHpMsg);
                 _deadEnemies.Clear();
-
-                var isGameOver = _sharedHpManager.isGameOver();
-                if (isGameOver)
-                {
-                    Console.WriteLine("[서버] 게임 오버");
-                    var gameOverMsg = new GameOverMessage("game_over", "GameOver!!");
-                    await _broadcaster.BroadcastAsync(gameOverMsg);
-                    break; // 게임 오버 시 스케줄러 종료
-                }
             }
 
             // 정확한 프레임 간격 맞추기
