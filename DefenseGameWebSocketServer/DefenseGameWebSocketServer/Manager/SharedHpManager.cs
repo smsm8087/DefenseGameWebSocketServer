@@ -18,14 +18,14 @@ namespace DefenseGameWebSocketServer.Manager
             {
                 sharedHp.Update(damageAmount);
             }
-            if(sharedHp.currentHp <= 0)
-            {
-                Console.WriteLine("[서버] 크리스탈 파괴됨");
-            }
         }
-        public (int,int) getHpStatus()
+        public (int, int) getHpStatus()
         {
             return (sharedHp.currentHp, sharedHp.maxHp);
+        }
+        public bool isGameOver()
+        {
+            return sharedHp.currentHp <= 0;
         }
     }
 }

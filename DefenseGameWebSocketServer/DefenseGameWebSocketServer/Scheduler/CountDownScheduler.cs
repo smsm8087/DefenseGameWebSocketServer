@@ -1,11 +1,9 @@
-﻿using DefenseGameWebSocketServer.Manager;
-using DefenseGameWebSocketServer.Model;
+﻿using DefenseGameWebSocketServer.Model;
 
 public class CountDownScheduler
 {
     private readonly IWebSocketBroadcaster _broadcaster;
     private readonly CancellationTokenSource _cts;
-    private int _wave = 0;
     private readonly Func<bool> _hasPlayerCount;
 
     public CountDownScheduler(IWebSocketBroadcaster broadcaster, CancellationTokenSource cts, Func<bool> hasPlayerCount)
@@ -27,7 +25,7 @@ public class CountDownScheduler
             await _broadcaster.BroadcastAsync(msg);
 
             await Task.Delay(1000, _cts.Token);
-            Console.WriteLine($"[CountDownScheduler] 웨이브 {_wave + 1} 시작 전 대기 중...{i + 1}초");
+            Console.WriteLine($"[CountDownScheduler] 시작 전 카운트다운 중...{i + 1}초");
         }
         //시작 메시지 전송
         var start_msg = new CountDownMesasge("countdown", -1, "start!!");

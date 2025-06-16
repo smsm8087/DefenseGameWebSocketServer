@@ -17,9 +17,7 @@ var broadcaster = new WebSocketBroadcaster();
 builder.Services.AddSingleton<IWebSocketBroadcaster>(broadcaster);
 
 var cts = new CancellationTokenSource();
-var playerManager = new PlayerManager();
-var sharedHpManager = new SharedHpManager();
-var waveScheduler = new WaveScheduler(broadcaster, cts, ()=> broadcaster.HasPlayers(),sharedHpManager);
+var GameManager = new GameManager(broadcaster, cts, () => broadcaster.HasPlayers());
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -44,23 +42,7 @@ app.Map("/ws", async context =>
 
         broadcaster.Register(playerId, webSocket);
         // 처음 위치 (0,0)으로
-        playerManager.setPlayerPosition(playerId, 0, 0);
-
-        // 전체 브로드캐스트 (join 알림)
-        await broadcaster.BroadcastAsync(new { type = "player_join", playerId });
-
-        //한명이상 접속했을때 웨이브 시작
-        if (broadcaster.ConnectedCount >= 1)
-        {
-            waveScheduler.TryStart();
-        }
-
-        // 접속자에게 player_list만 개별 전송
-        await broadcaster.SendToAsync(playerId, new
-        {
-            type = "player_list",
-            players = broadcaster.GetPlayerIds()
-        });
+        GameManager.InitializeGame(playerId);
 
         var buffer = new byte[1024 * 4];
         try
@@ -79,15 +61,8 @@ app.Map("/ws", async context =>
                         var typeString = root.GetProperty("type").GetString();
                         var msgType = MessageTypeHelper.Parse(typeString);
 
-                        switch(msgType)
-                        {
-                            case MessageType.Move:
-                                {
-                                    var moveHandler = new MoveHandler();
-                                    await moveHandler.HandleAsync(playerId, rawMessage, broadcaster, playerManager);
-                                }
-                                break;
-                        }
+                        //메시지 처리핸들러
+                        GameManager.ProcessHandler(msgType, rawMessage);
                     }
                     catch (Exception ex)
                     {
@@ -104,8 +79,7 @@ app.Map("/ws", async context =>
         {
             // remove socket
             broadcaster.Unregister(playerId);
-            playerManager.TryRemove(playerId);
-            await broadcaster.BroadcastAsync(new { type = "player_leave", playerId });
+            GameManager.RemovePlayer(playerId);
             webSocket.Dispose();
         }
     }
