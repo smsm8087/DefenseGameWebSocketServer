@@ -52,15 +52,15 @@ namespace DefenseGameWebSocketServer.Manager
 
         public void TryStartWave()
         {
+            if (_isGameLoopRunning) return;
+            _isGameLoopRunning = true;
+
             _waveScheduler.TryStart();
             StartGameLoop();
         }
 
         private void StartGameLoop()
         {
-            if (_isGameLoopRunning) return;
-
-            _isGameLoopRunning = true;
             _gameLoopTask = Task.Run(async () =>
             {
                 while (!_cts.Token.IsCancellationRequested)
