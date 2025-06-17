@@ -8,7 +8,6 @@ using System.Text.Json;
 public class MoveHandler
 {
     public async Task HandleAsync(
-        string playerId,
         string rawMessage,
         IWebSocketBroadcaster broadcaster,
         PlayerManager playerManager
@@ -17,9 +16,9 @@ public class MoveHandler
         var msg = JsonSerializer.Deserialize<MoveMessage>(rawMessage);
         if (msg == null) return;
 
-        playerManager.setPlayerPosition(playerId, msg.x, msg.y);
+        playerManager.setPlayerPosition(msg.playerId, msg.x, msg.y);
 
-        var response = new MoveMessage("move", playerId, msg.x, msg.y, msg.isJumping, msg.isRunning);
+        var response = new MoveMessage("move", msg.playerId, msg.x, msg.y, msg.isJumping, msg.isRunning);
         await broadcaster.BroadcastAsync(response);
     }
 }

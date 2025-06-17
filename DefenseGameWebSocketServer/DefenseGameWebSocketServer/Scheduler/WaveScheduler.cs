@@ -78,7 +78,7 @@ public class WaveScheduler
             // 접속자 없으면 웨이브 스탑
             if (!_hasPlayerCount())
             {
-                Stop();
+                Dispose();
                 break;
             }
 

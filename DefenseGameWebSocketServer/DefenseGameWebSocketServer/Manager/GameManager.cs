@@ -82,7 +82,7 @@ namespace DefenseGameWebSocketServer.Manager
 
             var msg = new GameOverMessage("game_over", "Game Over!!");
             await _broadcaster.BroadcastAsync(msg);
-            this.Dispose();
+            this.Stop();
             await Task.Delay(1000);
         }
 
@@ -125,14 +125,13 @@ namespace DefenseGameWebSocketServer.Manager
                 case MessageType.Move:
                     {
                         var moveHandler = new MoveHandler();
-                        await moveHandler.HandleAsync(_playerId, rawMessage, _broadcaster, _playerManager);
+                        await moveHandler.HandleAsync(rawMessage, _broadcaster, _playerManager);
                     }
                     break;
                 case MessageType.Restart:
                     {
                         var restartHandler = new RestartHandler();
                         await restartHandler.HandleAsync(_playerId, _broadcaster, RestartGame);
-
                     }
                     break;
             }
