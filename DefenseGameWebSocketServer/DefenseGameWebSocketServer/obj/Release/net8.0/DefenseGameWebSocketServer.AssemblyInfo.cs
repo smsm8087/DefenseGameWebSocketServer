@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DefenseGameWebSocketServer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7a5c1f62673d25055935169b1b56cd2e227a14ee")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bf8f0d25cb0e9ddd475bacd08ab12f584883ca97")]
 [assembly: System.Reflection.AssemblyProductAttribute("DefenseGameWebSocketServer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DefenseGameWebSocketServer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

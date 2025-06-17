@@ -7,6 +7,7 @@
     public enum MessageType
     {
         Move,
+        Restart,
         Unknown
     }
     public static class MessageTypeHelper
@@ -16,6 +17,7 @@
             return type switch
             {
                 "move" => MessageType.Move,
+                "restart" => MessageType.Restart,
                 _ => MessageType.Unknown,
             };
         }

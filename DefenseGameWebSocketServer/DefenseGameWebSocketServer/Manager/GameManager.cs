@@ -82,12 +82,11 @@ namespace DefenseGameWebSocketServer.Manager
 
             var msg = new GameOverMessage("game_over", "Game Over!!");
             await _broadcaster.BroadcastAsync(msg);
+            this.Dispose();
             await Task.Delay(1000);
-
-            RestartGame();
         }
 
-        public void RestartGame()
+        public bool RestartGame()
         {
             Stop();                         
             _waveScheduler?.Dispose();       
@@ -98,7 +97,8 @@ namespace DefenseGameWebSocketServer.Manager
             _sharedHpManager = new SharedHpManager();
             _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount, _sharedHpManager);
 
-            TryStartWave();                 
+            TryStartWave();
+            return true;
         }
         public void Dispose()
         {
@@ -123,8 +123,17 @@ namespace DefenseGameWebSocketServer.Manager
             switch (msgType)
             {
                 case MessageType.Move:
-                    var moveHandler = new MoveHandler();
-                    await moveHandler.HandleAsync(_playerId, rawMessage, _broadcaster, _playerManager);
+                    {
+                        var moveHandler = new MoveHandler();
+                        await moveHandler.HandleAsync(_playerId, rawMessage, _broadcaster, _playerManager);
+                    }
+                    break;
+                case MessageType.Restart:
+                    {
+                        var restartHandler = new RestartHandler();
+                        await restartHandler.HandleAsync(_playerId, _broadcaster, RestartGame);
+
+                    }
                     break;
             }
         }

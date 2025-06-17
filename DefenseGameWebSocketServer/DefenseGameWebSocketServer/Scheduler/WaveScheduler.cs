@@ -65,8 +65,8 @@ public class WaveScheduler
     public async Task StartAsync()
     {
         Console.WriteLine("[WaveScheduler] 웨이브 스케줄러 시작됨");
-        enemiesSpawnList.Add((-41.74f, -2.07f));
-        enemiesSpawnList.Add((49.88f, -2.07f));
+        enemiesSpawnList.Add((-46f, -2f));
+        enemiesSpawnList.Add((45f, -2f));
         //5초후 시작
         await Task.Delay(5000, _cts.Token);
 
