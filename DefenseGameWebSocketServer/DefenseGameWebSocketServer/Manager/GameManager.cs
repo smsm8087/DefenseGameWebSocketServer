@@ -36,6 +36,10 @@ namespace DefenseGameWebSocketServer.Manager
 
         public async Task InitializeGame()
         {
+            if (_cts == null) _cts = new CancellationTokenSource();
+            if( _sharedHpManager == null) _sharedHpManager = new SharedHpManager();
+            if (_waveScheduler == null) _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount, _sharedHpManager);
+
             await _broadcaster.BroadcastAsync(new { type = "player_join", playerId = _playerId });
 
             if (_broadcaster.ConnectedCount >= 1)
@@ -70,6 +74,11 @@ namespace DefenseGameWebSocketServer.Manager
                         await GameOver();
                         break;
                     }
+                    if(!_hasPlayerCount())
+                    {
+                        Dispose();
+                        break;
+                    }
 
                     await Task.Delay(100, _cts.Token);
                 }
@@ -93,10 +102,10 @@ namespace DefenseGameWebSocketServer.Manager
             _cts.Dispose();                  
 
             _cts = new CancellationTokenSource();
-
             _sharedHpManager = new SharedHpManager();
             _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount, _sharedHpManager);
 
+            _isGameLoopRunning = false;
             TryStartWave();
             return true;
         }
@@ -105,9 +114,14 @@ namespace DefenseGameWebSocketServer.Manager
             Stop();
             _cts.Dispose();
             _waveScheduler.Dispose();
+
+            _cts = null;
+            _sharedHpManager = null;
+            _waveScheduler = null;
         }
         public void Stop()
         {
+            _isGameLoopRunning = false;
             _cts.Cancel();
             _waveScheduler.Stop();
         }
