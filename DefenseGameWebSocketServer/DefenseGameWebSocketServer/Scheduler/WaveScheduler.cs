@@ -75,13 +75,6 @@ public class WaveScheduler
 
         while (!_cts.Token.IsCancellationRequested)
         {
-            // 접속자 없으면 웨이브 스탑
-            if (!_hasPlayerCount())
-            {
-                Dispose();
-                break;
-            }
-
             _wave++;
             Console.WriteLine($"[WaveScheduler] 웨이브 {_wave} 시작");
 

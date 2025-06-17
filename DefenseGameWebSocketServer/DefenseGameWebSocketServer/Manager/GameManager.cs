@@ -91,15 +91,15 @@ namespace DefenseGameWebSocketServer.Manager
 
             var msg = new GameOverMessage("game_over", "Game Over!!");
             await _broadcaster.BroadcastAsync(msg);
-            this.Stop();
+            Dispose();
             await Task.Delay(1000);
         }
 
         public bool RestartGame()
         {
             Stop();                         
-            _waveScheduler?.Dispose();       
-            _cts.Dispose();                  
+            if(_waveScheduler != null) _waveScheduler?.Dispose();
+            if (_cts != null) _cts.Dispose();                  
 
             _cts = new CancellationTokenSource();
             _sharedHpManager = new SharedHpManager();
@@ -122,8 +122,8 @@ namespace DefenseGameWebSocketServer.Manager
         public void Stop()
         {
             _isGameLoopRunning = false;
-            _cts.Cancel();
-            _waveScheduler.Stop();
+            if(_cts != null) _cts.Cancel();
+            if(_waveScheduler != null) _waveScheduler.Stop();
         }
 
         public async Task RemovePlayer(string playerId)
