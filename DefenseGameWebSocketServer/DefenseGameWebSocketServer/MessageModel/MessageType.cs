@@ -8,6 +8,8 @@
     {
         Move,
         Restart,
+        PlayerAnimation,
+        PlayerAttack,
         Unknown
     }
     public static class MessageTypeHelper
@@ -18,6 +20,8 @@
             {
                 "move" => MessageType.Move,
                 "restart" => MessageType.Restart,
+                "player_animation" => MessageType.PlayerAnimation,
+                "player_attack" => MessageType.PlayerAttack,
                 _ => MessageType.Unknown,
             };
         }

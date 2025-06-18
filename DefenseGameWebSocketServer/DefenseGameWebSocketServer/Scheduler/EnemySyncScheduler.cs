@@ -65,14 +65,14 @@ public class EnemySyncScheduler
                 syncList = _enemies.Select(e => new EnemySyncPacket(e.Id, e.X)).ToList();
             }
 
-            var msg = new EnemySyncMessage("enemy_sync", syncList);
+            var msg = new EnemySyncMessage(syncList);
             await _broadcaster.BroadcastAsync(msg);
 
             //죽은 적 처리
             var deadEnemiesList = _deadEnemies.Select(e => e.Id).ToList();
             if(deadEnemiesList.Count > 0)
             {
-                var dieMsg = new EnemyDieMessage("enemy_die", deadEnemiesList);
+                var dieMsg = new EnemyDieMessage(deadEnemiesList);
                 await _broadcaster.BroadcastAsync(dieMsg);
 
                 // 공유 HP 감소 처리
@@ -80,7 +80,7 @@ public class EnemySyncScheduler
                 {
                     _sharedHpManager.TakeDamage();
                 }
-                var sharedHpMsg = new SharedHpMessage("shared_hp_update", _sharedHpManager.getHpStatus().Item1, _sharedHpManager.getHpStatus().Item2);
+                var sharedHpMsg = new SharedHpMessage(_sharedHpManager.getHpStatus().Item1, _sharedHpManager.getHpStatus().Item2);
                 await _broadcaster.BroadcastAsync(sharedHpMsg);
                 _deadEnemies.Clear();
             }

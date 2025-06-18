@@ -7,14 +7,13 @@
         public float spawnPosX { get; set; }
         public float spawnPosY { get; set; }
         public SpawnEnemyMessage(
-            string type,
             string enemyId,
             int wave,
             float spawnPosX,
             float spawnPosY
         )
         {
-            this.type = type;
+            type = "spawn_enemy";
             this.enemyId = enemyId;
             this.wave = wave;
             this.spawnPosX = spawnPosX;

@@ -5,12 +5,11 @@
         public float currentHp { get; set; }
         public float maxHp { get; set; }
         public SharedHpMessage(
-            string type,
             float currentHp,
             float maxHp
         )
         {
-            this.type = type;
+            this.type = "shared_hp_update";
             this.currentHp = currentHp;
             this.maxHp = maxHp;
         }

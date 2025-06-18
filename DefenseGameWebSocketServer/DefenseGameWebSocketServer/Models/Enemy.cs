@@ -4,6 +4,9 @@
     public float X;
     public float Y;
     public float Speed;
+    public int Hp = 100;
+    public int MaxHp = 100;
+
     private float targetX;
     private float targetY;
 
@@ -15,6 +18,7 @@
         this.targetX = targetX;
         this.targetY = targetY;
         Speed = speed;
+        Hp = MaxHp = 100;
     }
 
     public void Update(float deltaTime)
@@ -40,5 +44,10 @@
         float dx = targetX - X;
         float dy = targetY - Y;
         return dx * dx + dy * dy <= radius * radius;
+    }
+    public void TakeDamage(int dmg)
+    {
+        Hp -= dmg;
+        if (Hp < 0) Hp = 0;
     }
 }

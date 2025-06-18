@@ -18,11 +18,10 @@
     {
         public List<EnemySyncPacket> enemies { get; set; }
         public EnemySyncMessage(
-            string type,
             List<EnemySyncPacket> enemies
         )
         {
-            this.type = type;
+            type = "enemy_sync";
             this.enemies = enemies;
         }
     }

@@ -1,9 +1,4 @@
-﻿using DefenseGameWebSocketServer.Manager;
-using DefenseGameWebSocketServer.Model;
-using System.Collections.Concurrent;
-using System.Net.WebSockets;
-using System.Text;
-using System.Text.Json;
+﻿using DefenseGameWebSocketServer.Model;
 
 public class RestartHandler
 {
@@ -15,7 +10,7 @@ public class RestartHandler
     {
         restartGameFunc?.Invoke();
 
-        var response = new RestartMessage("restart", playerId);
+        var response = new RestartMessage(playerId);
         await broadcaster.BroadcastAsync(response);
     }
 }

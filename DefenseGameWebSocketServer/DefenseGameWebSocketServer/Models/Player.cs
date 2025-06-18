@@ -4,23 +4,25 @@
     public string jobType;
     public float x;
     public float y;
-    public bool isJumping;
-    public bool isRunning;
+    //나중에 데이터로 빼야할 목록
+    public int Hp { get; private set; } = 100;
+    public int AttackPower { get; private set; } = 40;
 
-    public Player(string id, float x, float y, bool isJumping, bool isRunning )
+    public Player(string id, float x, float y)
     {
         this.id = id;
         this.x = x;
         this.y = y;
-        this.isJumping = isJumping;
-        this.isRunning = isRunning;
     }
 
-    public void Update(float x, float y, bool isJumping, bool isRunning)
+    public void PositionUpdate(float x, float y)
     {
         this.x = x;
         this.y = y;
-        this.isJumping = isJumping;
-        this.isRunning = isRunning;
+    }
+    public void TakeDamage(int dmg)
+    {
+        Hp -= dmg;
+        if (Hp < 0) Hp = 0;
     }
 }

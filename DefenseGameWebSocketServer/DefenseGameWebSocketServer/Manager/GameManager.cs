@@ -12,7 +12,6 @@ namespace DefenseGameWebSocketServer.Manager
         private WaveScheduler _waveScheduler;
         private PlayerManager _playerManager;
         private WebSocketBroadcaster _broadcaster;
-        private string _playerId;
         private CancellationTokenSource _cts;
         private Func<bool> _hasPlayerCount;
         private bool _isGameLoopRunning = false;
@@ -30,27 +29,26 @@ namespace DefenseGameWebSocketServer.Manager
 
         public void SetPlayerData(string playerId)
         {
-            _playerId = playerId;
-            _playerManager.setPlayerPosition(playerId, 0, 0);
+            _playerManager.AddOrUpdatePlayer(new Player(playerId,0,0));
         }
 
-        public async Task InitializeGame()
+        public async Task InitializeGame(string playerId)
         {
             if (_cts == null) _cts = new CancellationTokenSource();
             if( _sharedHpManager == null) _sharedHpManager = new SharedHpManager();
             if (_waveScheduler == null) _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount, _sharedHpManager);
 
-            await _broadcaster.BroadcastAsync(new { type = "player_join", playerId = _playerId });
+            await _broadcaster.BroadcastAsync(new { type = "player_join", playerId = playerId });
 
             if (_broadcaster.ConnectedCount >= 1)
             {
                 TryStartWave();
             }
 
-            await _broadcaster.SendToAsync(_playerId, new
+            await _broadcaster.SendToAsync(playerId, new
             {
                 type = "player_list",
-                players = _broadcaster.GetPlayerIds()
+                players = _playerManager.GetAllPlayerIds()
             });
         }
 
@@ -89,7 +87,7 @@ namespace DefenseGameWebSocketServer.Manager
         {
             _isGameLoopRunning = false;
 
-            var msg = new GameOverMessage("game_over", "Game Over!!");
+            var msg = new GameOverMessage("Game Over!!");
             await _broadcaster.BroadcastAsync(msg);
             Dispose();
             await Task.Delay(1000);
@@ -128,11 +126,11 @@ namespace DefenseGameWebSocketServer.Manager
 
         public async Task RemovePlayer(string playerId)
         {
-            _playerManager.TryRemove(playerId);
+            _playerManager.RemovePlayer(playerId);
             await _broadcaster.BroadcastAsync(new { type = "player_leave", playerId = playerId });
         }
 
-        public async Task ProcessHandler(MessageType msgType, string rawMessage)
+        public async Task ProcessHandler(string playerId, MessageType msgType, string rawMessage)
         {
             switch (msgType)
             {
@@ -145,7 +143,20 @@ namespace DefenseGameWebSocketServer.Manager
                 case MessageType.Restart:
                     {
                         var restartHandler = new RestartHandler();
-                        await restartHandler.HandleAsync(_playerId, _broadcaster, RestartGame);
+                        await restartHandler.HandleAsync(playerId, _broadcaster, RestartGame);
+                    }
+                    break;
+                case MessageType.PlayerAnimation:
+                    {
+                        var playerAnimationHandler = new PlayerAnimationHandler();
+                        await playerAnimationHandler.HandleAsync(playerId, rawMessage, _broadcaster);
+                    }
+                    break;
+                case MessageType.PlayerAttack:
+                    {
+                        if (!_isGameLoopRunning) return;
+                        var AttackHandler = new AttackHandler(_waveScheduler.GetEnemies(), _playerManager);
+                        await AttackHandler.HandleAsync(playerId, rawMessage, _broadcaster);
                     }
                     break;
             }

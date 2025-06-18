@@ -8,7 +8,6 @@
         public bool isJumping { get; set; }
         public bool isRunning { get; set; }
         public MoveMessage(
-            string type,
             string playerId,
             float x,
             float y,
@@ -16,7 +15,7 @@
             bool isRunning
         )
         {
-            this.type = type;
+            type = "move";
             this.playerId = playerId;
             this.x = x;
             this.y = y;

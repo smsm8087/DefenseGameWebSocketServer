@@ -24,6 +24,13 @@ public class WaveScheduler
         _hasPlayerCount = hasPlayerCount;
         _sharedHpManager = sharedHpManager;
     }
+    public List<Enemy> GetEnemies()
+    {
+        lock (enemies)
+        {
+            return enemies;
+        }
+    }
     public void TryStart()
     {
         lock (_lock)
@@ -100,7 +107,6 @@ public class WaveScheduler
                 }
 
                 var msg = new SpawnEnemyMessage(
-                    "spawn_enemy", 
                     enemyId, 
                     _wave, 
                     spawnPosition.Item1, 

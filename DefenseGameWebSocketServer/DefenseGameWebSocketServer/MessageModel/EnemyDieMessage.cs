@@ -3,11 +3,10 @@ public class EnemyDieMessage : BaseMessage
 {
     public List<string> deadEnemyIds { get; set; }
     public EnemyDieMessage(
-        string type,
         List<string> deadEnemyIds
     )
     {
-        this.type = type;
+        type = "enemy_die";
         this.deadEnemyIds = deadEnemyIds;
     }
 }

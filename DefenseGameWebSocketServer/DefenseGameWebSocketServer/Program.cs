@@ -42,7 +42,7 @@ app.Map("/ws", async context =>
         broadcaster.Register(playerId, webSocket);
         // 처음 위치 (0,0)으로
         GameManager.SetPlayerData(playerId);
-        await GameManager.InitializeGame();
+        await GameManager.InitializeGame(playerId);
 
         var buffer = new byte[1024 * 4];
         try
@@ -62,7 +62,7 @@ app.Map("/ws", async context =>
                         var msgType = MessageTypeHelper.Parse(typeString);
 
                         //메시지 처리핸들러
-                        await GameManager.ProcessHandler(msgType, rawMessage);
+                        await GameManager.ProcessHandler(playerId, msgType, rawMessage);
                     }
                     catch (Exception ex)
                     {

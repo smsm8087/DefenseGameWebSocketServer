@@ -4,11 +4,10 @@
     {
         public string message { get; set; }
         public GameOverMessage(
-            string type,
             string message
         )
         {
-            this.type = type;
+            type = "game_over";
             this.message = message;
         }
     }
