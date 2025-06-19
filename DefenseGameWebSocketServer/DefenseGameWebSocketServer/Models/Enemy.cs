@@ -1,53 +1,75 @@
-﻿public class Enemy
-{
-    public string Id;
-    public float X;
-    public float Y;
-    public float Speed;
-    public int Hp = 100;
-    public int MaxHp = 100;
+﻿using DefenseGameWebSocketServer.Models;
 
-    private float targetX;
-    private float targetY;
+public enum EnemyState
+{
+    Move,
+    Attack,
+    Dead
+}
+
+public class Enemy
+{
+    public string id;
+    public float x;
+    public float y;
+    public float speed;
+    public int hp = 100;
+    public int maxHp = 100;
+    public float targetX;
+    public float targetY;
+    public EnemyState state;
+    private IEnemyFSMState _currentState;
+    public float targetRadius = 2.125f;
+
+    //fsm
+    public EnemyMoveState moveState = new EnemyMoveState();
+    public EnemyAttackState attackState = new EnemyAttackState();
+    public EnemyDeadState deadState = new EnemyDeadState();
+    public Action<EnemyBroadcastEvent> OnBroadcastRequired;
+
+
+    public bool IsAlive => hp > 0;
 
     public Enemy(string id, string type, float startX, float startY, float targetX, float targetY, float speed = 3f)
     {
-        Id = id;
-        X = startX;
-        Y = startY;
+        this.id = id;
+        this.x = startX;
+        this.y = startY;
         this.targetX = targetX;
         this.targetY = targetY;
-        Speed = speed;
-        Hp = MaxHp = 100;
+        this.speed = speed;
+        this.hp = this.maxHp = 100;
+        ChangeState(EnemyState.Move);
+    }
+    public void UpdateFSM(float deltaTime)
+    {
+        _currentState?.Update(this, deltaTime);
     }
 
-    public void Update(float deltaTime)
+    public void ChangeState(EnemyState newState)
     {
-        float dirX = targetX - X;
-        float dirY = targetY - Y;
-        float len = MathF.Sqrt(dirX * dirX + dirY * dirY);
+        _currentState?.Exit(this);
 
-        if (len > 0.01f)
+        switch (newState)
         {
-            dirX /= len;
-            dirY /= len;
-
-            float moveX = dirX * Speed * deltaTime;
-            float moveY = dirY * Speed * deltaTime;
-
-            X += moveX;
-            Y += moveY;
+            case EnemyState.Move:
+                _currentState = moveState;
+                break;
+            case EnemyState.Attack:
+                _currentState = attackState;
+                break;
+            case EnemyState.Dead:
+                _currentState = deadState;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(newState), newState, null);
         }
-    }
-    public bool CheckArrived(float radius = 2.125f)
-    {
-        float dx = targetX - X;
-        float dy = targetY - Y;
-        return dx * dx + dy * dy <= radius * radius;
+        _currentState.Enter(this);
+        state = _currentState.GetStateType();
     }
     public void TakeDamage(int dmg)
     {
-        Hp -= dmg;
-        if (Hp < 0) Hp = 0;
+        hp -= dmg;
+        if (hp < 0) hp = 0;
     }
 }

@@ -21,7 +21,7 @@ namespace DefenseGameWebSocketServer.Manager
             _cts = new CancellationTokenSource();
             _hasPlayerCount = hasPlayerCount;
             _broadcaster = broadcaster;
-            _enemyManager = new EnemyManager((IWebSocketBroadcaster)broadcaster, _cts);
+            _enemyManager = new EnemyManager((IWebSocketBroadcaster)broadcaster,_sharedHpManager);
             _waveScheduler = new WaveScheduler((IWebSocketBroadcaster)broadcaster, _cts, _hasPlayerCount, _sharedHpManager, _enemyManager);
         }
 
@@ -153,7 +153,7 @@ namespace DefenseGameWebSocketServer.Manager
                 case MessageType.PlayerAttack:
                     {
                         if (!_isGameLoopRunning) return;
-                        var AttackHandler = new AttackHandler(_enemyManager._enemies, _playerManager);
+                        var AttackHandler = new AttackHandler(_enemyManager, _playerManager);
                         await AttackHandler.HandleAsync(playerId, rawMessage, _broadcaster);
                     }
                     break;

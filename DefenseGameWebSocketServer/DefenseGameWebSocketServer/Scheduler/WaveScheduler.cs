@@ -7,10 +7,8 @@ public class WaveScheduler
     private readonly object _lock = new();
     private readonly Func<bool> _hasPlayerCount;
     private readonly SharedHpManager _sharedHpManager;
-    private readonly EnemyManager _enemyManager;
-
-    private EnemySyncScheduler _enemySyncScheduler;
-    private  CountDownScheduler _countDownScheduler;
+    private EnemyManager _enemyManager;
+    private CountDownScheduler _countDownScheduler;
 
     private int _wave = 0;
     private bool _isRunning = false;
@@ -30,15 +28,16 @@ public class WaveScheduler
             if (_isRunning) return;
             _isRunning = true;
 
+            //count down 스케줄러
+            _countDownScheduler = new CountDownScheduler(_broadcaster, _cts, _hasPlayerCount);
+            //enemyManager 시작
+            _enemyManager.setCancellationTokenSource(_cts);
+            _ = _enemyManager.StartAsync();
+
             //웨이브 스케줄러 시작
             _ = StartAsync();
 
-            //enemy sync 스케줄러 시작
-            _enemySyncScheduler = new EnemySyncScheduler(_enemyManager, _cts.Token);
-            _ = _enemySyncScheduler.StartAsync();
-
-            //count down 스케줄러
-            _countDownScheduler = new CountDownScheduler(_broadcaster, _cts, _hasPlayerCount);
+            
         }
     }
     public void Stop()
@@ -48,11 +47,9 @@ public class WaveScheduler
             if (!_isRunning) return;
             _isRunning = false;
             //init wave
-            _enemyManager.ClearEnemies();
             _wave = 0;
-
-            //init enemy sync scheduler
-            _enemySyncScheduler.Dispose();
+            //enemyManager 중지
+            _enemyManager.Stop();
 
             Console.WriteLine("[WaveScheduler] 중지");
 
