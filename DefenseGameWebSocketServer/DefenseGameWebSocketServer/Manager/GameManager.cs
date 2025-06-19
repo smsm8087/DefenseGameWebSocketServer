@@ -1,8 +1,4 @@
 ﻿using DefenseGameWebSocketServer.Model;
-using Newtonsoft.Json.Linq;
-using System.Collections.Concurrent;
-using System.Runtime.InteropServices.JavaScript;
-using System.Threading.Tasks;
 
 namespace DefenseGameWebSocketServer.Manager
 {
@@ -11,6 +7,7 @@ namespace DefenseGameWebSocketServer.Manager
         private SharedHpManager _sharedHpManager;
         private WaveScheduler _waveScheduler;
         private PlayerManager _playerManager;
+        private EnemyManager _enemyManager;
         private WebSocketBroadcaster _broadcaster;
         private CancellationTokenSource _cts;
         private Func<bool> _hasPlayerCount;
@@ -23,8 +20,9 @@ namespace DefenseGameWebSocketServer.Manager
             _playerManager = new PlayerManager();
             _cts = new CancellationTokenSource();
             _hasPlayerCount = hasPlayerCount;
-            _waveScheduler = new WaveScheduler((IWebSocketBroadcaster)broadcaster, _cts, _hasPlayerCount, _sharedHpManager);
             _broadcaster = broadcaster;
+            _enemyManager = new EnemyManager((IWebSocketBroadcaster)broadcaster, _cts);
+            _waveScheduler = new WaveScheduler((IWebSocketBroadcaster)broadcaster, _cts, _hasPlayerCount, _sharedHpManager, _enemyManager);
         }
 
         public void SetPlayerData(string playerId)
@@ -36,7 +34,7 @@ namespace DefenseGameWebSocketServer.Manager
         {
             if (_cts == null) _cts = new CancellationTokenSource();
             if( _sharedHpManager == null) _sharedHpManager = new SharedHpManager();
-            if (_waveScheduler == null) _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount, _sharedHpManager);
+            if (_waveScheduler == null) _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount, _sharedHpManager, _enemyManager);
 
             await _broadcaster.BroadcastAsync(new { type = "player_join", playerId = playerId });
 
@@ -101,7 +99,7 @@ namespace DefenseGameWebSocketServer.Manager
 
             _cts = new CancellationTokenSource();
             _sharedHpManager = new SharedHpManager();
-            _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount, _sharedHpManager);
+            _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount, _sharedHpManager, _enemyManager);
 
             _isGameLoopRunning = false;
             TryStartWave();
@@ -155,7 +153,7 @@ namespace DefenseGameWebSocketServer.Manager
                 case MessageType.PlayerAttack:
                     {
                         if (!_isGameLoopRunning) return;
-                        var AttackHandler = new AttackHandler(_waveScheduler.GetEnemies(), _playerManager);
+                        var AttackHandler = new AttackHandler(_enemyManager._enemies, _playerManager);
                         await AttackHandler.HandleAsync(playerId, rawMessage, _broadcaster);
                     }
                     break;
