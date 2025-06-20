@@ -10,6 +10,7 @@
         Restart,
         PlayerAnimation,
         PlayerAttack,
+        EnemyAttackHit,
         Unknown
     }
     public static class MessageTypeHelper
@@ -22,6 +23,7 @@
                 "restart" => MessageType.Restart,
                 "player_animation" => MessageType.PlayerAnimation,
                 "player_attack" => MessageType.PlayerAttack,
+                "enemy_attack_hit" => MessageType.EnemyAttackHit,
                 _ => MessageType.Unknown,
             };
         }

@@ -1,4 +1,5 @@
-﻿using DefenseGameWebSocketServer.Model;
+﻿using DefenseGameWebSocketServer.Handlers;
+using DefenseGameWebSocketServer.Model;
 
 namespace DefenseGameWebSocketServer.Manager
 {
@@ -229,6 +230,13 @@ namespace DefenseGameWebSocketServer.Manager
                         if (!_isGameLoopRunning) return;
                         var AttackHandler = new AttackHandler(_enemyManager, _playerManager);
                         await AttackHandler.HandleAsync(playerId, rawMessage, _broadcaster);
+                    }
+                    break;
+                case MessageType.EnemyAttackHit:
+                    {
+                        if (!_isGameLoopRunning) return;
+                        var enemyAttackHitHandler = new EnemyAttackHitHandler();
+                        await enemyAttackHitHandler.HandleAsync(rawMessage, _broadcaster, _sharedHpManager, _enemyManager);
                     }
                     break;
             }
