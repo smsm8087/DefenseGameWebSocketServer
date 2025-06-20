@@ -36,8 +36,8 @@ public class WaveScheduler
 
             //웨이브 스케줄러 시작
             _ = StartAsync();
-
-            
+            // Reset shared HP manager
+            _sharedHpManager.Reset();
         }
     }
     public void Stop()
@@ -52,9 +52,6 @@ public class WaveScheduler
             _enemyManager.Stop();
 
             Console.WriteLine("[WaveScheduler] 중지");
-
-            // Reset shared HP manager
-            _sharedHpManager.Reset(); 
         }
     }
     public async Task StartAsync()

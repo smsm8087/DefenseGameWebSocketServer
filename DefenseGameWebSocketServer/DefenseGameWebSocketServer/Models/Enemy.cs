@@ -20,6 +20,7 @@ public class Enemy
     public EnemyState state;
     private IEnemyFSMState _currentState;
     public float targetRadius = 2.125f;
+    public float attackDamage = 1f;
 
     //fsm
     public EnemyMoveState moveState = new EnemyMoveState();

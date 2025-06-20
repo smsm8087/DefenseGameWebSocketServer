@@ -90,11 +90,8 @@ namespace DefenseGameWebSocketServer.Manager
                     switch (evt.Type)
                     {
                         case EnemyState.Attack:
+                            //prepare animation 재생
                             await _broadcaster.BroadcastAsync(evt.Payload);
-                            //공유 hp 처리
-                            _sharedHpManager.TakeDamage();
-                            var sharedMsg = new SharedHpMessage(_sharedHpManager.getHpStatus().Item1, _sharedHpManager.getHpStatus().Item2);
-                            await _broadcaster.BroadcastAsync(sharedMsg);
                             break;
                         case EnemyState.Dead:
                             await _broadcaster.BroadcastAsync(new EnemyDieMessage(new List<string> { evt.EnemyRef.id }));

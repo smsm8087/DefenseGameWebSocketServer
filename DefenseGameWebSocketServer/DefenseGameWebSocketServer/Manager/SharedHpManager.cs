@@ -5,7 +5,6 @@ namespace DefenseGameWebSocketServer.Manager
     public class SharedHpManager
     {
         private int maxHp = 100;
-        private int damageAmount = 1; // 한 번에 받는 데미지
         private SharedHp sharedHp;
 
         public SharedHpManager()
@@ -16,7 +15,7 @@ namespace DefenseGameWebSocketServer.Manager
         {
             sharedHp.currentHp = sharedHp.maxHp = maxHp;
         }
-        public void TakeDamage()
+        public void TakeDamage(float damageAmount)
         {
             lock (sharedHp)
             {
@@ -26,7 +25,7 @@ namespace DefenseGameWebSocketServer.Manager
                 }
             }
         }
-        public (int, int) getHpStatus()
+        public (float, float) getHpStatus()
         {
             return (sharedHp.currentHp, sharedHp.maxHp);
         }

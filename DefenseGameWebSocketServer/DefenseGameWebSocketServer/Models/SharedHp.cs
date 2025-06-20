@@ -1,14 +1,14 @@
 ﻿public class SharedHp
 {
-    public int currentHp;
-    public int maxHp;
+    public float currentHp;
+    public float maxHp;
 
-    public SharedHp(int maxHp )
+    public SharedHp(float maxHp )
     {
         this.currentHp = this.maxHp = maxHp;
     }
 
-    public void Update(int amount)
+    public void Update(float amount)
     {
         if (amount < 0) throw new ArgumentOutOfRangeException(nameof(amount), "Damage amount cannot be negative.");
         currentHp = Math.Max(0, currentHp - amount);
