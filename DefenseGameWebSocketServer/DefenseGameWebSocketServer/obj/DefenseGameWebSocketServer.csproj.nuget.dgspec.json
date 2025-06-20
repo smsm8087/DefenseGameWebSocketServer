@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\apdlv\\Desktop\\DefenseGameServer\\DefenseGameWebSocketServer\\DefenseGameWebSocketServer\\DefenseGameWebSocketServer.csproj": {}
+    "C:\\Users\\wm07k\\DefenseGameWebSocketServer\\DefenseGameWebSocketServer\\DefenseGameWebSocketServer\\DefenseGameWebSocketServer.csproj": {}
   },
   "projects": {
-    "C:\\Users\\apdlv\\Desktop\\DefenseGameServer\\DefenseGameWebSocketServer\\DefenseGameWebSocketServer\\DefenseGameWebSocketServer.csproj": {
+    "C:\\Users\\wm07k\\DefenseGameWebSocketServer\\DefenseGameWebSocketServer\\DefenseGameWebSocketServer\\DefenseGameWebSocketServer.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\apdlv\\Desktop\\DefenseGameServer\\DefenseGameWebSocketServer\\DefenseGameWebSocketServer\\DefenseGameWebSocketServer.csproj",
+        "projectUniqueName": "C:\\Users\\wm07k\\DefenseGameWebSocketServer\\DefenseGameWebSocketServer\\DefenseGameWebSocketServer\\DefenseGameWebSocketServer.csproj",
         "projectName": "DefenseGameWebSocketServer",
-        "projectPath": "C:\\Users\\apdlv\\Desktop\\DefenseGameServer\\DefenseGameWebSocketServer\\DefenseGameWebSocketServer\\DefenseGameWebSocketServer.csproj",
-        "packagesPath": "C:\\Users\\apdlv\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\apdlv\\Desktop\\DefenseGameServer\\DefenseGameWebSocketServer\\DefenseGameWebSocketServer\\obj\\",
+        "projectPath": "C:\\Users\\wm07k\\DefenseGameWebSocketServer\\DefenseGameWebSocketServer\\DefenseGameWebSocketServer\\DefenseGameWebSocketServer.csproj",
+        "packagesPath": "C:\\Users\\wm07k\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\wm07k\\DefenseGameWebSocketServer\\DefenseGameWebSocketServer\\DefenseGameWebSocketServer\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\apdlv\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\wm07k\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -26,7 +26,6 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -79,7 +78,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.300/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.301/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

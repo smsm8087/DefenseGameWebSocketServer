@@ -13,6 +13,14 @@ namespace DefenseGameWebSocketServer.Manager
         private Func<bool> _hasPlayerCount;
         private bool _isGameLoopRunning = false;
         private Task _gameLoopTask;
+        
+        // 직업 관리를 위한 필드 추가
+        private readonly List<string> _availableJobs = new List<string> 
+        { 
+            "Player", "Programmer"
+        };
+        private readonly HashSet<string> _assignedJobs = new HashSet<string>();
+        private readonly object _jobLock = new object();
 
         public GameManager(WebSocketBroadcaster broadcaster, Func<bool> hasPlayerCount)
         {
@@ -23,11 +31,43 @@ namespace DefenseGameWebSocketServer.Manager
             _broadcaster = broadcaster;
             _enemyManager = new EnemyManager((IWebSocketBroadcaster)broadcaster,_sharedHpManager);
             _waveScheduler = new WaveScheduler((IWebSocketBroadcaster)broadcaster, _cts, _hasPlayerCount, _sharedHpManager, _enemyManager);
+            
         }
 
         public void SetPlayerData(string playerId)
         {
             _playerManager.AddOrUpdatePlayer(new Player(playerId,0,0));
+        }
+
+        private string AssignJobToPlayer()
+        {
+            lock (_jobLock)
+            {
+                Random random = new Random();
+                
+                if (_assignedJobs.Count == 0)
+                {
+                    int randomIndex = random.Next(_availableJobs.Count);
+                    string assignedJob = _availableJobs[randomIndex];
+                    _assignedJobs.Add(assignedJob);
+                    return assignedJob;
+                }
+                else
+                {
+                    var remainingJobs = _availableJobs.Where(job => !_assignedJobs.Contains(job)).ToList();
+                    
+                    if (remainingJobs.Count == 0)
+                    {
+                        remainingJobs = _availableJobs.ToList();
+                        _assignedJobs.Clear();
+                    }
+                    
+                    int randomIndex = random.Next(remainingJobs.Count);
+                    string assignedJob = remainingJobs[randomIndex];
+                    _assignedJobs.Add(assignedJob);
+                    return assignedJob;
+                }
+            }
         }
 
         public async Task InitializeGame(string playerId)
@@ -36,7 +76,18 @@ namespace DefenseGameWebSocketServer.Manager
             if( _sharedHpManager == null) _sharedHpManager = new SharedHpManager();
             if (_waveScheduler == null) _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount, _sharedHpManager, _enemyManager);
 
-            await _broadcaster.BroadcastAsync(new { type = "player_join", playerId = playerId });
+            string assignedJob = AssignJobToPlayer();
+            
+            if (_playerManager.TryGetPlayer(playerId, out Player player))
+            {
+                player.jobType = assignedJob;
+            }
+
+            await _broadcaster.BroadcastAsync(new { 
+                type = "player_join", 
+                playerId = playerId,
+                jobType = assignedJob 
+            });
 
             if (_broadcaster.ConnectedCount >= 1)
             {
@@ -46,7 +97,10 @@ namespace DefenseGameWebSocketServer.Manager
             await _broadcaster.SendToAsync(playerId, new
             {
                 type = "player_list",
-                players = _playerManager.GetAllPlayerIds()
+                players = _playerManager.GetAllPlayers().Select(p => new { 
+                    playerId = p.id, 
+                    jobType = p.jobType 
+                })
             });
         }
 
@@ -101,10 +155,17 @@ namespace DefenseGameWebSocketServer.Manager
             _sharedHpManager = new SharedHpManager();
             _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount, _sharedHpManager, _enemyManager);
 
+            // 게임 재시작 시 직업 할당 초기화
+            lock (_jobLock)
+            {
+                _assignedJobs.Clear();
+            }
+
             _isGameLoopRunning = false;
             TryStartWave();
             return true;
         }
+
         public void Dispose()
         {
             Stop();
@@ -115,6 +176,7 @@ namespace DefenseGameWebSocketServer.Manager
             _sharedHpManager = null;
             _waveScheduler = null;
         }
+
         public void Stop()
         {
             _isGameLoopRunning = false;
@@ -124,6 +186,18 @@ namespace DefenseGameWebSocketServer.Manager
 
         public async Task RemovePlayer(string playerId)
         {
+            // 플레이어 제거 시 할당된 직업도 해제
+            if (_playerManager.TryGetPlayer(playerId, out Player player))
+            {
+                lock (_jobLock)
+                {
+                    if (!string.IsNullOrEmpty(player.jobType))
+                    {
+                        _assignedJobs.Remove(player.jobType);
+                    }
+                }
+            }
+
             _playerManager.RemovePlayer(playerId);
             await _broadcaster.BroadcastAsync(new { type = "player_leave", playerId = playerId });
         }
