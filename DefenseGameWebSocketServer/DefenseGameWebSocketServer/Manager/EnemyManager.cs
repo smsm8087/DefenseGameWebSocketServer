@@ -155,7 +155,7 @@ namespace DefenseGameWebSocketServer.Manager
 
         public async Task SpawnEnemy(int _wave)
         {
-            int enemyCount = 3 + _wave;
+            int enemyCount = 3 * _wave;
 
             for (int i = 0; i < enemyCount; i++)
             {

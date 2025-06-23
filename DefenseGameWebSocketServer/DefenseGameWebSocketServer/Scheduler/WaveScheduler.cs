@@ -12,6 +12,7 @@ public class WaveScheduler
 
     private int _wave = 0;
     private bool _isRunning = false;
+    private int maxWave = 10; // 최대 웨이브 수
 
     public WaveScheduler(IWebSocketBroadcaster broadcaster, CancellationTokenSource cts, Func<bool> hasPlayerCount, SharedHpManager sharedHpManager, EnemyManager enemyManager)
     {
@@ -64,7 +65,7 @@ public class WaveScheduler
         //countdown 시작
         await _countDownScheduler.StartAsync();
 
-        while (!_cts.Token.IsCancellationRequested)
+        while (!_cts.Token.IsCancellationRequested && _wave <= maxWave)
         {
             _wave++;
             Console.WriteLine($"[WaveScheduler] 웨이브 {_wave} 시작");
