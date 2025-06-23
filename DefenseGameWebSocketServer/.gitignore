@@ -1,13 +1,19 @@
 ## 빌드 결과물
-/bin/
-/obj/
-/out/
+bin/
+obj/
+out/
+Library/
+Temp/
 
 ## 사용자별 설정
 *.user
 *.userosscache
 *.suo
 *.sln.docstates
+*.dll
+*.pdb
+*.cache
+
 
 ## VSCode 설정 (옵션)
 .vscode/
