@@ -1,0 +1,4 @@
+id,title,type,grade,gradeProbability,value
+1,치명타확률증가,critical,normal,60,10
+2,치명타확률증가,critical,rare,30,20
+3,치명타확률증가,critical,legend,10,30

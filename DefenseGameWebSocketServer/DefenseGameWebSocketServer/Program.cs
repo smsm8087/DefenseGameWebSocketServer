@@ -1,5 +1,6 @@
 using DefenseGameWebSocketServer.Manager;
 using DefenseGameWebSocketServer.Model;
+using DefenseGameWebSocketServer.Models.DataModels;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
@@ -17,6 +18,14 @@ var broadcaster = new WebSocketBroadcaster();
 builder.Services.AddSingleton<IWebSocketBroadcaster>(broadcaster);
 
 var GameManager = new GameManager(broadcaster, () => broadcaster.HasPlayers());
+// 게임 데이터 초기화
+GameDataManager.Instance.LoadAllData();
+Dictionary<int,CardData> dataDict = GameDataManager.Instance.GetTable<CardData>("card");
+foreach (var data in dataDict.Values)
+{
+    Console.WriteLine($"Card ID: {data.id}, Name: {data.title}");
+}
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
