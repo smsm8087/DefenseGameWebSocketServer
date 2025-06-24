@@ -20,7 +20,7 @@ builder.Services.AddSingleton<IWebSocketBroadcaster>(broadcaster);
 var GameManager = new GameManager(broadcaster, () => broadcaster.HasPlayers());
 // 게임 데이터 초기화
 GameDataManager.Instance.LoadAllData();
-Dictionary<int,CardData> dataDict = GameDataManager.Instance.GetTable<CardData>("card");
+Dictionary<int,DataModel> dataDict = GameDataManager.Instance.GetTable<DataModel>("card");
 foreach (var data in dataDict.Values)
 {
     Console.WriteLine($"Card ID: {data.id}, Name: {data.title}");

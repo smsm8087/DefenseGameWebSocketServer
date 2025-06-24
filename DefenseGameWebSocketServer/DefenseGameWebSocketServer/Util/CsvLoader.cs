@@ -57,7 +57,7 @@ namespace DefenseGameWebSocketServer.Util
                     }
                 }
 
-                var keyField = Array.Find(fields, f => f.Name.Equals("Id"));
+                var keyField = Array.Find(fields, f => f.Name.Equals("id"));
                 if (keyField == null)
                 {
                     Console.WriteLine($"[Error] 기본키(Id)가 없음 - {typeof(T).Name}");

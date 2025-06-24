@@ -9,4 +9,12 @@
         public float gradeProbability { get; set; }
         public float value { get; set; }
     }
+    public class PlayerData
+    {
+        public int id { get; set; }
+        public string job_type { get; set; }
+        public int hp { get; set; }
+        public float ult_gauge { get; set; }
+        public int attack_power { get; set; }
+    }
 }

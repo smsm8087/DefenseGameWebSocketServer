@@ -11,7 +11,8 @@ namespace DefenseGameWebSocketServer.Manager
 
         public void LoadAllData()
         {
-            _tableDict["card"] = CsvLoader.Load<CardData>("Data/card_data.csv");
+            _tableDict["card_data"] = CsvLoader.Load<CardData>("Data/card_data.csv");
+            _tableDict["player_data"] = CsvLoader.Load<PlayerData>("Data/player_data.csv");
 
             Console.WriteLine("[GameDataManager] 모든 데이터 로드 완료!");
         }
