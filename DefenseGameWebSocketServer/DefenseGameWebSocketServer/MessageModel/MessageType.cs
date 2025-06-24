@@ -4,6 +4,7 @@
     {
         public string type { get; set; }
     }
+    
     public enum MessageType
     {
         Move,
@@ -11,8 +12,11 @@
         PlayerAnimation,
         PlayerAttack,
         EnemyAttackHit,
-        Unknown
+        Unknown,
+        RequestPlayerData,
+        AttackSuccess
     }
+    
     public static class MessageTypeHelper
     {
         public static MessageType Parse(string type)
@@ -24,6 +28,8 @@
                 "player_animation" => MessageType.PlayerAnimation,
                 "player_attack" => MessageType.PlayerAttack,
                 "enemy_attack_hit" => MessageType.EnemyAttackHit,
+                "request_player_data" => MessageType.RequestPlayerData, 
+                "attack_success" => MessageType.AttackSuccess,          
                 _ => MessageType.Unknown,
             };
         }

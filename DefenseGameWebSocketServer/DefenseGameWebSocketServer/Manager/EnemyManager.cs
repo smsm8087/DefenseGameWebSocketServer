@@ -111,35 +111,53 @@ namespace DefenseGameWebSocketServer.Manager
             Console.WriteLine("[EnemyManager] FSM 종료됨");
             _isRunning = false;
         }
-
+        
         //플레이어에게 공격을 받았을때.
-        public async Task CheckDamaged(int playerAttackPower, PlayerAttackRequest msg)
+        // 플레이어에게 공격을 받았을때 - 수정된 버전
+        public async Task<bool> CheckDamaged(int playerAttackPower, PlayerAttackRequest msg)
         {
-            //적 리스트 돌면서 박스 충돌 체크
             var dmgMsg = new EnemyDamagedMessage();
+            bool hitAnyEnemy = false;
+            var hitEnemies = new HashSet<string>(); // 중복 방지용
 
-            foreach (var enemy in _enemies)
+            lock (_enemies) // lock으로 동시성 문제 방지
             {
-                if (IsEnemyInAttackBox(enemy, msg))
+                // 적 리스트 복사본을 만들어서 안전하게 순회
+                var enemiesCopy = new List<Enemy>(_enemies);
+        
+                foreach (var enemy in enemiesCopy)
                 {
-                    enemy.TakeDamage(playerAttackPower);
-                    
-                    Console.WriteLine($"[AttackHandler] 적 {enemy.id}  {playerAttackPower} 데미지 남은 HP: {enemy.hp}");
-
-                    //데미지 메시지 브로드캐스트
-                    dmgMsg.damagedEnemies.Add(new EnemyDamageInfo
+                    // 이미 처리된 적인지 확인
+                    if (hitEnemies.Contains(enemy.id))
+                        continue;
+                
+                    if (IsEnemyInAttackBox(enemy, msg))
                     {
-                        enemyId = enemy.id,
-                        currentHp = enemy.hp,
-                        maxHp = enemy.maxHp,
-                        damage = playerAttackPower
-                    });
+                        enemy.TakeDamage(playerAttackPower);
+                        hitAnyEnemy = true;
+                        hitEnemies.Add(enemy.id); // 처리된 적으로 마킹
+        
+                        Console.WriteLine($"[AttackHandler] 적 {enemy.id} {playerAttackPower} 데미지 남은 HP: {enemy.hp}");
+
+                        // 데미지 메시지 브로드캐스트
+                        dmgMsg.damagedEnemies.Add(new EnemyDamageInfo
+                        {
+                            enemyId = enemy.id,
+                            currentHp = enemy.hp,
+                            maxHp = enemy.maxHp,
+                            damage = playerAttackPower
+                        });
+                    }
                 }
             }
+
             if (dmgMsg.damagedEnemies.Count > 0)
             {
                 await _broadcaster.BroadcastAsync(dmgMsg);
+                Console.WriteLine($"[EnemyManager] {dmgMsg.damagedEnemies.Count}마리의 적에게 데미지 전송");
             }
+
+            return hitAnyEnemy;
         }
         //히트박스 검사
         private bool IsEnemyInAttackBox(Enemy enemy, PlayerAttackRequest msg)

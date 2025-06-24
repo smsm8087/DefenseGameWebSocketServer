@@ -1,5 +1,11 @@
 ﻿using DefenseGameWebSocketServer.Handlers;
 using DefenseGameWebSocketServer.Model;
+using DefenseGameWebSocketServer.Models.DataModels;  // 추가
+using System;                                        // 추가
+using System.Collections.Generic;                    // 추가
+using System.Linq;                                   // 추가
+using System.Threading;                              // 추가
+using System.Threading.Tasks;                        // 추가
 
 namespace DefenseGameWebSocketServer.Manager
 {
@@ -18,7 +24,7 @@ namespace DefenseGameWebSocketServer.Manager
         // 직업 관리를 위한 필드 추가
         private readonly List<string> _availableJobs = new List<string> 
         { 
-            "Player", "Programmer"
+            "tank", "programmer"
         };
         private readonly HashSet<string> _assignedJobs = new HashSet<string>();
         private readonly object _jobLock = new object();
@@ -78,12 +84,12 @@ namespace DefenseGameWebSocketServer.Manager
             if (_waveScheduler == null) _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount, _sharedHpManager, _enemyManager);
 
             string assignedJob = AssignJobToPlayer();
-            
+    
             if (_playerManager.TryGetPlayer(playerId, out Player player))
             {
-                player.jobType = assignedJob;
+                player.SetJobType(assignedJob);
             }
-
+    
             await _broadcaster.BroadcastAsync(new { 
                 type = "player_join", 
                 playerId = playerId,
@@ -99,10 +105,20 @@ namespace DefenseGameWebSocketServer.Manager
             {
                 type = "player_list",
                 players = _playerManager.GetAllPlayers().Select(p => new { 
-                    playerId = p.id, 
-                    jobType = p.jobType 
+                    id = p.id,              
+                    job_type = p.jobType 
                 })
             });
+        }
+
+        private int GetJobId(string jobType)
+        {
+            return jobType switch
+            {
+                "tank" => 1,
+                "programmer" => 2,
+                _ => 1 // 기본값
+            };
         }
 
         public void TryStartWave()
@@ -238,6 +254,12 @@ namespace DefenseGameWebSocketServer.Manager
                         var enemyAttackHitHandler = new EnemyAttackHitHandler();
                         await enemyAttackHitHandler.HandleAsync(rawMessage, _broadcaster, _sharedHpManager, _enemyManager);
                     }
+                    break;
+                case MessageType.RequestPlayerData:
+                {
+                    var playerDataRequestHandler = new PlayerDataRequestHandler();
+                    await playerDataRequestHandler.HandleAsync(playerId, rawMessage, _broadcaster, _playerManager);
+                }
                     break;
             }
         }
