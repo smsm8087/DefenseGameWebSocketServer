@@ -123,7 +123,7 @@ namespace DefenseGameWebSocketServer.Manager
                 if (IsEnemyInAttackBox(enemy, msg))
                 {
                     enemy.TakeDamage(playerAttackPower);
-                    
+
                     Console.WriteLine($"[AttackHandler] 적 {enemy.id}  {playerAttackPower} 데미지 남은 HP: {enemy.hp}");
 
                     //데미지 메시지 브로드캐스트

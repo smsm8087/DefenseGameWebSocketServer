@@ -12,6 +12,8 @@ namespace DefenseGameWebSocketServer.Manager
         private WebSocketBroadcaster _broadcaster;
         private CancellationTokenSource _cts;
         private Func<bool> _hasPlayerCount;
+        private Func<int> _getPlayerCount;
+        private Func<List<string>> _getPlayerList;
         private bool _isGameLoopRunning = false;
         private Task _gameLoopTask;
         
@@ -23,15 +25,17 @@ namespace DefenseGameWebSocketServer.Manager
         private readonly HashSet<string> _assignedJobs = new HashSet<string>();
         private readonly object _jobLock = new object();
 
-        public GameManager(WebSocketBroadcaster broadcaster, Func<bool> hasPlayerCount)
+        public GameManager(WebSocketBroadcaster broadcaster)
         {
             _sharedHpManager = new SharedHpManager();
             _playerManager = new PlayerManager();
             _cts = new CancellationTokenSource();
-            _hasPlayerCount = hasPlayerCount;
+            _hasPlayerCount = () => _playerManager._playersDict.Count > 0;
+            _getPlayerCount = () => _playerManager._playersDict.Count;
+            _getPlayerList = () => _playerManager.GetAllPlayerIds().ToList();
             _broadcaster = broadcaster;
             _enemyManager = new EnemyManager((IWebSocketBroadcaster)broadcaster,_sharedHpManager);
-            _waveScheduler = new WaveScheduler((IWebSocketBroadcaster)broadcaster, _cts, _hasPlayerCount, _sharedHpManager, _enemyManager);
+            _waveScheduler = new WaveScheduler((IWebSocketBroadcaster)broadcaster, _cts, _hasPlayerCount,_getPlayerCount, _getPlayerList, _sharedHpManager, _enemyManager);
             
         }
 
@@ -75,7 +79,7 @@ namespace DefenseGameWebSocketServer.Manager
         {
             if (_cts == null) _cts = new CancellationTokenSource();
             if( _sharedHpManager == null) _sharedHpManager = new SharedHpManager();
-            if (_waveScheduler == null) _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount, _sharedHpManager, _enemyManager);
+            if (_waveScheduler == null) _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount,_getPlayerCount,_getPlayerList, _sharedHpManager, _enemyManager);
 
             string assignedJob = AssignJobToPlayer();
             
@@ -154,7 +158,7 @@ namespace DefenseGameWebSocketServer.Manager
 
             _cts = new CancellationTokenSource();
             _sharedHpManager = new SharedHpManager();
-            _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount, _sharedHpManager, _enemyManager);
+            _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount,_getPlayerCount, _getPlayerList,  _sharedHpManager, _enemyManager);
 
             // 게임 재시작 시 직업 할당 초기화
             lock (_jobLock)

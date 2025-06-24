@@ -15,6 +15,7 @@ public class WebSocketBroadcaster : IWebSocketBroadcaster
     private readonly ConcurrentDictionary<string, WebSocket> _sockets = new();
     public int ConnectedCount => _sockets.Count;
     public bool HasPlayers() => _sockets.Count > 0;
+    public int GetPlayerCount() => _sockets.Count;
 
     public void Register(string playerId, WebSocket socket)
     {
