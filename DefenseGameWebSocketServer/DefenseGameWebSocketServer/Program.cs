@@ -17,14 +17,9 @@ builder.Services.AddSwaggerGen();
 var broadcaster = new WebSocketBroadcaster();
 builder.Services.AddSingleton<IWebSocketBroadcaster>(broadcaster);
 
-var GameManager = new GameManager(broadcaster, () => broadcaster.HasPlayers());
+var GameManager = new GameManager(broadcaster);
 // 게임 데이터 초기화
 GameDataManager.Instance.LoadAllData();
-Dictionary<int,CardData> dataDict = GameDataManager.Instance.GetTable<CardData>("card_data");
-foreach (var data in dataDict.Values)
-{
-    Console.WriteLine($"Card ID: {data.id}, Name: {data.title}");
-}
 
 var app = builder.Build();
 

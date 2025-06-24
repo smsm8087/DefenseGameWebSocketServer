@@ -1,4 +1,4 @@
-﻿using DefenseGameWebSocketServer.MessageModel;
+using DefenseGameWebSocketServer.MessageModel;
 using DefenseGameWebSocketServer.Model;
 using DefenseGameWebSocketServer.Models;
 using Newtonsoft.Json.Linq;
