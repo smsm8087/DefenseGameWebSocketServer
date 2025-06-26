@@ -75,7 +75,7 @@ public class WaveScheduler
     public async Task StartAsync()
     {
         Console.WriteLine("[WaveScheduler] 웨이브 스케줄러 시작됨");
-        _currentPhase = GamePhase.Wave;
+        _currentPhase = GamePhase.Settlement;
         _readyCount = 0;
 
         //5초후 시작
@@ -137,6 +137,9 @@ public class WaveScheduler
             _currentPhase = GamePhase.Wave;
             return;
         }
+
+        float settlementSeconds = 60f;
+
         foreach (var playerId in playerList)
         {
             List<CardData> cards = CardTableManager.Instance.DrawCards(3);
@@ -144,8 +147,11 @@ public class WaveScheduler
 
             await _broadcaster.SendToAsync(playerId,msg);
         }
-        var settlementDuration = TimeSpan.FromSeconds(60);
+        var settlementDuration = TimeSpan.FromSeconds(settlementSeconds);
         var settlementTask = Task.Delay(settlementDuration, _cts.Token);
+
+        //타이머 시작
+        _ = BroadcastSettlementTimer(settlementSeconds);
 
         while (_readyCount < _getPlayerCount() && !settlementTask.IsCompleted)
         {
@@ -161,6 +167,23 @@ public class WaveScheduler
         {
             _currentPhase = GamePhase.Wave;
         }
+    }
+    private async Task BroadcastSettlementTimer(float duration)
+    {
+        float remaining = duration;
+
+        while (remaining > 0 && !_cts.Token.IsCancellationRequested)
+        {
+            bool isReady = _readyCount >= _getPlayerCount();
+            if (isReady) break;
+            var msg = new SettlementTimerUpdateMessage(remaining, isReady);
+
+            await _broadcaster.BroadcastAsync(msg);
+            await Task.Delay(100, _cts.Token);
+            remaining -= 0.1f;
+        }
+        var finishMsg = new SettlementTimerUpdateMessage(remaining, true);
+        await _broadcaster.BroadcastAsync(finishMsg);
     }
 
     private async Task StartBossPhaseAsync()

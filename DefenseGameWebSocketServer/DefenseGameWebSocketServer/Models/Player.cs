@@ -11,7 +11,7 @@ public class Player
     
     public int Hp { get; private set; }
     public int AttackPower { get; private set; }
-
+    public List<int> CardIds { get; private set; } = new List<int>();
     public Player(string id, float x, float y)
     {
         this.id = id;
@@ -21,6 +21,18 @@ public class Player
         // 기본값 설정 (직업이 할당되기 전)
         this.Hp = 100;
         this.AttackPower = 40;
+    }
+    public void addCardId(int cardId)
+    {
+        if (!CardIds.Contains(cardId))
+        {
+            CardIds.Add(cardId);
+            Console.WriteLine($"[Player] {id} 카드 추가: {cardId}");
+        }
+        else
+        {
+            Console.WriteLine($"[PlayerERR] {id} 이미 카드 {cardId}를 가지고 있습니다.");
+        }
     }
 
     // 직업이 할당될 때 테이블 데이터로 스탯 업데이트

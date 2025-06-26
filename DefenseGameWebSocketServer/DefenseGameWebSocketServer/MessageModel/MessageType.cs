@@ -14,7 +14,8 @@
         EnemyAttackHit,
         Unknown,
         RequestPlayerData,
-        AttackSuccess
+        AttackSuccess,
+        SettlementReady
     }
     
     public static class MessageTypeHelper
@@ -29,7 +30,8 @@
                 "player_attack" => MessageType.PlayerAttack,
                 "enemy_attack_hit" => MessageType.EnemyAttackHit,
                 "request_player_data" => MessageType.RequestPlayerData, 
-                "attack_success" => MessageType.AttackSuccess,          
+                "attack_success" => MessageType.AttackSuccess,
+                "settlement_ready" => MessageType.SettlementReady,
                 _ => MessageType.Unknown,
             };
         }

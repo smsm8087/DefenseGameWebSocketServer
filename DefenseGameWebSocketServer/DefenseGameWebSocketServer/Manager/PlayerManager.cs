@@ -36,5 +36,12 @@ namespace DefenseGameWebSocketServer.Manager
                 player.PositionUpdate(x, y);
             }
         }
+        public void addCardToPlayer(string playerId, int cardId)
+        {
+            if (TryGetPlayer(playerId, out Player player))
+            {
+                player.addCardId(cardId);
+            }
+        }
     }
 }

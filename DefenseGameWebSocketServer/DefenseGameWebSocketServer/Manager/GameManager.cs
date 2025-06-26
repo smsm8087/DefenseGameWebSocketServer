@@ -260,10 +260,16 @@ namespace DefenseGameWebSocketServer.Manager
                     }
                     break;
                 case MessageType.RequestPlayerData:
-                {
-                    var playerDataRequestHandler = new PlayerDataRequestHandler();
-                    await playerDataRequestHandler.HandleAsync(playerId, rawMessage, _broadcaster, _playerManager);
-                }
+                    {
+                        var playerDataRequestHandler = new PlayerDataRequestHandler();
+                        await playerDataRequestHandler.HandleAsync(playerId, rawMessage, _broadcaster, _playerManager);
+                    }
+                    break;
+                case MessageType.SettlementReady:
+                    {
+                        var settlementReadyHandler = new SettlementReadyHandler();
+                        await settlementReadyHandler.HandleAsync(playerId, rawMessage, _broadcaster, _waveScheduler, _playerManager);
+                    }
                     break;
             }
         }
