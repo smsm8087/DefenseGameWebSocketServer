@@ -100,6 +100,7 @@ namespace DefenseGameWebSocketServer.Manager
                         job_type = assignedJob,
                         currentHp = player.currentHp,
                         currentUlt = player.currentUlt,
+                        currentMoveSpeed = player.currentMoveSpeed,
                         playerBaseData = player.playerBaseData,
                     }
                 });

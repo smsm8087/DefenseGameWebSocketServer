@@ -113,7 +113,7 @@ namespace DefenseGameWebSocketServer.Manager
         }
         
         //플레이어에게 공격을 받았을때.
-        public async Task<int> CheckDamaged(int playerAttackPower, PlayerAttackRequest msg)
+        public async Task<int> CheckDamaged(PlayerManager _playerManager, PlayerAttackRequest msg)
         {
             var dmgMsg = new EnemyDamagedMessage();
 
@@ -126,6 +126,8 @@ namespace DefenseGameWebSocketServer.Manager
                 {
                     if (IsEnemyInAttackBox(enemy, msg))
                     {
+                        int playerAttackPower = _playerManager.getPlayerAttackPower(msg.playerId);
+
                         enemy.TakeDamage(playerAttackPower);
         
                         Console.WriteLine($"[AttackHandler] 적 {enemy.id} {playerAttackPower} 데미지 남은 HP: {enemy.hp}");

@@ -1,3 +1,6 @@
-id,job_type,hp,ult_gauge,attack_power
-1,tank,100,0.2,20
-2,programmer,100,0.1,40
+id,job_type,hp,ult_gauge,attack_power,move_speed,critical_pct,critical_dmg,
+1,tank,500,3,30,3,10,100,
+2,programmer,150,1,50,6,40,150,
+,,,,,,,,
+,,,,,,,,
+,,,,,,,,

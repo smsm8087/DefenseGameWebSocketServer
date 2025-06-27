@@ -23,11 +23,8 @@ public class AttackHandler
             return;
         }
         
-        int playerAttackPower = _playerManager.getPlayerAttackPower(playerId);
-        Console.WriteLine($"[AttackHandler] 플레이어 {playerId} 공격력: {playerAttackPower}");
-
         // 적 명중 여부 확인
-        int hitEnemyCount = await _enemyManager.CheckDamaged(playerAttackPower, msg);
+        int hitEnemyCount = await _enemyManager.CheckDamaged(_playerManager, msg);
 
         // 결과 로깅
         if (hitEnemyCount > 0)

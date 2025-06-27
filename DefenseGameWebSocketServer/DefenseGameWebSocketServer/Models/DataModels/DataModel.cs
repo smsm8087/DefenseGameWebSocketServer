@@ -16,5 +16,8 @@
         public int hp { get; set; }
         public float ult_gauge { get; set; }
         public int attack_power { get; set; }
+        public float move_speed { get; set; }
+        public int critical_pct { get; set; }
+        public int critical_dmg { get; set; }
     }
 }
