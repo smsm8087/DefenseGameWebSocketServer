@@ -32,7 +32,7 @@ namespace DefenseGameWebSocketServer.Manager
             {
                 var availableCards = cardTable.Where(card => !result.Contains(card)).ToList();
                 
-                int totalPct = cardTable.Sum(card => card.pct);
+                int totalPct = availableCards.Sum(card => card.pct);
                 if (totalPct == 0) break;
                 
                 int rand = Random.Shared.Next(1, totalPct + 1);

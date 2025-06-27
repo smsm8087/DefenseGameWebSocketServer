@@ -181,13 +181,13 @@ public class WaveScheduler
         {
             bool isReady = _readyCount >= _getPlayerCount();
             if (isReady) break;
-            var msg = new SettlementTimerUpdateMessage(remaining, isReady);
+            var msg = new SettlementTimerUpdateMessage(remaining, _readyCount);
 
             await _broadcaster.BroadcastAsync(msg);
             await Task.Delay(100, _cts.Token);
             remaining -= 0.1f;
         }
-        var finishMsg = new SettlementTimerUpdateMessage(remaining, true);
+        var finishMsg = new SettlementTimerUpdateMessage(remaining, _readyCount);
         await _broadcaster.BroadcastAsync(finishMsg);
     }
 
