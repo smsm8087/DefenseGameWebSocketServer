@@ -8,6 +8,7 @@ namespace DefenseGameWebSocketServer.MessageModel
         public int currentHp { get; set; }
         public int maxHp { get; set; }
         public int damage { get; set; }
+        public bool isCritical { get; set; }
     }
     public class EnemyDamagedMessage : BaseMessage
     {

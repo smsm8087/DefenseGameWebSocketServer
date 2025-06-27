@@ -108,7 +108,7 @@ public class Player
         this.x = x;
         this.y = y;
     }
-    public int getDamage()
+    public (int , bool) getDamage()
     {
         //최소공격력 최대공격력 적용
         int baseDamage = playerBaseData.attack_power + addData.addAttackPower;
@@ -122,9 +122,9 @@ public class Player
         // 크리티컬 확률 계산
         if (Random.Shared.Next(0, 100) < critChance)
         {
-            return (int)(baseDamage * (1 + critDamage / 100.0f)); // 크리티컬 데미지 적용
+            return ((int)(baseDamage * (1 + critDamage / 100.0f)), true); // 크리티컬 데미지 적용
         }
-        return baseDamage; // 일반 데미지
+        return (baseDamage, false); // 일반 데미지
     }
     public void addUltGauge()
     {

@@ -43,13 +43,13 @@ namespace DefenseGameWebSocketServer.Manager
                 player.addCardId(cardId);
             }
         }
-        public int getPlayerAttackPower(string playerId)
+        public (int , bool) getPlayerAttackPower(string playerId)
         {
             if (TryGetPlayer(playerId, out Player player))
             {
                 return player.getDamage();
             }
-            return 0;
+            return (0,false);
         }
         public (float, float) addUltGauge(string playerId)
         {

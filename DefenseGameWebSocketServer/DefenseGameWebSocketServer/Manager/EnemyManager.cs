@@ -126,11 +126,13 @@ namespace DefenseGameWebSocketServer.Manager
                 {
                     if (IsEnemyInAttackBox(enemy, msg))
                     {
-                        int playerAttackPower = _playerManager.getPlayerAttackPower(msg.playerId);
+                        (int, bool) playerAttackData = _playerManager.getPlayerAttackPower(msg.playerId);
+                        int playerDamage = playerAttackData.Item1;
+                        bool isCritical = playerAttackData.Item2;
 
-                        enemy.TakeDamage(playerAttackPower);
+                        enemy.TakeDamage(playerDamage);
         
-                        Console.WriteLine($"[AttackHandler] 적 {enemy.id} {playerAttackPower} 데미지 남은 HP: {enemy.hp}");
+                        Console.WriteLine($"[AttackHandler] 적 {enemy.id} {playerDamage} 데미지 남은 HP: {enemy.hp}");
 
                         // 데미지 메시지 브로드캐스트
                         dmgMsg.damagedEnemies.Add(new EnemyDamageInfo
@@ -138,7 +140,8 @@ namespace DefenseGameWebSocketServer.Manager
                             enemyId = enemy.id,
                             currentHp = enemy.hp,
                             maxHp = enemy.maxHp,
-                            damage = playerAttackPower
+                            damage = playerDamage,
+                            isCritical = isCritical
                         });
                     }
                 }
