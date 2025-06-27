@@ -6,15 +6,15 @@ namespace DefenseGameWebSocketServer.MessageModel
     public class SettlementTimerUpdateMessage : BaseMessage
     {
         public float duration { get; set; }
-        public bool isReady { get; set; } = false; // 기본값 false로 설정
+        public int readyCount { get; set; }
         public SettlementTimerUpdateMessage(
             float duration,
-            bool isReady
+            int readyCount
         )
         {
             type = "settlement_timer_update";
             this.duration = duration;
-            this.isReady = isReady;
+            this.readyCount = readyCount;
         }
     }
 }

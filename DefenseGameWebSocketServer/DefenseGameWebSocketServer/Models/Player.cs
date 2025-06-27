@@ -19,7 +19,7 @@ public class PlayerAddData
     public int addAttackPower { get; set; }
     public int addCriPct { get; set; }
     public int addCriDmg { get; set; }
-    public int addMoveSpeed { get; set; }
+    public float addMoveSpeed { get; set; }
 }
 public class Player
 {
@@ -84,7 +84,7 @@ public class Player
                     addData.addAttackPower += cardTable.value;
                     break;
                 case "add_movespeed":
-                    addData.addMoveSpeed += cardTable.value;
+                    addData.addMoveSpeed += cardTable.value * 0.01f;
                     currentMoveSpeed = playerBaseData.move_speed + addData.addMoveSpeed; // 이동 속도 증가
                     break;
                 case "add_criticaldmg":
