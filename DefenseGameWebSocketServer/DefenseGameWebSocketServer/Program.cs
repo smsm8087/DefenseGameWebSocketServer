@@ -44,8 +44,7 @@ app.Map("/ws", async context =>
         var webSocket = await context.WebSockets.AcceptWebSocketAsync();
 
         broadcaster.Register(playerId, webSocket);
-        // 처음 위치 (0,0)으로
-        GameManager.SetPlayerData(playerId);
+        
         await GameManager.InitializeGame(playerId);
 
         var buffer = new byte[1024 * 4];

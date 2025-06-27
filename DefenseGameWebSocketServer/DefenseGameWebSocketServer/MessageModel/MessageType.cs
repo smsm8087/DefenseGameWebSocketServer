@@ -12,12 +12,11 @@
         PlayerAnimation,
         PlayerAttack,
         EnemyAttackHit,
-        Unknown,
-        RequestPlayerData,
         AttackSuccess,
-        SettlementReady
+        SettlementReady,
+        Unknown,
     }
-    
+
     public static class MessageTypeHelper
     {
         public static MessageType Parse(string type)
@@ -29,7 +28,6 @@
                 "player_animation" => MessageType.PlayerAnimation,
                 "player_attack" => MessageType.PlayerAttack,
                 "enemy_attack_hit" => MessageType.EnemyAttackHit,
-                "request_player_data" => MessageType.RequestPlayerData, 
                 "attack_success" => MessageType.AttackSuccess,
                 "settlement_ready" => MessageType.SettlementReady,
                 _ => MessageType.Unknown,

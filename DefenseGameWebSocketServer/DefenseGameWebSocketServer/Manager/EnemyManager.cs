@@ -113,12 +113,9 @@ namespace DefenseGameWebSocketServer.Manager
         }
         
         //플레이어에게 공격을 받았을때.
-        // 플레이어에게 공격을 받았을때 - 수정된 버전
-        public async Task<bool> CheckDamaged(int playerAttackPower, PlayerAttackRequest msg)
+        public async Task<int> CheckDamaged(int playerAttackPower, PlayerAttackRequest msg)
         {
             var dmgMsg = new EnemyDamagedMessage();
-            bool hitAnyEnemy = false;
-            var hitEnemies = new HashSet<string>(); // 중복 방지용
 
             lock (_enemies) // lock으로 동시성 문제 방지
             {
@@ -127,15 +124,9 @@ namespace DefenseGameWebSocketServer.Manager
         
                 foreach (var enemy in enemiesCopy)
                 {
-                    // 이미 처리된 적인지 확인
-                    if (hitEnemies.Contains(enemy.id))
-                        continue;
-                
                     if (IsEnemyInAttackBox(enemy, msg))
                     {
                         enemy.TakeDamage(playerAttackPower);
-                        hitAnyEnemy = true;
-                        hitEnemies.Add(enemy.id); // 처리된 적으로 마킹
         
                         Console.WriteLine($"[AttackHandler] 적 {enemy.id} {playerAttackPower} 데미지 남은 HP: {enemy.hp}");
 
@@ -154,10 +145,9 @@ namespace DefenseGameWebSocketServer.Manager
             if (dmgMsg.damagedEnemies.Count > 0)
             {
                 await _broadcaster.BroadcastAsync(dmgMsg);
-                Console.WriteLine($"[EnemyManager] {dmgMsg.damagedEnemies.Count}마리의 적에게 데미지 전송");
             }
 
-            return hitAnyEnemy;
+            return dmgMsg.damagedEnemies.Count;
         }
         //히트박스 검사
         private bool IsEnemyInAttackBox(Enemy enemy, PlayerAttackRequest msg)

@@ -45,9 +45,9 @@ namespace DefenseGameWebSocketServer.Manager
             
         }
 
-        public void SetPlayerData(string playerId)
+        public void SetPlayerData(string playerId, string job_type)
         {
-            _playerManager.AddOrUpdatePlayer(new Player(playerId,0,0));
+            _playerManager.AddOrUpdatePlayer(new Player(playerId,0,0,job_type));
         }
 
         private string AssignJobToPlayer()
@@ -88,17 +88,22 @@ namespace DefenseGameWebSocketServer.Manager
             if (_waveScheduler == null) _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount,_getPlayerCount,_getPlayerList, _sharedHpManager, _enemyManager);
 
             string assignedJob = AssignJobToPlayer();
-    
-            if (_playerManager.TryGetPlayer(playerId, out Player player))
+            SetPlayerData(playerId,assignedJob);
+            if(_playerManager.TryGetPlayer(playerId, out Player player))
             {
-                player.SetJobType(assignedJob);
+                await _broadcaster.BroadcastAsync(new
+                {
+                    type = "player_join",
+                    playerInfo = new PlayerInfo
+                    {
+                        id = playerId,
+                        job_type = assignedJob,
+                        currentHp = player.currentHp,
+                        currentUlt = player.currentUlt,
+                        playerBaseData = player.playerBaseData,
+                    }
+                });
             }
-    
-            await _broadcaster.BroadcastAsync(new { 
-                type = "player_join", 
-                playerId = playerId,
-                jobType = assignedJob 
-            });
 
             if (_broadcaster.ConnectedCount >= 1)
             {
@@ -108,21 +113,12 @@ namespace DefenseGameWebSocketServer.Manager
             await _broadcaster.SendToAsync(playerId, new
             {
                 type = "player_list",
-                players = _playerManager.GetAllPlayers().Select(p => new { 
+                players = _playerManager.GetAllPlayers().Select(p => new PlayerInfo
+                { 
                     id = p.id,              
-                    job_type = p.jobType 
+                    job_type = p.jobType,
                 })
             });
-        }
-
-        private int GetJobId(string jobType)
-        {
-            return jobType switch
-            {
-                "tank" => 1,
-                "programmer" => 2,
-                _ => 1 // 기본값
-            };
         }
 
         public void TryStartWave()
@@ -257,12 +253,6 @@ namespace DefenseGameWebSocketServer.Manager
                         if (!_isGameLoopRunning) return;
                         var enemyAttackHitHandler = new EnemyAttackHitHandler();
                         await enemyAttackHitHandler.HandleAsync(rawMessage, _broadcaster, _sharedHpManager, _enemyManager);
-                    }
-                    break;
-                case MessageType.RequestPlayerData:
-                    {
-                        var playerDataRequestHandler = new PlayerDataRequestHandler();
-                        await playerDataRequestHandler.HandleAsync(playerId, rawMessage, _broadcaster, _playerManager);
                     }
                     break;
                 case MessageType.SettlementReady:

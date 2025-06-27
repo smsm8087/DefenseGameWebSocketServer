@@ -43,5 +43,22 @@ namespace DefenseGameWebSocketServer.Manager
                 player.addCardId(cardId);
             }
         }
+        public int getPlayerAttackPower(string playerId)
+        {
+            if (TryGetPlayer(playerId, out Player player))
+            {
+                return player.getDamage();
+            }
+            return 0;
+        }
+        public (float, float) addUltGauge(string playerId)
+        {
+            if (TryGetPlayer(playerId, out Player player))
+            {
+                player.addUltGauge();
+                return (player.currentUlt, 100f);
+            }
+            return (0f, 100f);
+        }
     }
 }

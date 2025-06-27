@@ -2,6 +2,24 @@
 using DefenseGameWebSocketServer.Models.DataModels;
 using System;
 
+public class PlayerInfo
+{
+    public string id { get; set; }
+    public string job_type { get; set; }
+    public int currentHp { get; set; }
+    public float currentUlt { get; set; }
+    public PlayerData playerBaseData { get; set; }
+}
+
+public class PlayerAddData
+{
+    public int addHp { get; set; }
+    public int addUlt { get; set; }
+    public int addAttackPower { get; set; }
+    public int addCriPct { get; set; }
+    public int addCriDmg { get; set; }
+    public int addMoveSpeed { get; set; }
+}
 public class Player
 {
     public string id;
@@ -9,18 +27,30 @@ public class Player
     public float x;
     public float y;
     
-    public int Hp { get; private set; }
-    public int AttackPower { get; private set; }
+    public int currentHp { get; private set; }
+    public float currentUlt { get; private set; }
+    public PlayerAddData addData { get; private set; }
+    public PlayerData playerBaseData { get; private set; }
     public List<int> CardIds { get; private set; } = new List<int>();
-    public Player(string id, float x, float y)
+    public Player(string id, float x, float y, string job_type)
     {
         this.id = id;
         this.x = x;
         this.y = y;
-        
-        // 기본값 설정 (직업이 할당되기 전)
-        this.Hp = 100;
-        this.AttackPower = 40;
+        this.currentHp = 100; // 기본 HP 설정
+        this.currentUlt = 0; // 기본 ULT 게이지 설정
+        this.jobType = job_type;
+        this.addData = new PlayerAddData
+        {
+            addHp = 0,
+            addUlt = 0,
+            addAttackPower = 0,
+            addCriPct = 0,
+            addCriDmg = 0,
+            addMoveSpeed = 0
+        };
+        PlayerData? playerData = GameDataManager.Instance.GetTable<PlayerData>("player_data").Values.FirstOrDefault(x => x.job_type == this.jobType);
+        this.playerBaseData = playerData;
     }
     public void addCardId(int cardId)
     {
@@ -35,52 +65,27 @@ public class Player
         }
     }
 
-    // 직업이 할당될 때 테이블 데이터로 스탯 업데이트
-    public void SetJobType(string jobType)
-    {
-        this.jobType = jobType;
-        LoadStatsFromTable();
-    }
-
-    private void LoadStatsFromTable()
-    {
-        if (string.IsNullOrEmpty(jobType)) return;
-
-        var playerDataTable = GameDataManager.Instance.GetTable<PlayerData>("player_data");
-        if (playerDataTable != null)
-        {
-            // 직업 타입으로 데이터 찾기
-            foreach (var kvp in playerDataTable)
-            {
-                var data = kvp.Value;
-                if (data.job_type == jobType)
-                {
-                    this.Hp = data.hp;
-                    this.AttackPower = data.attack_power;
-                    Console.WriteLine($"[Player] {id} 직업 {jobType} 스탯 로드: HP={Hp}, 공격력={AttackPower}");
-                    return;
-                }
-            }
-        }
-        
-        Console.WriteLine($"[Player] {jobType} 직업 데이터를 찾을 수 없습니다. 기본값 사용");
-    }
-
     public void PositionUpdate(float x, float y)
     {
         this.x = x;
         this.y = y;
     }
-    
-    public void TakeDamage(int dmg)
+    public int getDamage()
     {
-        Hp -= dmg;
-        if (Hp < 0) Hp = 0;
+        int baseDamage = playerBaseData.attack_power + addData.addAttackPower;
+        int critChance = addData.addCriPct;
+        int critDamage = addData.addCriDmg;
+        // 크리티컬 확률 계산
+        if (Random.Shared.Next(0, 100) < critChance)
+        {
+            return (int)(baseDamage * (1 + critDamage / 100.0f)); // 크리티컬 데미지 적용
+        }
+        return baseDamage; // 일반 데미지
     }
-
-    // 최대 HP 복구 (게임 재시작 등에서 사용)
-    public void RestoreFullHp()
+    public void addUltGauge()
     {
-        LoadStatsFromTable(); // 테이블에서 다시 로드하여 최대 HP 복구
+        float addUlt = addData.addUlt + playerBaseData.ult_gauge;
+        this.currentUlt += addUlt;
+        if (this.currentUlt > 100) this.currentUlt = 100; // 최대 ULT 게이지는 100
     }
 }
