@@ -1,6 +1,7 @@
 ﻿using DefenseGameWebSocketServer.Manager;
 using DefenseGameWebSocketServer.MessageModel;
 using DefenseGameWebSocketServer.Models.DataModels;
+using DefenseGameWebSocketServer.Model;
 using System.Dynamic;
 public enum GamePhase
 {
@@ -92,6 +93,10 @@ public class WaveScheduler
                     {
                         _wave++;
                         Console.WriteLine($"[WaveScheduler] 웨이브 {_wave} 시작");
+                        
+                        // 웨이브 시작 메시지 전송
+                        var waveStartMsg = new WaveStartMessage(_wave);
+                        await _broadcaster.BroadcastAsync(waveStartMsg);
 
                         //적 소환
                         await _enemyManager.SpawnEnemy(_wave);
