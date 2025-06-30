@@ -233,13 +233,8 @@ public class WaveScheduler
             {
                 Console.WriteLine($"[WaveScheduler] {playerId} 플레이어 정보가 없습니다. 카드 지급 실패.");
             }
-
-            var response = new UpdatePlayerDataMessage(new PlayerInfo
-            {
-                id = playerId,
-                currentMoveSpeed = player.currentMoveSpeed,
-            });
-            await _broadcaster.SendToAsync(playerId, response);
+            var finishMsg = new SettlementTimerUpdateMessage(0, _readyCount);
+            await _broadcaster.BroadcastAsync(finishMsg);
             PlayerReady(playerId);
         }
     }

@@ -23,7 +23,9 @@ public class Enemy
     public float attackDamage = 1f;
     public float baseWidth = 1f;   
     public float baseHeight = 1f;  
-    public float scale = 1f; 
+    public float scale = 1f;
+    public float offSetX = 1f;
+    public float offSetY = 1f;
 
     //fsm
     public EnemyMoveState moveState = new EnemyMoveState();
@@ -54,6 +56,8 @@ public class Enemy
                 baseWidth = 0.5f;
                 baseHeight = 0.5f;
                 scale = 3f;
+                offSetX = 0.008874312f;
+                offSetY = 0.2873794f;
                 break;
             default:
                 baseWidth = 1f;
