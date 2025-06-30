@@ -143,13 +143,13 @@ public class WaveScheduler
             return;
         }
 
-        float settlementSeconds = 60f;
+        float settlementSeconds = 5f;
 
         _selectCardPlayerDict.Clear();
         foreach (var playerId in playerList)
         {
             List<CardData> cards = CardTableManager.Instance.DrawCards(3);
-            var msg = new SettlementStartMessage(playerId, 60, cards);
+            var msg = new SettlementStartMessage(playerId, (int)settlementSeconds, cards);
             _selectCardPlayerDict[playerId] = cards; // 플레이어별 카드 저장
 
             await _broadcaster.SendToAsync(playerId,msg);
@@ -191,8 +191,6 @@ public class WaveScheduler
             await Task.Delay(100, _cts.Token);
             remaining -= 0.1f;
         }
-        var finishMsg = new SettlementTimerUpdateMessage(remaining, _readyCount);
-        await _broadcaster.BroadcastAsync(finishMsg);
     }
 
     private async Task StartBossPhaseAsync()
@@ -233,10 +231,10 @@ public class WaveScheduler
             {
                 Console.WriteLine($"[WaveScheduler] {playerId} 플레이어 정보가 없습니다. 카드 지급 실패.");
             }
-            var finishMsg = new SettlementTimerUpdateMessage(0, _readyCount);
-            await _broadcaster.BroadcastAsync(finishMsg);
             PlayerReady(playerId);
         }
+        var finishMsg = new SettlementTimerUpdateMessage(0, _readyCount);
+        await _broadcaster.BroadcastAsync(finishMsg);
     }
     public void Dispose()
     {

@@ -7,6 +7,7 @@ namespace DefenseGameWebSocketServer.Manager
     public class PlayerManager
     {
         private static PlayerManager _instance;
+        public ConcurrentDictionary<string, Player> _playersDict;
         public static PlayerManager Instance
         {
             get
@@ -18,7 +19,12 @@ namespace DefenseGameWebSocketServer.Manager
                 return _instance;
             }
         }
-        public ConcurrentDictionary<string, Player> _playersDict = new ConcurrentDictionary<string, Player>();
+        public PlayerManager()
+        {
+            _playersDict = new ConcurrentDictionary<string, Player>();
+            _instance = this;
+        }
+        
         public void AddOrUpdatePlayer(Player player)
         {
             _playersDict[player.id] = player;
