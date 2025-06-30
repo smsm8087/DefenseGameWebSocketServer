@@ -143,7 +143,7 @@ public class WaveScheduler
             return;
         }
 
-        float settlementSeconds = 5f;
+        float settlementSeconds = 60f;
 
         _selectCardPlayerDict.Clear();
         foreach (var playerId in playerList)
