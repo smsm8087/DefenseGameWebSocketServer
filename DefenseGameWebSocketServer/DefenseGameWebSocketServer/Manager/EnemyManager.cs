@@ -149,7 +149,7 @@ namespace DefenseGameWebSocketServer.Manager
 
             if (dmgMsg.damagedEnemies.Count > 0)
             {
-                await _broadcaster.BroadcastAsync(dmgMsg);
+                await _broadcaster.SendToAsync(msg.playerId, dmgMsg);
             }
 
             return dmgMsg.damagedEnemies.Count;
