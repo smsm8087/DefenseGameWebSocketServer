@@ -157,13 +157,28 @@ namespace DefenseGameWebSocketServer.Manager
         //히트박스 검사
         private bool IsEnemyInAttackBox(Enemy enemy, PlayerAttackRequest msg)
         {
-            float halfWidth = msg.attackBoxWidth / 2f;
-            float halfHeight = msg.attackBoxHeight / 2f;
-
-            return enemy.x >= (msg.attackBoxCenterX - halfWidth) &&
-                    enemy.x <= (msg.attackBoxCenterX + halfWidth) &&
-                    enemy.y >= (msg.attackBoxCenterY - halfHeight) &&
-                    enemy.y <= (msg.attackBoxCenterY + halfHeight);
+            // 몬스터 실제 크기 계산
+            float enemyWidth = enemy.baseWidth * enemy.scale;
+            float enemyHeight = enemy.baseHeight * enemy.scale;
+    
+            // 공격박스 범위
+            float offsetY = 0.8f;
+            float attackLeft = msg.attackBoxCenterX - msg.attackBoxWidth / 2f;
+            float attackRight = msg.attackBoxCenterX + msg.attackBoxWidth / 2f;
+            float attackBottom = msg.attackBoxCenterY - msg.attackBoxHeight / 2f;
+            float attackTop = msg.attackBoxCenterY + msg.attackBoxHeight / 2f;
+    
+            // 몬스터 박스 범위
+            float enemyLeft = enemy.x - enemyWidth / 2f;
+            float enemyRight = enemy.x + enemyWidth / 2f;
+            float enemyBottom = enemy.y - enemyHeight / 2f;
+            float enemyTop = enemy.y + enemyHeight / 2f;
+    
+            // AABB 충돌 체크
+            return !(attackLeft > enemyRight || 
+                     attackRight < enemyLeft || 
+                     attackBottom > enemyTop || 
+                     attackTop < enemyBottom);
         }
 
         public async Task SpawnEnemy(int _wave)
