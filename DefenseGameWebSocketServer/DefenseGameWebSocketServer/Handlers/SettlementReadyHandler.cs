@@ -28,6 +28,6 @@ public class SettlementReadyHandler
             currentMoveSpeed = player.currentMoveSpeed,
         });
         await broadcaster.SendToAsync(playerId, response);
-        waveScheduler.PlayerReady();
+        waveScheduler.PlayerReady(playerId);
     }
 }
