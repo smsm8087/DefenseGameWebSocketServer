@@ -21,6 +21,9 @@ public class Enemy
     private IEnemyFSMState _currentState;
     public float targetRadius = 2.125f;
     public float attackDamage = 1f;
+    public float baseWidth = 1f;   
+    public float baseHeight = 1f;  
+    public float scale = 1f; 
 
     //fsm
     public EnemyMoveState moveState = new EnemyMoveState();
@@ -39,7 +42,25 @@ public class Enemy
         this.targetX = targetX;
         this.targetY = targetY;
         this.hp = this.maxHp = 100;
+        SetEnemySize(type);
         ChangeState(EnemyState.Move);
+    }
+    
+    private void SetEnemySize(string type)
+    {
+        switch (type)
+        {
+            case "Dust":
+                baseWidth = 1.5f;
+                baseHeight = 1.5f;
+                scale = 1f;
+                break;
+            default:
+                baseWidth = 1f;
+                baseHeight = 1f;
+                scale = 1f;
+                break;
+        }
     }
     public void UpdateFSM(float deltaTime)
     {
