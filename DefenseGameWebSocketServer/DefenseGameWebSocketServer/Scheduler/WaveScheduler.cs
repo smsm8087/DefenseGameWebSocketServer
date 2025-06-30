@@ -28,7 +28,7 @@ public class WaveScheduler
     //페이즈 나누기
     private int _readyCount = 0;
     private GamePhase _currentPhase;
-
+    private Dictionary<string, List<CardData>> _selectCardPlayerDict = new Dictionary<string, List<CardData>>();
 
     public WaveScheduler(IWebSocketBroadcaster broadcaster, CancellationTokenSource cts, Func<bool> hasPlayerCount, Func<int> getPlayerCount, Func<List<string>> getPlayerList, SharedHpManager sharedHpManager, EnemyManager enemyManager)
     {
@@ -145,10 +145,12 @@ public class WaveScheduler
 
         float settlementSeconds = 60f;
 
+        _selectCardPlayerDict.Clear();
         foreach (var playerId in playerList)
         {
             List<CardData> cards = CardTableManager.Instance.DrawCards(3);
-            var msg = new SettlementStartMessage(playerId, 60, cards);
+            var msg = new SettlementStartMessage(playerId, (int)settlementSeconds, cards);
+            _selectCardPlayerDict[playerId] = cards; // 플레이어별 카드 저장
 
             await _broadcaster.SendToAsync(playerId,msg);
         }
@@ -163,7 +165,9 @@ public class WaveScheduler
             await Task.Delay(100);
         }
 
-        if(_wave >= maxWave)
+        await givePlayerRandomCard(playerList);
+
+        if (_wave >= maxWave)
         {
             Console.WriteLine("[WaveScheduler] Settlement Phase 완료 → Boss Phase 진입");
             _currentPhase = GamePhase.Boss;
@@ -187,8 +191,6 @@ public class WaveScheduler
             await Task.Delay(100, _cts.Token);
             remaining -= 0.1f;
         }
-        var finishMsg = new SettlementTimerUpdateMessage(remaining, _readyCount);
-        await _broadcaster.BroadcastAsync(finishMsg);
     }
 
     private async Task StartBossPhaseAsync()
@@ -199,10 +201,40 @@ public class WaveScheduler
         await Task.Delay(10000);
     }
 
-    public void PlayerReady()
+    public void PlayerReady(string playerId)
     {
+        if(!_hasPlayerCount() || !_getPlayerList().Contains(playerId) || !_selectCardPlayerDict.ContainsKey(playerId))
+        {
+            Console.WriteLine($"[WaveScheduler] PlayerReady: {playerId}는 유효한 플레이어가 아닙니다.");
+            return;
+        }
+        _selectCardPlayerDict.Remove(playerId);
         _readyCount++;
         Console.WriteLine($"[WaveScheduler] PlayerReady {_readyCount}/{_getPlayerCount()}");
+    }
+    private async Task givePlayerRandomCard(List<string> playerList)
+    {
+        //선택 안한 플레이어의 카드 랜덤 지급
+        foreach (var playerId in playerList)
+        {
+            if (!_selectCardPlayerDict.ContainsKey(playerId)) continue; // 이미 선택한 플레이어는 건너뜀
+            var cards = _selectCardPlayerDict[playerId];
+            int randomIndex = new Random().Next(cards.Count);
+
+            var selectedCard = cards[randomIndex];
+            if (PlayerManager.Instance.TryGetPlayer(playerId, out Player player))
+            {
+                player.addCardId(selectedCard.id); // 플레이어에게 카드 추가
+                Console.WriteLine($"[WaveScheduler] {playerId}에게 랜덤 카드 지급: {selectedCard.id}");
+            }
+            else
+            {
+                Console.WriteLine($"[WaveScheduler] {playerId} 플레이어 정보가 없습니다. 카드 지급 실패.");
+            }
+            PlayerReady(playerId);
+        }
+        var finishMsg = new SettlementTimerUpdateMessage(0, _readyCount);
+        await _broadcaster.BroadcastAsync(finishMsg);
     }
     public void Dispose()
     {

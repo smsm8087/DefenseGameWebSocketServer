@@ -6,11 +6,11 @@ namespace DefenseGameWebSocketServer.MessageModel
     public class SettlementStartMessage : BaseMessage
     {
         public string playerId { get; set; }
-        public int duration { get; set; }
+        public float duration { get; set; }
         public List<CardData> cards { get; set; }
         public SettlementStartMessage(
             string playerId,
-            int duration,
+            float duration,
             List<CardData> cards
         )
         {

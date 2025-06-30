@@ -149,7 +149,7 @@ namespace DefenseGameWebSocketServer.Manager
 
             if (dmgMsg.damagedEnemies.Count > 0)
             {
-                await _broadcaster.BroadcastAsync(dmgMsg);
+                await _broadcaster.SendToAsync(msg.playerId, dmgMsg);
             }
 
             return dmgMsg.damagedEnemies.Count;
@@ -160,19 +160,21 @@ namespace DefenseGameWebSocketServer.Manager
             // 몬스터 실제 크기 계산
             float enemyWidth = enemy.baseWidth * enemy.scale;
             float enemyHeight = enemy.baseHeight * enemy.scale;
-    
+
             // 공격박스 범위
-            float offsetY = 0.8f;
+            
+            float offsetX = enemy.offSetX * enemy.scale;
+            float offsetY = enemy.offSetY * enemy.scale;
             float attackLeft = msg.attackBoxCenterX - msg.attackBoxWidth / 2f;
             float attackRight = msg.attackBoxCenterX + msg.attackBoxWidth / 2f;
             float attackBottom = msg.attackBoxCenterY - msg.attackBoxHeight / 2f;
             float attackTop = msg.attackBoxCenterY + msg.attackBoxHeight / 2f;
     
             // 몬스터 박스 범위
-            float enemyLeft = enemy.x - enemyWidth / 2f;
-            float enemyRight = enemy.x + enemyWidth / 2f;
-            float enemyBottom = enemy.y - enemyHeight / 2f;
-            float enemyTop = enemy.y + enemyHeight / 2f;
+            float enemyLeft = (enemy.x + offsetX) - enemyWidth / 2f;
+            float enemyRight = (enemy.x + offsetX) + enemyWidth / 2f;
+            float enemyBottom = (enemy.y + offsetY) - enemyHeight / 2f;
+            float enemyTop = (enemy.y + offsetY) + enemyHeight / 2f;
     
             // AABB 충돌 체크
             return !(attackLeft > enemyRight || 
