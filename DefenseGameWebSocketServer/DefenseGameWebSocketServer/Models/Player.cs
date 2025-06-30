@@ -113,7 +113,7 @@ public class Player
         //최소공격력 최대공격력 적용
         int baseDamage = playerBaseData.attack_power + addData.addAttackPower;
         int minDamage = (int)(baseDamage * 0.5f); // 최소 공격력 50% 적용
-        int maxDamage = (int)(baseDamage * 1.5f); // 최대 공격력 150% 적용
+        int maxDamage = baseDamage; // 최대 공격력 150% 적용
 
         baseDamage = Random.Shared.Next(minDamage, maxDamage);
 

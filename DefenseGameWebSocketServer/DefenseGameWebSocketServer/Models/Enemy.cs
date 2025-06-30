@@ -36,7 +36,7 @@ public class Enemy
 
     public bool IsAlive => hp > 0;
 
-    public Enemy(string id, string type, float startX, float startY, float targetX, float targetY)
+    public Enemy(string id, string type, float startX, float startY, float targetX, float targetY, float speed)
     {
         this.id = id;
         this.x = startX;
@@ -44,6 +44,7 @@ public class Enemy
         this.targetX = targetX;
         this.targetY = targetY;
         this.hp = this.maxHp = 100;
+        this.speed = speed;
         SetEnemySize(type);
         ChangeState(EnemyState.Move);
     }

@@ -202,7 +202,8 @@ namespace DefenseGameWebSocketServer.Manager
                         spawnPosition.Item1,
                         spawnPosition.Item2,
                         targetPosition.Item1,
-                        targetPosition.Item2
+                        targetPosition.Item2,
+                        2f + ((_wave - 1) * 0.5f)
                     );
 
                     enemy.OnBroadcastRequired = evt => { _broadcastEvents.Enqueue(evt); };
