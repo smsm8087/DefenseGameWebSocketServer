@@ -51,9 +51,9 @@ public class Enemy
         switch (type)
         {
             case "Dust":
-                baseWidth = 1.5f;
-                baseHeight = 1.5f;
-                scale = 1f;
+                baseWidth = 0.5f;
+                baseHeight = 0.5f;
+                scale = 3f;
                 break;
             default:
                 baseWidth = 1f;
