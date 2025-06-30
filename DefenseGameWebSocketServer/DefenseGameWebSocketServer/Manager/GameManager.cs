@@ -1,11 +1,11 @@
 ﻿using DefenseGameWebSocketServer.Handlers;
 using DefenseGameWebSocketServer.Model;
-using DefenseGameWebSocketServer.Models.DataModels;  // 추가
-using System;                                        // 추가
-using System.Collections.Generic;                    // 추가
-using System.Linq;                                   // 추가
-using System.Threading;                              // 추가
-using System.Threading.Tasks;                        // 추가
+using DefenseGameWebSocketServer.Models.DataModels;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace DefenseGameWebSocketServer.Manager
 {
@@ -16,6 +16,7 @@ namespace DefenseGameWebSocketServer.Manager
         private PlayerManager _playerManager;
         private EnemyManager _enemyManager;
         private WebSocketBroadcaster _broadcaster;
+        private PartyMemberManager _partyMemberManager;
         private CancellationTokenSource _cts;
         private Func<bool> _hasPlayerCount;
         private Func<int> _getPlayerCount;
@@ -35,6 +36,7 @@ namespace DefenseGameWebSocketServer.Manager
         {
             _sharedHpManager = new SharedHpManager();
             _playerManager = new PlayerManager();
+            _partyMemberManager = new PartyMemberManager(_playerManager, broadcaster);
             _cts = new CancellationTokenSource();
             _hasPlayerCount = () => _playerManager._playersDict.Count > 0;
             _getPlayerCount = () => _playerManager._playersDict.Count;
@@ -42,7 +44,6 @@ namespace DefenseGameWebSocketServer.Manager
             _broadcaster = broadcaster;
             _enemyManager = new EnemyManager((IWebSocketBroadcaster)broadcaster,_sharedHpManager);
             _waveScheduler = new WaveScheduler((IWebSocketBroadcaster)broadcaster, _cts, _hasPlayerCount,_getPlayerCount, _getPlayerList, _sharedHpManager, _enemyManager);
-            
         }
 
         public void SetPlayerData(string playerId, string job_type)
@@ -106,6 +107,9 @@ namespace DefenseGameWebSocketServer.Manager
                 });
             }
 
+            // 파티 정보 브로드캐스트 (새 플레이어 참여)
+            await _partyMemberManager.OnPlayerJoined(playerId);
+
             if (_broadcaster.ConnectedCount >= 1)
             {
                 TryStartWave();
@@ -120,6 +124,9 @@ namespace DefenseGameWebSocketServer.Manager
                     job_type = p.jobType,
                 })
             });
+
+            // 새 플레이어에게 파티 정보 전송
+            await _partyMemberManager.SendPartyInfoToPlayer(playerId);
         }
 
         public void TryStartWave()
@@ -216,8 +223,27 @@ namespace DefenseGameWebSocketServer.Manager
                 }
             }
 
+            // 파티에서 플레이어 제거
+            await _partyMemberManager.OnPlayerLeft(playerId);
+
             _playerManager.RemovePlayer(playerId);
             await _broadcaster.BroadcastAsync(new { type = "player_leave", playerId = playerId });
+        }
+
+        // 플레이어 체력 변화 시 호출할 수 있는 메서드들 추가
+        public async Task OnPlayerDamaged(string playerId)
+        {
+            await _partyMemberManager.OnPlayerDamaged(playerId);
+        }
+
+        public async Task OnPlayerHealed(string playerId)
+        {
+            await _partyMemberManager.OnPlayerHealed(playerId);
+        }
+
+        public async Task OnPlayerUltGaugeChanged(string playerId)
+        {
+            await _partyMemberManager.OnPlayerUltGaugeChanged(playerId);
         }
 
         public async Task ProcessHandler(string playerId, MessageType msgType, string rawMessage)
@@ -247,6 +273,9 @@ namespace DefenseGameWebSocketServer.Manager
                         if (!_isGameLoopRunning) return;
                         var AttackHandler = new AttackHandler(_enemyManager, _playerManager);
                         await AttackHandler.HandleAsync(playerId, rawMessage, _broadcaster);
+                        
+                        // 공격 후 궁극기 게이지 변화 가능성 있으므로 파티 정보 업데이트
+                        await OnPlayerUltGaugeChanged(playerId);
                     }
                     break;
                 case MessageType.EnemyAttackHit:
@@ -254,6 +283,12 @@ namespace DefenseGameWebSocketServer.Manager
                         if (!_isGameLoopRunning) return;
                         var enemyAttackHitHandler = new EnemyAttackHitHandler();
                         await enemyAttackHitHandler.HandleAsync(rawMessage, _broadcaster, _sharedHpManager, _enemyManager);
+                        
+                        // 적의 공격으로 플레이어가 데미지를 받았을 수 있으므로
+                        foreach (var pid in _playerManager.GetAllPlayerIds())
+                        {
+                            await OnPlayerDamaged(pid);
+                        }
                     }
                     break;
                 case MessageType.SettlementReady:
