@@ -226,12 +226,26 @@ public class WaveScheduler
             {
                 player.addCardId(selectedCard.id); // 플레이어에게 카드 추가
                 Console.WriteLine($"[WaveScheduler] {playerId}에게 랜덤 카드 지급: {selectedCard.id}");
+                var response = new UpdatePlayerDataMessage(new PlayerInfo
+                {
+                    id = playerId,
+                    job_type = player.jobType,
+                    currentMaxHp = player.playerBaseData.hp + player.addData.addHp,
+                    currentUltGauge = player.playerBaseData.ult_gauge + player.addData.addUlt,
+                    currentMoveSpeed = player.currentMoveSpeed,
+                    currentCriPct = player.playerBaseData.critical_pct + player.addData.addCriPct,
+                    currentCriDmg = player.playerBaseData.critical_dmg + player.addData.addCriDmg,
+                    currentAttack = player.playerBaseData.attack_power + player.addData.addAttackPower,
+                    cardIds = player.CardIds,
+                });
+                await _broadcaster.SendToAsync(playerId, response);
+
+                PlayerReady(playerId);
             }
             else
             {
                 Console.WriteLine($"[WaveScheduler] {playerId} 플레이어 정보가 없습니다. 카드 지급 실패.");
             }
-            PlayerReady(playerId);
         }
         var finishMsg = new SettlementTimerUpdateMessage(0, _readyCount);
         await _broadcaster.BroadcastAsync(finishMsg);

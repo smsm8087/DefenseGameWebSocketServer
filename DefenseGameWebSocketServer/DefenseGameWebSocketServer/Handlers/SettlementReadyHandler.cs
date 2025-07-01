@@ -25,7 +25,14 @@ public class SettlementReadyHandler
         var response = new UpdatePlayerDataMessage(new PlayerInfo
         {
             id = playerId,
+            job_type = player.jobType,
+            currentMaxHp = player.playerBaseData.hp + player.addData.addHp,
+            currentUltGauge = player.playerBaseData.ult_gauge + player.addData.addUlt,
             currentMoveSpeed = player.currentMoveSpeed,
+            currentCriPct = player.playerBaseData.critical_pct + player.addData.addCriPct,
+            currentCriDmg = player.playerBaseData.critical_dmg + player.addData.addCriDmg,
+            currentAttack = player.playerBaseData.attack_power + player.addData.addAttackPower,
+            cardIds = player.CardIds,
         });
         await broadcaster.SendToAsync(playerId, response);
         waveScheduler.PlayerReady(playerId);

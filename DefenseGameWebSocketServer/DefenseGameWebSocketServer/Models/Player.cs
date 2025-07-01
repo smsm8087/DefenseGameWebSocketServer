@@ -8,7 +8,14 @@ public class PlayerInfo
     public string job_type { get; set; }
     public int currentHp { get; set; }
     public float currentUlt { get; set; }
+    public int currentMaxHp { get; set; }
+    public float currentUltGauge { get; set; }
     public float currentMoveSpeed { get; set; }
+    public int currentCriPct { get; set; }
+    public int currentCriDmg { get; set; }
+    public float currentAttack { get; set; }
+    public List<int> cardIds { get; set; } = new List<int>();
+
     public PlayerData playerBaseData { get; set; }
 }
 
