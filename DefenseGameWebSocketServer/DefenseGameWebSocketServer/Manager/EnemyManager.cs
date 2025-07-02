@@ -134,7 +134,8 @@ namespace DefenseGameWebSocketServer.Manager
                         bool isCritical = playerAttackData.Item2;
                         int enemyDefense = (int)enemy.currentDefense;
                         playerDamage -= enemyDefense; // 적의 방어력 적용
-                        enemy.TakeDamage(playerDamage);
+                        int currentDamage = Math.Max(0, playerDamage - enemyDefense);
+                        enemy.TakeDamage(currentDamage);
         
                         Console.WriteLine($"[AttackHandler] 적 {enemy.id} {playerDamage} 데미지 남은 HP: {enemy.currentHp}");
 
@@ -144,7 +145,7 @@ namespace DefenseGameWebSocketServer.Manager
                             enemyId = enemy.id,
                             currentHp = enemy.currentHp,
                             maxHp = enemy.maxHp,
-                            damage = playerDamage,
+                            damage = currentDamage,
                             isCritical = isCritical
                         });
                     }
