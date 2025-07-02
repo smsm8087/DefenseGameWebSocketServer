@@ -80,7 +80,7 @@ public class Enemy
     }
     public void TakeDamage(int dmg)
     {
-        currentHp -= dmg;
+        currentHp -= dmg ;
         if (currentHp < 0) currentHp = 0;
     }
 }

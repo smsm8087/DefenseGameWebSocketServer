@@ -132,7 +132,8 @@ namespace DefenseGameWebSocketServer.Manager
                         (int, bool) playerAttackData = _playerManager.getPlayerAttackPower(msg.playerId);
                         int playerDamage = playerAttackData.Item1;
                         bool isCritical = playerAttackData.Item2;
-
+                        int enemyDefense = (int)enemy.currentDefense;
+                        playerDamage -= enemyDefense; // 적의 방어력 적용
                         enemy.TakeDamage(playerDamage);
         
                         Console.WriteLine($"[AttackHandler] 적 {enemy.id} {playerDamage} 데미지 남은 HP: {enemy.currentHp}");
@@ -226,7 +227,8 @@ namespace DefenseGameWebSocketServer.Manager
                     enemyId,
                     _wave,
                     spawnPosition.Item1,
-                    spawnPosition.Item2
+                    spawnPosition.Item2,
+                    enemyData.id
                 );
 
                 await _broadcaster.BroadcastAsync(msg);

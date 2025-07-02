@@ -1,2 +1,2 @@
 id,type,prefab,hp,speed,attack,defense,base_width,base_height,base_scale,base_offsetx,base_offsety
-1000,Dust,Enemy,100,2,1,10,0.5,0.5,3,0.008874312f,0.2873794f
+1000,Dust,Prefabs/Enemy,100,2,1,10,0.5,0.5,3,0.008874312,0.2873794
