@@ -19,7 +19,7 @@ namespace DefenseGameWebSocketServer.Handlers
                 return;
             }
             // Shared HP 감소
-            _sharedHpManager.TakeDamage(targetEnemy.attackDamage);
+            _sharedHpManager.TakeDamage(targetEnemy.currentAttack);
 
             // Shared HP 상태 브로드캐스트
             var hpMessage = new SharedHpMessage(_sharedHpManager.getHpStatus().Item1, _sharedHpManager.getHpStatus().Item2);

@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Collections;
+using System.Reflection;
 
 namespace DefenseGameWebSocketServer.Util
 {
@@ -15,26 +16,20 @@ namespace DefenseGameWebSocketServer.Util
             }
 
             var lines = File.ReadAllLines(csvPath);
-
             if (lines.Length < 2)
             {
                 Console.WriteLine($"[Error] CSV 파일 빈 내용: {csvPath}");
                 return dict;
             }
 
-            // 첫 줄: 헤더
             var headers = lines[0].Split(',');
-
-            // 필드 매칭
             var type = typeof(T);
             var fields = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
             for (int i = 1; i < lines.Length; i++)
             {
                 var cols = lines[i].Split(',');
-
-                if (cols.Length < headers.Length)
-                    continue;
+                if (cols.Length < headers.Length) continue;
 
                 T obj = new T();
 
@@ -42,14 +37,37 @@ namespace DefenseGameWebSocketServer.Util
                 {
                     var header = headers[j].Trim();
                     var field = Array.Find(fields, f => f.Name.Equals(header, StringComparison.OrdinalIgnoreCase));
-
-                    if (field == null)
-                        continue;
+                    if (field == null) continue;
 
                     try
                     {
-                        object value = Convert.ChangeType(cols[j], field.PropertyType);
-                        field.SetValue(obj, value);
+                        var rawValue = cols[j].Trim();
+
+                        // List<T> 처리
+                        if (field.PropertyType.IsGenericType &&
+                            field.PropertyType.GetGenericTypeDefinition() == typeof(List<>))
+                        {
+                            var elementType = field.PropertyType.GetGenericArguments()[0];
+
+                            // [1000,1001,1002] or 1000;1001;1002
+                            rawValue = rawValue.Trim('[', ']');
+                            var stringValues = rawValue.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+
+                            var list = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(elementType));
+                            foreach (var val in stringValues)
+                            {
+                                var converted = Convert.ChangeType(val.Trim(), elementType);
+                                list.Add(converted);
+                            }
+
+                            field.SetValue(obj, list);
+                        }
+                        else
+                        {
+                            // 단일 값
+                            object value = Convert.ChangeType(rawValue, field.PropertyType);
+                            field.SetValue(obj, value);
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -57,7 +75,8 @@ namespace DefenseGameWebSocketServer.Util
                     }
                 }
 
-                var keyField = Array.Find(fields, f => f.Name.Equals("id"));
+                // 기본 키 "id" 추출
+                var keyField = Array.Find(fields, f => f.Name.Equals("id", StringComparison.OrdinalIgnoreCase));
                 if (keyField == null)
                 {
                     Console.WriteLine($"[Error] 기본키(Id)가 없음 - {typeof(T).Name}");
@@ -69,7 +88,6 @@ namespace DefenseGameWebSocketServer.Util
             }
 
             Console.WriteLine($"[CsvLoader] {typeof(T).Name} → {dict.Count}개 로드 완료!");
-
             return dict;
         }
     }

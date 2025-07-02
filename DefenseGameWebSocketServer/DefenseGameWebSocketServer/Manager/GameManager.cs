@@ -42,7 +42,7 @@ namespace DefenseGameWebSocketServer.Manager
             _getPlayerCount = () => _playerManager._playersDict.Count;
             _getPlayerList = () => _playerManager.GetAllPlayerIds().ToList();
             _broadcaster = broadcaster;
-            _enemyManager = new EnemyManager((IWebSocketBroadcaster)broadcaster,_sharedHpManager);
+            _enemyManager = new EnemyManager((IWebSocketBroadcaster)broadcaster);
             _waveScheduler = new WaveScheduler((IWebSocketBroadcaster)broadcaster, _cts, _hasPlayerCount,_getPlayerCount, _getPlayerList, _sharedHpManager, _enemyManager);
         }
 
@@ -139,7 +139,9 @@ namespace DefenseGameWebSocketServer.Manager
             if (_isGameLoopRunning) return;
             _isGameLoopRunning = true;
 
-            _waveScheduler.TryStart();
+            //웨이브 기본 설정
+
+            _waveScheduler.TryStart(1);
             StartGameLoop();
         }
 

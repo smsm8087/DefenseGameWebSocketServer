@@ -1,6 +1,7 @@
 using DefenseGameWebSocketServer.MessageModel;
 using DefenseGameWebSocketServer.Model;
 using DefenseGameWebSocketServer.Models;
+using DefenseGameWebSocketServer.Models.DataModels;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
@@ -17,20 +18,16 @@ namespace DefenseGameWebSocketServer.Manager
     {
         public List<Enemy> _enemies = new List<Enemy>();
         private List<(float, float)> enemiesSpawnList = new List<(float, float)>();
-        private (float, float) targetPosition = (0f, -2.9f);
+        private (float, float) targetPosition = (0f, 0f);
+
         private readonly Random _rand = new();
         private readonly IWebSocketBroadcaster _broadcaster;
         private CancellationTokenSource _cts;
         private bool _isRunning = false;
         private readonly ConcurrentQueue<EnemyBroadcastEvent> _broadcastEvents = new();
-        private readonly SharedHpManager _sharedHpManager;
-        public EnemyManager(IWebSocketBroadcaster broadcaster, SharedHpManager sharedHpManager)
+        public EnemyManager(IWebSocketBroadcaster broadcaster)
         {
-            _sharedHpManager = sharedHpManager;
             _broadcaster = broadcaster;
-            // 초기 적 스폰 위치 설정
-            enemiesSpawnList.Add((-46f, -2f));
-            enemiesSpawnList.Add((45f, -2f));
         }
         public void setCancellationTokenSource(CancellationTokenSource cts)
         {
@@ -44,6 +41,12 @@ namespace DefenseGameWebSocketServer.Manager
                 _isRunning = false;
                 Console.WriteLine("[EnemyManager] FSM 멈춤");
             }
+        }
+        public void InitializeEnemySpawnPoints(List<(float,float)> spawnPointList, (float,float) targetPosition)
+        {
+            enemiesSpawnList = spawnPointList;
+            this.targetPosition = targetPosition;
+            Console.WriteLine("[EnemyManager] 적 스폰 포인트 초기화됨");
         }
         public async Task StartAsync()
         {
@@ -132,13 +135,13 @@ namespace DefenseGameWebSocketServer.Manager
 
                         enemy.TakeDamage(playerDamage);
         
-                        Console.WriteLine($"[AttackHandler] 적 {enemy.id} {playerDamage} 데미지 남은 HP: {enemy.hp}");
+                        Console.WriteLine($"[AttackHandler] 적 {enemy.id} {playerDamage} 데미지 남은 HP: {enemy.currentHp}");
 
                         // 데미지 메시지 브로드캐스트
                         dmgMsg.damagedEnemies.Add(new EnemyDamageInfo
                         {
                             enemyId = enemy.id,
-                            currentHp = enemy.hp,
+                            currentHp = enemy.currentHp,
                             maxHp = enemy.maxHp,
                             damage = playerDamage,
                             isCritical = isCritical
@@ -158,13 +161,13 @@ namespace DefenseGameWebSocketServer.Manager
         private bool IsEnemyInAttackBox(Enemy enemy, PlayerAttackRequest msg)
         {
             // 몬스터 실제 크기 계산
-            float enemyWidth = enemy.baseWidth * enemy.scale;
-            float enemyHeight = enemy.baseHeight * enemy.scale;
+            float enemyWidth = enemy.enemyBaseData.base_width * enemy.enemyBaseData.base_scale;
+            float enemyHeight = enemy.enemyBaseData.base_height * enemy.enemyBaseData.base_scale;
 
             // 공격박스 범위
             
-            float offsetX = enemy.offSetX * enemy.scale;
-            float offsetY = enemy.offSetY * enemy.scale;
+            float offsetX = enemy.enemyBaseData.base_offsetx * enemy.enemyBaseData.base_scale;
+            float offsetY = enemy.enemyBaseData.base_offsety * enemy.enemyBaseData.base_scale;
             float attackLeft = msg.attackBoxCenterX - msg.attackBoxWidth / 2f;
             float attackRight = msg.attackBoxCenterX + msg.attackBoxWidth / 2f;
             float attackBottom = msg.attackBoxCenterY - msg.attackBoxHeight / 2f;
@@ -183,14 +186,21 @@ namespace DefenseGameWebSocketServer.Manager
                      attackTop < enemyBottom);
         }
 
-        public async Task SpawnEnemy(int _wave)
+        public async Task SpawnEnemy(int _wave, WaveData waveData, List<WaveRoundData> waveRoundDataList)
         {
-            int enemyCount = 3 * _wave;
+            WaveRoundData roundData =  waveRoundDataList.FirstOrDefault(x => x.round_index == _wave);
+            if (roundData == null)
+            {
+                Console.WriteLine($"[EnemyManager] 라운드 {_wave} 데이터가 없습니다.");
+                return;
+            }
+            List<int> enemyIds = roundData.enemy_ids;
+            int enemyCount = roundData.enemy_counts;
 
             for (int i = 0; i < enemyCount; i++)
             {
                 string enemyId = Guid.NewGuid().ToString();
-                string enemyType = GetRandomEnemyType();
+                EnemyData enemyData = GetRandomEnemy(enemyIds);
                 int randomSpawnIndex = _rand.Next(0, 2);
                 var spawnPosition = enemiesSpawnList[randomSpawnIndex];
 
@@ -198,19 +208,20 @@ namespace DefenseGameWebSocketServer.Manager
                 {
                     var enemy = new Enemy(
                         enemyId,
-                        enemyType,
+                        enemyData,
                         spawnPosition.Item1,
                         spawnPosition.Item2,
                         targetPosition.Item1,
                         targetPosition.Item2,
-                        2f + ((_wave - 1) * 0.5f)
+                        waveData,
+                        roundData
                     );
 
                     enemy.OnBroadcastRequired = evt => { _broadcastEvents.Enqueue(evt); };
                     _enemies.Add(enemy);
 
                 }
-                Console.WriteLine($"[EnemyManager] 적 생성: {enemyId}, 타입: {enemyType}, 위치: ({spawnPosition.Item1}, {spawnPosition.Item2})");
+                Console.WriteLine($"[EnemyManager] 적 생성: {enemyId}, 타입: {enemyData.type}, 위치: ({spawnPosition.Item1}, {spawnPosition.Item2})");
                 var msg = new SpawnEnemyMessage(
                     enemyId,
                     _wave,
@@ -232,10 +243,12 @@ namespace DefenseGameWebSocketServer.Manager
             }
             return syncList;
         }
-        private string GetRandomEnemyType()
+        private EnemyData GetRandomEnemy(List<int> enemyIds)
         {
-            string[] types = { "Dust"};
-            return types[_rand.Next(types.Length)];
+            int randomIdx = _rand.Next(enemyIds.Count);
+            int enemyId = enemyIds[randomIdx];
+            EnemyData enemydata = GameDataManager.Instance.GetData<EnemyData>("enemy_data", enemyId);
+            return enemydata;
         }
     }
 }

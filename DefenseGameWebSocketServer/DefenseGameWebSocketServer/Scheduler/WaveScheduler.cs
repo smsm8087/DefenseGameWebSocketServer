@@ -23,12 +23,13 @@ public class WaveScheduler
 
     private int _wave = 0;
     private bool _isRunning = false;
-    private int maxWave = 10; // 최대 웨이브 수
     
     //페이즈 나누기
     private int _readyCount = 0;
     private GamePhase _currentPhase;
     private Dictionary<string, List<CardData>> _selectCardPlayerDict = new Dictionary<string, List<CardData>>();
+    private WaveData waveData;
+    private List<WaveRoundData> waveRoundDataList = new List<WaveRoundData>();
 
     public WaveScheduler(IWebSocketBroadcaster broadcaster, CancellationTokenSource cts, Func<bool> hasPlayerCount, Func<int> getPlayerCount, Func<List<string>> getPlayerList, SharedHpManager sharedHpManager, EnemyManager enemyManager)
     {
@@ -40,12 +41,14 @@ public class WaveScheduler
         _sharedHpManager = sharedHpManager;
         _enemyManager = enemyManager;
     }
-    public void TryStart()
+    public void TryStart(int wave_id)
     {
         lock (_lock)
         {
             if (_isRunning) return;
             _isRunning = true;
+
+            initWave(wave_id);
 
             //count down 스케줄러
             _countDownScheduler = new CountDownScheduler(_broadcaster, _cts, _hasPlayerCount);
@@ -57,6 +60,30 @@ public class WaveScheduler
             _ = StartAsync();
             // Reset shared HP manager
             _sharedHpManager.Reset();
+        }
+    }
+    public void initWave(int wave_id)
+    {
+        waveData = GameDataManager.Instance.GetData<WaveData>("wave_data", wave_id);
+        if(waveData == null)
+        {
+            Console.WriteLine($"[WaveScheduler] 웨이브 데이터가 없습니다. 웨이브 ID: {wave_id}");
+            return;
+        }
+        List<(float, float)> spawnPointList = new List<(float, float)>
+        {
+            (waveData.spawn_left_posx, waveData.spawn_left_posy),
+            (waveData.spawn_right_posx, waveData.spawn_right_posy)
+        };
+        _enemyManager.InitializeEnemySpawnPoints(spawnPointList, (waveData.shared_hp_posx, waveData.shared_hp_posy));
+
+        var waveRoundData = GameDataManager.Instance.GetTable<WaveRoundData>("wave_round_data");
+        foreach (var roundData in waveRoundData.Values)
+        {
+            if (roundData.wave_id == wave_id)
+            {
+                waveRoundDataList.Add(roundData);
+            }
         }
     }
     public void Stop()
@@ -85,7 +112,7 @@ public class WaveScheduler
         //countdown 시작
         await _countDownScheduler.StartAsync();
 
-        while (!_cts.Token.IsCancellationRequested && _wave <= maxWave)
+        while (!_cts.Token.IsCancellationRequested && _wave <= waveData.max_wave)
         {
             switch(_currentPhase)
             {
@@ -99,9 +126,9 @@ public class WaveScheduler
                         await _broadcaster.BroadcastAsync(waveStartMsg);
 
                         //적 소환
-                        await _enemyManager.SpawnEnemy(_wave);
+                        await _enemyManager.SpawnEnemy(_wave, waveData,waveRoundDataList);
                         //웨이브 2부터는 카드선택 페이즈
-                        if (_wave % 2 == 0)
+                        if (_wave % waveData.settlement_phase_round == 0)
                         {
                             Console.WriteLine($"[WaveScheduler] Wave {_wave} → Settlement 대기 (적 {_enemyManager._enemies.Count})");
 
@@ -167,7 +194,7 @@ public class WaveScheduler
 
         await givePlayerRandomCard(playerList);
 
-        if (_wave >= maxWave)
+        if (_wave >= waveData.max_wave)
         {
             Console.WriteLine("[WaveScheduler] Settlement Phase 완료 → Boss Phase 진입");
             _currentPhase = GamePhase.Boss;

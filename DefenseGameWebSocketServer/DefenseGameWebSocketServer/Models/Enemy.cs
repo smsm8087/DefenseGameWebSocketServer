@@ -1,4 +1,5 @@
 ﻿using DefenseGameWebSocketServer.Models;
+using DefenseGameWebSocketServer.Models.DataModels;
 
 public enum EnemyState
 {
@@ -10,63 +11,47 @@ public enum EnemyState
 public class Enemy
 {
     public string id;
+    public string type;
     public float x;
     public float y;
-    public float speed = 2f;
-    public int hp = 100;
+    public int currentHp = 100;
     public int maxHp = 100;
     public float targetX;
     public float targetY;
     public EnemyState state;
     private IEnemyFSMState _currentState;
-    public float targetRadius = 2.125f;
-    public float attackDamage = 1f;
-    public float baseWidth = 1f;   
-    public float baseHeight = 1f;  
-    public float scale = 1f;
-    public float offSetX = 1f;
-    public float offSetY = 1f;
+    public float currentAttack = 1f;
+    public float currentDefense = 10f;
+    public float currentSpeed = 2f;
 
+    public EnemyData enemyBaseData;
     //fsm
     public EnemyMoveState moveState = new EnemyMoveState();
     public EnemyAttackState attackState = new EnemyAttackState();
     public EnemyDeadState deadState = new EnemyDeadState();
     public Action<EnemyBroadcastEvent> OnBroadcastRequired;
 
+    public WaveData waveData;
+    public bool IsAlive => currentHp > 0;
 
-    public bool IsAlive => hp > 0;
-
-    public Enemy(string id, string type, float startX, float startY, float targetX, float targetY, float speed)
+    public Enemy(string id, EnemyData enemyData, float startX, float startY, float targetX, float targetY, WaveData waveData, WaveRoundData waveRoundData)
     {
         this.id = id;
         this.x = startX;
         this.y = startY;
         this.targetX = targetX;
         this.targetY = targetY;
-        this.hp = this.maxHp = 100;
-        this.speed = speed;
-        SetEnemySize(type);
+        enemyBaseData = enemyData;
+        this.currentHp = this.maxHp = enemyBaseData.hp + waveRoundData.add_hp;
+        this.currentSpeed = enemyBaseData.speed + waveRoundData.add_movespeed;
+        this.currentAttack = enemyBaseData.attack + waveRoundData.add_attack;
+        this.currentDefense = enemyBaseData.defense + waveRoundData.add_defense;
+        this.type = enemyBaseData.type;
+
+        this.waveData = waveData;
         ChangeState(EnemyState.Move);
     }
     
-    private void SetEnemySize(string type)
-    {
-        switch (type)
-        {
-            case "Dust":
-                baseWidth = 0.5f;
-                baseHeight = 0.5f;
-                scale = 3f;
-                offSetX = 0.008874312f;
-                offSetY = 0.2873794f;
-                break;
-            default:
-                baseWidth = 1f;
-                baseHeight = 1f;
-                scale = 1f;
-                break;
-        }
-    }
     public void UpdateFSM(float deltaTime)
     {
         _currentState?.Update(this, deltaTime);
@@ -95,7 +80,7 @@ public class Enemy
     }
     public void TakeDamage(int dmg)
     {
-        hp -= dmg;
-        if (hp < 0) hp = 0;
+        currentHp -= dmg;
+        if (currentHp < 0) currentHp = 0;
     }
 }

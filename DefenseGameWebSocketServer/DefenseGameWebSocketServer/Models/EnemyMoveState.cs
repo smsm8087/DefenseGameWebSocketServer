@@ -21,13 +21,13 @@ namespace DefenseGameWebSocketServer.Models
             float dirY = enemy.targetY - enemy.y;
             float len = MathF.Sqrt(dirX * dirX + dirY * dirY);
 
-            if(len > enemy.targetRadius)
+            if(len > enemy.waveData.shared_hp_radius)
             {
                 dirX /= len;
                 dirY /= len;
                 // 속도 적용
-                enemy.x += dirX * enemy.speed * deltaTime;
-                enemy.y += dirY * enemy.speed * deltaTime;
+                enemy.x += dirX * enemy.currentSpeed * deltaTime;
+                enemy.y += dirY * enemy.currentSpeed * deltaTime;
             }
             else
             {
