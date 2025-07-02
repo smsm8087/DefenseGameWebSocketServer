@@ -133,7 +133,6 @@ namespace DefenseGameWebSocketServer.Manager
                         int playerDamage = playerAttackData.Item1;
                         bool isCritical = playerAttackData.Item2;
                         int enemyDefense = (int)enemy.currentDefense;
-                        playerDamage -= enemyDefense; // 적의 방어력 적용
                         int currentDamage = Math.Max(0, playerDamage - enemyDefense);
                         enemy.TakeDamage(currentDamage);
         
