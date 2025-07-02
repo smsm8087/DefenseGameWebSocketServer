@@ -44,8 +44,9 @@ app.Map("/ws", async context =>
         var webSocket = await context.WebSockets.AcceptWebSocketAsync();
 
         broadcaster.Register(playerId, webSocket);
-        
-        await GameManager.InitializeGame(playerId);
+
+        //임시로 wave_id = 1로 설정
+        await GameManager.InitializeGame(playerId,1);
 
         var buffer = new byte[1024 * 4];
         try

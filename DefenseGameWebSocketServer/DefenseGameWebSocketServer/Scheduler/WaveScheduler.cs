@@ -106,12 +106,6 @@ public class WaveScheduler
         _currentPhase = GamePhase.Settlement;
         _readyCount = 0;
 
-        var initialMsg = new
-        {
-            type = "initial_game", wave_id = waveData.id 
-        };
-        await _broadcaster.BroadcastAsync(initialMsg);
-
         //5초후 시작
         await Task.Delay(5000, _cts.Token);
 

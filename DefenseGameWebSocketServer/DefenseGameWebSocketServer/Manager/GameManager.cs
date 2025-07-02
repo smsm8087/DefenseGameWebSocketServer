@@ -23,7 +23,8 @@ namespace DefenseGameWebSocketServer.Manager
         private Func<List<string>> _getPlayerList;
         private bool _isGameLoopRunning = false;
         private Task _gameLoopTask;
-        
+        private int waveId = 0; // 현재 웨이브 ID
+
         // 직업 관리를 위한 필드 추가
         private readonly List<string> _availableJobs = new List<string> 
         { 
@@ -82,12 +83,12 @@ namespace DefenseGameWebSocketServer.Manager
             }
         }
 
-        public async Task InitializeGame(string playerId)
+        public async Task InitializeGame(string playerId, int wave_id)
         {
             if (_cts == null) _cts = new CancellationTokenSource();
             if( _sharedHpManager == null) _sharedHpManager = new SharedHpManager();
             if (_waveScheduler == null) _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount,_getPlayerCount,_getPlayerList, _sharedHpManager, _enemyManager);
-
+            waveId = wave_id;
             string assignedJob = AssignJobToPlayer();
             SetPlayerData(playerId,assignedJob);
             if(_playerManager.TryGetPlayer(playerId, out Player player))
@@ -111,13 +112,19 @@ namespace DefenseGameWebSocketServer.Manager
                     }
                 });
             }
+            var initialMsg = new
+            {
+                type = "initial_game",
+                wave_id = wave_id
+            };
+            await _broadcaster.BroadcastAsync(initialMsg);
 
             // 파티 정보 브로드캐스트 (새 플레이어 참여)
             await _partyMemberManager.OnPlayerJoined(playerId);
 
             if (_broadcaster.ConnectedCount >= 1)
             {
-                TryStartWave();
+                TryStartWave(wave_id);
             }
 
             await _broadcaster.SendToAsync(playerId, new
@@ -134,14 +141,14 @@ namespace DefenseGameWebSocketServer.Manager
             await _partyMemberManager.SendPartyInfoToPlayer(playerId);
         }
 
-        public void TryStartWave()
+        public void TryStartWave(int wave_id)
         {
             if (_isGameLoopRunning) return;
             _isGameLoopRunning = true;
 
             //웨이브 기본 설정
 
-            _waveScheduler.TryStart(1);
+            _waveScheduler.TryStart(wave_id);
             StartGameLoop();
         }
 
@@ -194,7 +201,7 @@ namespace DefenseGameWebSocketServer.Manager
             }
 
             _isGameLoopRunning = false;
-            TryStartWave();
+            TryStartWave(waveId);
             return true;
         }
 
