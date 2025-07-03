@@ -66,18 +66,10 @@ public class Player
     }
     public void addCardId(int cardId)
     {
-        if (!CardIds.Contains(cardId))
-        {
-            CardIds.Add(cardId);
-            Console.WriteLine($"[Player] {id} 카드 추가: {cardId}");
-            
-            //카드 효과 적용
-        }
-        else
-        {
-            Console.WriteLine($"[PlayerERR] {id} 이미 카드 {cardId}를 가지고 있습니다.");
-            return;
-        }
+        CardIds.Add(cardId);
+        Console.WriteLine($"[Player] {id} 카드 추가: {cardId}");
+    
+        // 카드 효과 적용
         applyCardToPlayerAddData(cardId);
     }
     void applyCardToPlayerAddData(int cardId)
