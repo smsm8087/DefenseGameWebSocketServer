@@ -78,5 +78,15 @@ namespace DefenseGameWebSocketServer.Manager
             }
             return (0f, 100f);
         }
+        public Player GetRandomPlayer()
+        {
+            if (_playersDict.Count == 0)
+            {
+                return null;
+            }
+            var random = new Random();
+            int index = random.Next(_playersDict.Count);
+            return _playersDict.ElementAt(index).Value;
+        }
     }
 }

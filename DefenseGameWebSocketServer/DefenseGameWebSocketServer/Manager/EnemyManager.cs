@@ -105,7 +105,79 @@ namespace DefenseGameWebSocketServer.Manager
             Console.WriteLine("[EnemyManager] FSM 종료됨");
             _isRunning = false;
         }
-        
+        public async Task SpawnEnemy(int waveIndex, WaveData waveData, List<WaveRoundData> waveRoundDataList, SharedHpManager sharedHpManager)
+        {
+            WaveRoundData roundData = waveRoundDataList.Find(x => x.round_index == waveIndex);
+            if (roundData == null)
+            {
+                Console.WriteLine($"[EnemyManager] 라운드 {waveIndex} 데이터가 없습니다.");
+                return;
+            }
+
+            if (roundData.enemy_ids.Count != roundData.enemy_counts.Count)
+            {
+                Console.WriteLine("[EnemyManager] enemy_ids와 enemy_counts 수가 일치하지 않습니다.");
+                return;
+            }
+
+            for (int i = 0; i < roundData.enemy_ids.Count; i++)
+            {
+                int enemyDataId = roundData.enemy_ids[i];
+                int spawnCount = roundData.enemy_counts[i];
+                var enemyData = GetEnemyData(enemyDataId);
+                if (enemyData == null) continue;
+
+                for (int j = 0; j < spawnCount; j++)
+                {
+                    string enemyId = Guid.NewGuid().ToString();
+                    float spawnX, spawnY;
+                    int randomSide = _rand.Next(0, 2);
+                    var spawnPos = randomSide == 0 ? enemyData.spawn_left_pos : enemyData.spawn_right_pos;
+                    spawnX = spawnPos[0];
+                    spawnY = spawnPos[1];
+
+                    Enemy enemy;
+                    if (enemyData.target_type == "player")
+                    {
+                        var targetPlayer = PlayerManager.Instance.GetRandomPlayer();
+                        if (targetPlayer == null) continue;
+
+                        enemy = new Enemy(
+                            enemyId,
+                            enemyData,
+                            spawnX,
+                            spawnY,
+                            targetPlayer.x,
+                            targetPlayer.y,
+                            waveData,
+                            roundData
+                        );
+
+                        enemy.SetAggroTarget(targetPlayer);
+                    }
+                    else
+                    {
+                        enemy = new Enemy(
+                            enemyId,
+                            enemyData,
+                            spawnX,
+                            spawnY,
+                            sharedHpManager.GetPosition()[0],
+                            sharedHpManager.GetPosition()[1],
+                            waveData,
+                            roundData
+                        );
+                    }
+
+                    enemy.OnBroadcastRequired = evt => _broadcastEvents.Enqueue(evt);
+                    lock (_enemies) _enemies.Add(enemy);
+
+                    var msg = new SpawnEnemyMessage(enemyId, waveIndex, spawnX, spawnY, enemyDataId);
+                    await _broadcaster.BroadcastAsync(msg);
+                    await Task.Delay(500, _cts.Token);
+                }
+            }
+        }
         //플레이어에게 공격을 받았을때.
         public async Task<int> CheckDamaged(PlayerManager _playerManager, PlayerAttackRequest msg)
         {
@@ -177,89 +249,16 @@ namespace DefenseGameWebSocketServer.Manager
                      attackBottom > enemyTop || 
                      attackTop < enemyBottom);
         }
-
-        public async Task SpawnEnemy(int _wave, WaveData waveData, List<WaveRoundData> waveRoundDataList, SharedHpManager sharedHpManager)
-        {
-            WaveRoundData roundData = waveRoundDataList.FirstOrDefault(x => x.round_index == _wave);
-            if (roundData == null)
-            {
-                Console.WriteLine($"[EnemyManager] 라운드 {_wave} 데이터가 없습니다.");
-                return;
-            }
-            List<int> enemyIdList = roundData.enemy_ids;
-            List<int> enemyCountList = roundData.enemy_counts;
-
-            if(enemyIdList.Count == 0 || enemyCountList.Count == 0 || enemyIdList.Count != enemyCountList.Count)
-            {
-                Console.WriteLine($"[EnemyManager] 라운드 {_wave} 적 데이터가 잘못되었습니다.");
-                return;
-            }
-
-            for (int i = 0; i < enemyCountList.Count; i++)
-            {
-                int enemyDataId = enemyIdList[i];
-                int enemyCount = enemyCountList[i];
-
-                for (int j = 0; j < enemyCount; j++)
-                {
-                    string enemyId = Guid.NewGuid().ToString();
-                    EnemyData enemyData = GetEnemyData(enemyDataId);
-                    if(enemyData.target_type == "shared_hp")
-                    {
-                        int randomSpawnIndex = _rand.Next(0, 2);
-                        List<List<float>> spawnPositionList = [enemyData.spawn_left_pos, enemyData.spawn_right_pos];
-                        var spawnPosition = spawnPositionList[randomSpawnIndex];
-                        lock (_enemies)
-                        {
-                            var enemy = new Enemy(
-                                enemyId,
-                                enemyData,
-                                spawnPosition[0],
-                                spawnPosition[1],
-                                sharedHpManager.GetPosition()[0],
-                                sharedHpManager.GetPosition()[1],
-                                waveData,
-                                roundData
-                            );
-
-                            enemy.OnBroadcastRequired = evt => { _broadcastEvents.Enqueue(evt); };
-                            _enemies.Add(enemy);
-                        }
-                        Console.WriteLine($"[EnemyManager] 적 생성: {enemyId}, 타입: {enemyData.type}, 위치: ({spawnPosition[0]}, {spawnPosition[1]})");
-                        var msg = new SpawnEnemyMessage(
-                            enemyId,
-                            _wave,
-                            spawnPosition[0],
-                            spawnPosition[1],
-                            enemyData.id
-                        );
-
-                        await _broadcaster.BroadcastAsync(msg);
-                        await Task.Delay(1000, _cts.Token);
-                    }
-                    else
-                    {
-                        //if target_type == player
-                        // 플레이어의 위치를 가져와서 적을 생성
-                        //새로 추가될 몬스터 로직
-                    }
-                }
-            }
-        }
         public List<EnemySyncPacket> SyncEnemy()
         {
-            List<EnemySyncPacket> syncList;
-
             lock (_enemies)
             {
-                syncList = _enemies.Select(e => new EnemySyncPacket(e.id, e.x)).ToList();
+                return _enemies.Select(e => new EnemySyncPacket(e.id, e.x)).ToList();
             }
-            return syncList;
         }
         private EnemyData GetEnemyData (int enemyDataId)
         {
-            EnemyData enemydata = GameDataManager.Instance.GetData<EnemyData>("enemy_data", enemyDataId);
-            return enemydata;
+            return GameDataManager.Instance.GetData<EnemyData>("enemy_data", enemyDataId);
         }
     }
 }

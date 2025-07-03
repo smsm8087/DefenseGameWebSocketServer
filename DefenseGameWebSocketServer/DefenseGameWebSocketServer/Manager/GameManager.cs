@@ -296,7 +296,6 @@ namespace DefenseGameWebSocketServer.Manager
                         if (!_isGameLoopRunning) return;
                         var enemyAttackHitHandler = new EnemyAttackHitHandler();
                         await enemyAttackHitHandler.HandleAsync(rawMessage, _broadcaster, _sharedHpManager, _enemyManager);
-                        
                         // 적의 공격으로 플레이어가 데미지를 받았을 수 있으므로
                         foreach (var pid in _playerManager.GetAllPlayerIds())
                         {

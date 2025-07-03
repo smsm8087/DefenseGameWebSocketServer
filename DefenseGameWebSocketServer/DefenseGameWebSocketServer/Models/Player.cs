@@ -131,4 +131,9 @@ public class Player
         this.currentUlt += addUlt;
         if (this.currentUlt > 100) this.currentUlt = 100; // 최대 ULT 게이지는 100
     }
+    public void TakeDamage(int damage)
+    {
+        this.currentHp -= damage;
+        if (this.currentHp < 0) this.currentHp = 0; // HP가 0 이하로 떨어지지 않도록
+    }
 }

@@ -12,32 +12,42 @@ namespace DefenseGameWebSocketServer.Models
 
         public void Update(Enemy enemy, float deltaTime)
         {
-            if (!enemy.IsAlive)
+            if (!enemy.IsAlive) return;
+
+            // 플레이어 타겟형이면 어그로 업데이트
+            if (enemy.targetType == TargetType.Player && PlayerManager.Instance != null)
             {
-                enemy.ChangeState(EnemyState.Dead);
-                return;
+                var players = PlayerManager.Instance.GetAllPlayers().ToArray();
+                if (players.Length > 0)
+                {
+                    enemy.UpdateAggro(players);
+                    if (enemy.AggroTarget != null)
+                    {
+                        enemy.targetX = enemy.AggroTarget.x;
+                        enemy.targetY = enemy.AggroTarget.y;
+                    }
+                }
             }
 
             float dirX = enemy.targetX - enemy.x;
             float dirY = enemy.targetY - enemy.y;
             float len = MathF.Sqrt(dirX * dirX + dirY * dirY);
+            // 속도 적용
+            enemy.x += dirX / len * enemy.currentSpeed * deltaTime;
+            enemy.y += dirY / len * enemy.currentSpeed * deltaTime;
 
-            if(enemy.enemyBaseData.target_type == "shared_hp")
+            if (enemy.enemyBaseData.target_type == "shared_hp")
             {
                 var sharedHpData = GameDataManager.Instance.GetData<SharedData>("shared_data", enemy.waveData.shared_hp_id);
-                if (len > sharedHpData.radius)
-                {
-                    dirX /= len;
-                    dirY /= len;
-                    // 속도 적용
-                    enemy.x += dirX * enemy.currentSpeed * deltaTime;
-                    enemy.y += dirY * enemy.currentSpeed * deltaTime;
-                }
-                else
+                if (len <= sharedHpData.radius)
                 {
                     // 목표 지점 도달 시 Attack 상태로 전환
                     enemy.ChangeState(EnemyState.Attack);
+                    return;
                 }
+            } else
+            {
+                //"player" 타입의 적은 플레이어와의 거리 계산
             }
         }
 

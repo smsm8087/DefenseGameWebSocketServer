@@ -1,5 +1,7 @@
 ﻿using DefenseGameWebSocketServer.Manager;
 using DefenseGameWebSocketServer.Model;
+using Microsoft.AspNetCore.SignalR.Protocol;
+using System;
 using System.Text.Json;
 
 namespace DefenseGameWebSocketServer.Handlers
@@ -18,13 +20,32 @@ namespace DefenseGameWebSocketServer.Handlers
                 Console.WriteLine($"[EnemyAttackHitHandler] 적 {msg.enemyId} 정보 없음");
                 return;
             }
-            // Shared HP 감소
-            _sharedHpManager.TakeDamage(targetEnemy.currentAttack);
-
-            // Shared HP 상태 브로드캐스트
-            var hpMessage = new SharedHpMessage(_sharedHpManager.getHpStatus().Item1, _sharedHpManager.getHpStatus().Item2);
-            await broadcaster.BroadcastAsync(hpMessage);
-
+            if (targetEnemy.targetType == TargetType.SharedHp)
+            {
+                // Shared HP 감소
+                _sharedHpManager.TakeDamage(targetEnemy.currentAttack);
+                // Shared HP 상태 브로드캐스트
+                var hpMessage = new SharedHpMessage(_sharedHpManager.getHpStatus().Item1, _sharedHpManager.getHpStatus().Item2);
+                await broadcaster.BroadcastAsync(hpMessage);
+            } 
+            else if (targetEnemy.targetType == TargetType.Player)
+            {
+                // 플레이어 공격
+                if(targetEnemy.AggroTarget != null)
+                {
+                    targetEnemy.AggroTarget.TakeDamage((int)targetEnemy.currentAttack);
+                    var playerHpMessage = new PlayerUpdateHpMessage(
+                        targetEnemy.AggroTarget.id, 
+                        new PlayerInfo
+                        {
+                            currentHp = targetEnemy.AggroTarget.currentHp,
+                            currentMaxHp = targetEnemy.AggroTarget.playerBaseData.hp + targetEnemy.AggroTarget.addData.addHp,
+                        }
+                    );
+                    await broadcaster.SendToAsync(targetEnemy.AggroTarget.id, playerHpMessage);
+                    targetEnemy.OnAttackPerformed(); // 공격 횟수 증가 및 상태 변경
+                }
+            }
             Console.WriteLine($"[EnemyAttackHitHandler] 공유 HP 감소됨, 현재 HP: {_sharedHpManager.getHpStatus().Item1}");
         }
     }

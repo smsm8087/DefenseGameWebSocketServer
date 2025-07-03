@@ -7,7 +7,12 @@ public enum EnemyState
     Attack,
     Dead
 }
-
+public enum TargetType
+{
+    SharedHp,
+    Player,
+    None
+}
 public class Enemy
 {
     public string id;
@@ -33,6 +38,12 @@ public class Enemy
 
     public WaveData waveData;
     public bool IsAlive => currentHp > 0;
+    public TargetType targetType;
+    public Player AggroTarget { get; private set; }
+    private int attackCount;
+    private DateTime lastAggroChangeTime;
+    private const int MaxAttackBeforeReaggro = 3;
+    private const float AggroCooldown = 5f;
 
     public Enemy(string id, EnemyData enemyData, float startX, float startY, float targetX, float targetY, WaveData waveData, WaveRoundData waveRoundData)
     {
@@ -47,8 +58,15 @@ public class Enemy
         this.currentAttack = enemyBaseData.attack + waveRoundData.add_attack;
         this.currentDefense = enemyBaseData.defense + waveRoundData.add_defense;
         this.type = enemyBaseData.type;
-
         this.waveData = waveData;
+
+        targetType = enemyBaseData.target_type.ToLower() switch
+        {
+            "player" => TargetType.Player,
+            "shared_hp" => TargetType.SharedHp,
+            _=> TargetType.None
+        };
+
         ChangeState(EnemyState.Move);
     }
     
@@ -80,7 +98,40 @@ public class Enemy
     }
     public void TakeDamage(int dmg)
     {
-        currentHp -= dmg ;
+        currentHp -= dmg;
         if (currentHp < 0) currentHp = 0;
+
+        if (currentHp == 0 && state != EnemyState.Dead)
+        {
+            ChangeState(EnemyState.Dead);
+        }
+    }
+    public void SetAggroTarget(Player player)
+    {
+        AggroTarget = player;
+        targetX = player.x;
+        targetY = player.y;
+        lastAggroChangeTime = DateTime.UtcNow;
+        attackCount = 0;
+    }
+
+    public void UpdateAggro(Player[] players)
+    {
+        if (targetType != TargetType.Player) return;
+
+        if (AggroTarget == null || (DateTime.UtcNow - lastAggroChangeTime).TotalSeconds >= AggroCooldown || attackCount >= MaxAttackBeforeReaggro)
+        {
+            var rand = new Random();
+            AggroTarget = players[rand.Next(players.Length)];
+            targetX = AggroTarget.x;
+            targetY = AggroTarget.y;
+            lastAggroChangeTime = DateTime.UtcNow;
+            attackCount = 0;
+        }
+    }
+
+    public void OnAttackPerformed()
+    {
+        attackCount++;
     }
 }

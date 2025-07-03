@@ -18,11 +18,7 @@ namespace DefenseGameWebSocketServer.Models
 
         public void Update(Enemy enemy, float deltaTime)
         {
-            if (!enemy.IsAlive)
-            {
-                enemy.ChangeState(EnemyState.Dead);
-                return;
-            }
+            
         }
 
         public void Exit(Enemy enemy)
