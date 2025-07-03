@@ -5,6 +5,7 @@ public enum EnemyState
 {
     Move,
     Attack,
+    RangedAttack,
     Dead
 }
 public enum TargetType
@@ -19,21 +20,23 @@ public class Enemy
     public string type;
     public float x;
     public float y;
-    public int currentHp = 100;
-    public int maxHp = 100;
+    public int currentHp;
+    public int maxHp;
     public float targetX;
     public float targetY;
     public EnemyState state;
     private IEnemyFSMState _currentState;
-    public float currentAttack = 1f;
-    public float currentDefense = 10f;
-    public float currentSpeed = 2f;
+    public float currentAttack;
+    public float currentDefense;
+    public float currentSpeed;
 
     public EnemyData enemyBaseData;
     //fsm
     public EnemyMoveState moveState = new EnemyMoveState();
     public EnemyAttackState attackState = new EnemyAttackState();
     public EnemyDeadState deadState = new EnemyDeadState();
+    public EnemyRangedAttackState rangedAttackState = new EnemyRangedAttackState();
+
     public Action<EnemyBroadcastEvent> OnBroadcastRequired;
 
     public WaveData waveData;
@@ -45,7 +48,8 @@ public class Enemy
     private const int MaxAttackBeforeReaggro = 3;
     private const float AggroCooldown = 5f;
 
-    public Enemy(string id, EnemyData enemyData, float startX, float startY, float targetX, float targetY, WaveData waveData, WaveRoundData waveRoundData)
+    public BulletData bulletData;
+    public Enemy(string id, EnemyData enemyData, float startX, float startY, float targetX, float targetY, WaveData waveData, WaveRoundData waveRoundData, BulletData bulletData)
     {
         this.id = id;
         this.x = startX;
@@ -59,6 +63,7 @@ public class Enemy
         this.currentDefense = enemyBaseData.defense + waveRoundData.add_defense;
         this.type = enemyBaseData.type;
         this.waveData = waveData;
+        this.bulletData = bulletData;
 
         targetType = enemyBaseData.target_type.ToLower() switch
         {
@@ -86,6 +91,9 @@ public class Enemy
                 break;
             case EnemyState.Attack:
                 _currentState = attackState;
+                break;
+            case EnemyState.RangedAttack:
+                _currentState = rangedAttackState;
                 break;
             case EnemyState.Dead:
                 _currentState = deadState;

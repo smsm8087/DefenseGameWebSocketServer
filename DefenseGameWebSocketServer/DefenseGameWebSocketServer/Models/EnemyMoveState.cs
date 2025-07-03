@@ -36,7 +36,7 @@ namespace DefenseGameWebSocketServer.Models
             enemy.x += dirX / len * enemy.currentSpeed * deltaTime;
             enemy.y += dirY / len * enemy.currentSpeed * deltaTime;
 
-            if (enemy.enemyBaseData.target_type == "shared_hp")
+            if (enemy.targetType == TargetType.SharedHp)
             {
                 var sharedHpData = GameDataManager.Instance.GetData<SharedData>("shared_data", enemy.waveData.shared_hp_id);
                 if (len <= sharedHpData.radius)
@@ -48,6 +48,8 @@ namespace DefenseGameWebSocketServer.Models
             } else
             {
                 //"player" 타입의 적은 플레이어와의 거리 계산
+                //근거리 냐 원거리냐
+                enemy.ChangeState(EnemyState.RangedAttack);
             }
         }
 

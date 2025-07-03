@@ -38,6 +38,8 @@
         public string target_type { get; set; }
         public List<float> spawn_left_pos { get; set; }
         public List<float> spawn_right_pos { get; set; }
+        public string attack_type { get; set; }
+        public int bullet_id { get; set; }
     }
     public class WaveRoundData
     {
@@ -68,5 +70,13 @@
         public float radius { get; set; }
         public List<float> pos { get; set; }
         public float hp { get; set; }
+    }
+    public class BulletData
+    {
+        public int id { get; set; }
+        public string name { get; set; }
+        public float speed { get; set; }
+        public float range { get; set; }
+        public string prefab_path { get; set; }
     }
 }
