@@ -49,7 +49,7 @@ public class Enemy
     private const float AggroCooldown = 5f;
 
     public BulletData bulletData;
-    public Enemy(string id, EnemyData enemyData, float startX, float startY, float targetX, float targetY, WaveData waveData, WaveRoundData waveRoundData, BulletData bulletData)
+    public Enemy(string id, EnemyData enemyData, float startX, float startY, float targetX, float targetY, WaveData waveData, WaveRoundData waveRoundData, BulletData bulletData = null)
     {
         this.id = id;
         this.x = startX;

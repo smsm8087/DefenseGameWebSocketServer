@@ -142,6 +142,8 @@ namespace DefenseGameWebSocketServer.Manager
                         var targetPlayer = PlayerManager.Instance.GetRandomPlayer();
                         if (targetPlayer == null) continue;
 
+                        var bulletData = GameDataManager.Instance.GetData<BulletData>("bullet_data", enemyData.bullet_id);
+
                         enemy = new Enemy(
                             enemyId,
                             enemyData,
@@ -150,7 +152,8 @@ namespace DefenseGameWebSocketServer.Manager
                             targetPlayer.x,
                             targetPlayer.y,
                             waveData,
-                            roundData
+                            roundData,
+                            bulletData
                         );
 
                         enemy.SetAggroTarget(targetPlayer);
