@@ -70,13 +70,7 @@ public class WaveScheduler
             Console.WriteLine($"[WaveScheduler] 웨이브 데이터가 없습니다. 웨이브 ID: {wave_id}");
             return;
         }
-        List<(float, float)> spawnPointList = new List<(float, float)>
-        {
-            (waveData.spawn_left_posx, waveData.spawn_left_posy),
-            (waveData.spawn_right_posx, waveData.spawn_right_posy)
-        };
-        _enemyManager.InitializeEnemySpawnPoints(spawnPointList, (waveData.shared_hp_posx, waveData.shared_hp_posy));
-
+        
         var waveRoundData = GameDataManager.Instance.GetTable<WaveRoundData>("wave_round_data");
         foreach (var roundData in waveRoundData.Values)
         {
@@ -126,7 +120,7 @@ public class WaveScheduler
                         await _broadcaster.BroadcastAsync(waveStartMsg);
 
                         //적 소환
-                        await _enemyManager.SpawnEnemy(_wave, waveData,waveRoundDataList);
+                        await _enemyManager.SpawnEnemy(_wave, waveData,waveRoundDataList,_sharedHpManager);
                         //웨이브 2부터는 카드선택 페이즈
                         if (_wave % waveData.settlement_phase_round == 0)
                         {

@@ -1,4 +1,5 @@
 ﻿using DefenseGameWebSocketServer.Manager;
+using DefenseGameWebSocketServer.Models.DataModels;
 
 namespace DefenseGameWebSocketServer.Models
 {
@@ -21,18 +22,22 @@ namespace DefenseGameWebSocketServer.Models
             float dirY = enemy.targetY - enemy.y;
             float len = MathF.Sqrt(dirX * dirX + dirY * dirY);
 
-            if(len > enemy.waveData.shared_hp_radius)
+            if(enemy.enemyBaseData.target_type == "shared_hp")
             {
-                dirX /= len;
-                dirY /= len;
-                // 속도 적용
-                enemy.x += dirX * enemy.currentSpeed * deltaTime;
-                enemy.y += dirY * enemy.currentSpeed * deltaTime;
-            }
-            else
-            {
-                // 목표 지점 도달 시 Attack 상태로 전환
-                enemy.ChangeState(EnemyState.Attack);
+                var sharedHpData = GameDataManager.Instance.GetData<SharedData>("shared_data", enemy.waveData.shared_hp_id);
+                if (len > sharedHpData.radius)
+                {
+                    dirX /= len;
+                    dirY /= len;
+                    // 속도 적용
+                    enemy.x += dirX * enemy.currentSpeed * deltaTime;
+                    enemy.y += dirY * enemy.currentSpeed * deltaTime;
+                }
+                else
+                {
+                    // 목표 지점 도달 시 Attack 상태로 전환
+                    enemy.ChangeState(EnemyState.Attack);
+                }
             }
         }
 

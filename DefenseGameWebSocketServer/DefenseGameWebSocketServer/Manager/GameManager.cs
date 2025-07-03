@@ -33,9 +33,10 @@ namespace DefenseGameWebSocketServer.Manager
         private readonly HashSet<string> _assignedJobs = new HashSet<string>();
         private readonly object _jobLock = new object();
 
-        public GameManager(WebSocketBroadcaster broadcaster)
+        public GameManager(WebSocketBroadcaster broadcaster, int wave_id)
         {
-            _sharedHpManager = new SharedHpManager();
+            this.waveId = wave_id;
+            _sharedHpManager = new SharedHpManager(waveId);
             _playerManager = new PlayerManager();
             _partyMemberManager = new PartyMemberManager(_playerManager, broadcaster);
             _cts = new CancellationTokenSource();
@@ -83,12 +84,11 @@ namespace DefenseGameWebSocketServer.Manager
             }
         }
 
-        public async Task InitializeGame(string playerId, int wave_id)
+        public async Task InitializeGame(string playerId)
         {
             if (_cts == null) _cts = new CancellationTokenSource();
-            if( _sharedHpManager == null) _sharedHpManager = new SharedHpManager();
+            if( _sharedHpManager == null) _sharedHpManager = new SharedHpManager(waveId);
             if (_waveScheduler == null) _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount,_getPlayerCount,_getPlayerList, _sharedHpManager, _enemyManager);
-            waveId = wave_id;
             string assignedJob = AssignJobToPlayer();
             SetPlayerData(playerId,assignedJob);
             if(_playerManager.TryGetPlayer(playerId, out Player player))
@@ -115,7 +115,7 @@ namespace DefenseGameWebSocketServer.Manager
             var initialMsg = new
             {
                 type = "initial_game",
-                wave_id = wave_id
+                wave_id = this.waveId
             };
             await _broadcaster.BroadcastAsync(initialMsg);
 
@@ -124,7 +124,7 @@ namespace DefenseGameWebSocketServer.Manager
 
             if (_broadcaster.ConnectedCount >= 1)
             {
-                TryStartWave(wave_id);
+                TryStartWave(this.waveId);
             }
 
             await _broadcaster.SendToAsync(playerId, new
@@ -191,7 +191,6 @@ namespace DefenseGameWebSocketServer.Manager
             if (_cts != null) _cts.Dispose();                  
 
             _cts = new CancellationTokenSource();
-            _sharedHpManager = new SharedHpManager();
             _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount,_getPlayerCount, _getPlayerList,  _sharedHpManager, _enemyManager);
 
             // 게임 재시작 시 직업 할당 초기화

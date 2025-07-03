@@ -1,2 +1,2 @@
-id,title,difficulty,max_wave,settlement_phase_round,background,shared_hp,shared_hp_radius,shared_hp_posx,shared_hp_posy,spawn_left_posx,spawn_left_posy,spawn_right_posx,spawn_right_posy
-1,base_wave,easy,10,2,BackGround/BACKGROUND,Prefabs/Crystal,2.125,0,-2.9,-46,-2,45,-2
+id,title,difficulty,max_wave,settlement_phase_round,background,shared_hp_id
+1,base_wave,easy,10,2,BackGround/BACKGROUND,1
