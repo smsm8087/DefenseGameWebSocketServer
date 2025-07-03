@@ -1,19 +1,32 @@
-﻿using System.Collections.Concurrent;
+﻿using DefenseGameWebSocketServer.Models.DataModels;
+using System.Collections.Concurrent;
 
 namespace DefenseGameWebSocketServer.Manager
 {
     public class SharedHpManager
     {
-        private int maxHp = 100;
         private SharedHp sharedHp;
 
-        public SharedHpManager()
+        public SharedHpManager(int wave_id)
         {
-            sharedHp = new SharedHp(maxHp);
+            var wave_table = GameDataManager.Instance.GetData<WaveData>("wave_data", wave_id);
+            if (wave_table == null)
+            {
+                throw new ArgumentException($"WaveData with id {wave_id} not found.");
+            }
+            if (wave_table.shared_hp_id <= 0)
+            {
+                throw new ArgumentException($"WaveData with id {wave_id} does not have a valid shared_id.");
+            }
+            sharedHp = new SharedHp(wave_table.shared_hp_id);
         }
         public void Reset()
         {
-            sharedHp.currentHp = sharedHp.maxHp = maxHp;
+            sharedHp.Reset();
+        }
+        public List<float> GetPosition()
+        {
+            return sharedHp.pos;
         }
         public void TakeDamage(float damageAmount)
         {

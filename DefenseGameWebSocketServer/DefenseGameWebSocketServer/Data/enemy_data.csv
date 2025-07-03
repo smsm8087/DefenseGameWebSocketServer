@@ -1,2 +1,2 @@
-id,type,prefab,hp,speed,attack,defense,base_width,base_height,base_scale,base_offsetx,base_offsety
-1000,Dust,Prefabs/Enemy,100,2,1,10,0.5,0.5,3,0.008874312,0.2873794
+id,type,prefab_path,hp,speed,attack,defense,base_width,base_height,base_scale,base_offsetx,base_offsety,target_type,spawn_left_pos,spawn_right_pos
+1000,Dust,Prefabs/Enemy/Enemy,100,2,1,10,0.5,0.5,3,0.008874312,0.2873794,shared_hp,"[-46,-2]","[45,-2]"

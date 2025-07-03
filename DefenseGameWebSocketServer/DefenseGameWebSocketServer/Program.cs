@@ -17,9 +17,11 @@ builder.Services.AddSwaggerGen();
 var broadcaster = new WebSocketBroadcaster();
 builder.Services.AddSingleton<IWebSocketBroadcaster>(broadcaster);
 
-var GameManager = new GameManager(broadcaster);
-// 게임 데이터 초기화
 GameDataManager.Instance.LoadAllData();
+
+int wave_id = 1; // 임시로 웨이브 ID 설정, 실제 게임 로직에 따라 변경 필요
+var GameManager = new GameManager(broadcaster, wave_id);
+// 게임 데이터 초기화
 
 var app = builder.Build();
 
@@ -46,7 +48,7 @@ app.Map("/ws", async context =>
         broadcaster.Register(playerId, webSocket);
 
         //임시로 wave_id = 1로 설정
-        await GameManager.InitializeGame(playerId,1);
+        await GameManager.InitializeGame(playerId);
 
         var buffer = new byte[1024 * 4];
         try

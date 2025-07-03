@@ -1,94 +1,87 @@
-﻿using System.Collections;
-using System.Reflection;
+﻿using CsvHelper;
+using CsvHelper.Configuration;
+using CsvHelper.TypeConversion;
+using System;
+using System.Collections.Generic;
+using System.Formats.Asn1;
+using System.Globalization;
+using System.IO;
+using System.Linq;
 
 namespace DefenseGameWebSocketServer.Util
 {
     public static class CsvLoader
     {
-        public static Dictionary<int, T> Load<T>(string csvPath) where T : new()
+        public static Dictionary<int, T> Load<T>(string csvPath) where T : class
         {
-            var dict = new Dictionary<int, T>();
-
             if (!File.Exists(csvPath))
             {
                 Console.WriteLine($"[Error] CSV 파일 없음: {csvPath}");
-                return dict;
+                return new Dictionary<int, T>();
             }
 
-            var lines = File.ReadAllLines(csvPath);
-            if (lines.Length < 2)
+            try
             {
-                Console.WriteLine($"[Error] CSV 파일 빈 내용: {csvPath}");
-                return dict;
-            }
-
-            var headers = lines[0].Split(',');
-            var type = typeof(T);
-            var fields = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-
-            for (int i = 1; i < lines.Length; i++)
-            {
-                var cols = lines[i].Split(',');
-                if (cols.Length < headers.Length) continue;
-
-                T obj = new T();
-
-                for (int j = 0; j < headers.Length; j++)
+                using var reader = new StreamReader(csvPath);
+                using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
                 {
-                    var header = headers[j].Trim();
-                    var field = Array.Find(fields, f => f.Name.Equals(header, StringComparison.OrdinalIgnoreCase));
-                    if (field == null) continue;
+                    HasHeaderRecord = true,
+                    TrimOptions = TrimOptions.Trim,
+                });
 
-                    try
-                    {
-                        var rawValue = cols[j].Trim();
+                // List<float> 등을 위한 TypeConverter 자동 등록
+                csv.Context.TypeConverterCache.AddConverter(typeof(List<int>), new ListConverter<int>());
+                csv.Context.TypeConverterCache.AddConverter(typeof(List<float>), new ListConverter<float>());
+                csv.Context.TypeConverterCache.AddConverter(typeof(List<string>), new ListConverter<string>());
 
-                        // List<T> 처리
-                        if (field.PropertyType.IsGenericType &&
-                            field.PropertyType.GetGenericTypeDefinition() == typeof(List<>))
-                        {
-                            var elementType = field.PropertyType.GetGenericArguments()[0];
+                var records = csv.GetRecords<T>().ToList();
 
-                            // [1000,1001,1002] or 1000;1001;1002
-                            rawValue = rawValue.Trim('[', ']');
-                            var stringValues = rawValue.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
-
-                            var list = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(elementType));
-                            foreach (var val in stringValues)
-                            {
-                                var converted = Convert.ChangeType(val.Trim(), elementType);
-                                list.Add(converted);
-                            }
-
-                            field.SetValue(obj, list);
-                        }
-                        else
-                        {
-                            // 단일 값
-                            object value = Convert.ChangeType(rawValue, field.PropertyType);
-                            field.SetValue(obj, value);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"[CsvLoader] 변환 오류: {header} / 값: {cols[j]} / {ex.Message}");
-                    }
+                // id 필드로 Dictionary 구성
+                var idProp = typeof(T).GetProperty("id");
+                if (idProp == null)
+                {
+                    Console.WriteLine($"[Error] id 프로퍼티 없음 - {typeof(T).Name}");
+                    return new Dictionary<int, T>();
                 }
 
-                // 기본 키 "id" 추출
-                var keyField = Array.Find(fields, f => f.Name.Equals("id", StringComparison.OrdinalIgnoreCase));
-                if (keyField == null)
+                var dict = new Dictionary<int, T>();
+                foreach (var record in records)
                 {
-                    Console.WriteLine($"[Error] 기본키(Id)가 없음 - {typeof(T).Name}");
-                    continue;
+                    int id = (int)Convert.ChangeType(idProp.GetValue(record), typeof(int));
+                    dict[id] = record;
                 }
 
-                int key = (int)Convert.ChangeType(keyField.GetValue(obj), typeof(int));
-                dict[key] = obj;
+                Console.WriteLine($"[CsvLoader] {typeof(T).Name} → {dict.Count}개 로드 완료!");
+                return dict;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CsvLoader] 로딩 실패: {ex.Message}");
+                return new Dictionary<int, T>();
+            }
+        }
+    }
+
+    // 범용 List<T> 파서
+    public class ListConverter<TElement> : DefaultTypeConverter
+    {
+        public override object ConvertFromString(string text, IReaderRow row, MemberMapData memberMapData)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return new List<TElement>();
+
+            text = text.Trim('[', ']', '"');
+            var parts = text.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+
+            var result = new List<TElement>();
+            foreach (var part in parts)
+            {
+                var trimmed = part.Trim();
+                var value = (TElement)Convert.ChangeType(trimmed, typeof(TElement), CultureInfo.InvariantCulture);
+                result.Add(value);
             }
 
-            Console.WriteLine($"[CsvLoader] {typeof(T).Name} → {dict.Count}개 로드 완료!");
-            return dict;
+            return result;
         }
     }
 }
