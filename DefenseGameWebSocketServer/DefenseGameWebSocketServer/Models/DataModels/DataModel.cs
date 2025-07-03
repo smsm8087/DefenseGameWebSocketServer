@@ -8,6 +8,7 @@
         public string grade { get; set; }
         public int value { get; set; }
         public int pct { get; set; }
+        public int need_percent { get; set; }
     }
     public class PlayerData
     {

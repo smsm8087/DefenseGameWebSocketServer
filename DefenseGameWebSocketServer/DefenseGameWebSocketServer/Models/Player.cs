@@ -80,24 +80,47 @@ public class Player
             switch(cardTable.type)
             {
                 case "add_attack":
-                    addData.addAttackPower += cardTable.value;
+                    if (cardTable.need_percent == 1)
+                        addData.addAttackPower += (int)(playerBaseData.attack_power * (cardTable.value / 100.0f));
+                    else
+                        addData.addAttackPower += cardTable.value;
                     break;
+                    
                 case "add_movespeed":
-                    addData.addMoveSpeed += cardTable.value * 0.01f;
-                    currentMoveSpeed = playerBaseData.move_speed + addData.addMoveSpeed; // 이동 속도 증가
+                    if (cardTable.need_percent == 1)
+                        addData.addMoveSpeed += playerBaseData.move_speed * (cardTable.value / 100.0f);
+                    else
+                        addData.addMoveSpeed += cardTable.value;
+                    currentMoveSpeed = playerBaseData.move_speed + addData.addMoveSpeed;
                     break;
+                    
                 case "add_criticaldmg":
-                    addData.addCriDmg += cardTable.value;
+                    if (cardTable.need_percent == 1)
+                        addData.addCriDmg += (int)(playerBaseData.critical_dmg * (cardTable.value / 100.0f));
+                    else
+                        addData.addCriDmg += cardTable.value;
                     break;
+                    
                 case "add_criticalpct":
-                    addData.addCriPct += cardTable.value;
+                    if (cardTable.need_percent == 1)
+                        addData.addCriPct += (int)(playerBaseData.critical_pct * (cardTable.value / 100.0f));
+                    else
+                        addData.addCriPct += cardTable.value;
                     break;
+                    
                 case "add_ultgauge":
-                    addData.addUlt += cardTable.value;
+                    if (cardTable.need_percent == 1)
+                        addData.addUlt += (int)(playerBaseData.ult_gauge * (cardTable.value / 100.0f));
+                    else
+                        addData.addUlt += cardTable.value;
                     break;
+                    
                 case "add_hp":
-                    addData.addHp += cardTable.value;
-                    currentHp = playerBaseData.hp + addData.addHp; // 이동 속도 증가
+                    if (cardTable.need_percent == 1)
+                        addData.addHp += (int)(playerBaseData.hp * (cardTable.value / 100.0f));
+                    else
+                        addData.addHp += cardTable.value;
+                    currentHp = playerBaseData.hp + addData.addHp;
                     break;
             }
         }
