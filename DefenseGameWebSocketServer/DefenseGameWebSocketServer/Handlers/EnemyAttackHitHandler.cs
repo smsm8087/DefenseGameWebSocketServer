@@ -10,7 +10,7 @@ namespace DefenseGameWebSocketServer.Handlers
     {
         public async Task HandleAsync(string rawMessage, IWebSocketBroadcaster broadcaster, SharedHpManager _sharedHpManager, EnemyManager _enemyManager)
         {
-            var msg = JsonSerializer.Deserialize<EnemyAttackMessage>(rawMessage);
+            var msg = JsonSerializer.Deserialize<EnemyChangeStateMessage>(rawMessage);
             if (msg == null) return;
 
             //해당 적 공격력 가져오기

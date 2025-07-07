@@ -12,7 +12,7 @@ namespace DefenseGameWebSocketServer.Models
             enemy.OnBroadcastRequired?.Invoke(new EnemyBroadcastEvent(
                     EnemyState.Attack,
                     enemy,
-                    new EnemyAttackMessage(enemy.id)
+                    new EnemyChangeStateMessage(enemy.id,"attack")
             ));
         }
 

@@ -83,6 +83,9 @@ namespace DefenseGameWebSocketServer.Manager
                 {
                     switch (evt.Type)
                     {
+                        case EnemyState.Move:
+                            await _broadcaster.BroadcastAsync(evt.Payload);
+                            break;
                         case EnemyState.RangedAttack:
                         case EnemyState.Attack:
                             //prepare animation 재생

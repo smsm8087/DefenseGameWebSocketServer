@@ -8,6 +8,11 @@ namespace DefenseGameWebSocketServer.Models
         public void Enter(Enemy enemy)
         {
             Console.WriteLine($"[Enemy {enemy.id}] → Move 상태 진입");
+            enemy.OnBroadcastRequired?.Invoke(new EnemyBroadcastEvent(
+                EnemyState.Move,
+                enemy,
+                new EnemyChangeStateMessage(enemy.id,"idle")
+            ));
         }
 
         public void Update(Enemy enemy, float deltaTime)

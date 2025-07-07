@@ -1,12 +1,15 @@
 ﻿using DefenseGameWebSocketServer.Model;
-public class EnemyAttackMessage : BaseMessage
+public class EnemyChangeStateMessage : BaseMessage
 {
     public string enemyId { get; set; }
-    public EnemyAttackMessage(
-        string enemyId
+    public string animName { get; set; }
+    public EnemyChangeStateMessage(
+        string enemyId,
+        string animName
     )
     {
-        type = "enemy_attack";
+        type = "enemy_change_state";
         this.enemyId = enemyId;
+        this.animName = animName;
     }
 }
