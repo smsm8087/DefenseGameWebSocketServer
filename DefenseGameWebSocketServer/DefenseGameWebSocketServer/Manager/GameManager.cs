@@ -46,6 +46,7 @@ namespace DefenseGameWebSocketServer.Manager
             _broadcaster = broadcaster;
             _enemyManager = new EnemyManager((IWebSocketBroadcaster)broadcaster);
             _waveScheduler = new WaveScheduler((IWebSocketBroadcaster)broadcaster, _cts, _hasPlayerCount,_getPlayerCount, _getPlayerList, _sharedHpManager, _enemyManager);
+            BulletManager.Instance.Initialize(broadcaster);
         }
 
         public void SetPlayerData(string playerId, string job_type)
@@ -89,6 +90,8 @@ namespace DefenseGameWebSocketServer.Manager
             if (_cts == null) _cts = new CancellationTokenSource();
             if( _sharedHpManager == null) _sharedHpManager = new SharedHpManager(waveId);
             if (_waveScheduler == null) _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount,_getPlayerCount,_getPlayerList, _sharedHpManager, _enemyManager);
+            BulletManager.Instance.Initialize(_broadcaster);
+
             string assignedJob = AssignJobToPlayer();
             SetPlayerData(playerId,assignedJob);
             if(_playerManager.TryGetPlayer(playerId, out Player player))
@@ -192,6 +195,7 @@ namespace DefenseGameWebSocketServer.Manager
 
             _cts = new CancellationTokenSource();
             _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount,_getPlayerCount, _getPlayerList,  _sharedHpManager, _enemyManager);
+            BulletManager.Instance.Initialize(_broadcaster);
 
             // 게임 재시작 시 직업 할당 초기화
             lock (_jobLock)

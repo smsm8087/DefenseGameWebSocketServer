@@ -40,6 +40,7 @@
         public List<float> spawn_right_pos { get; set; }
         public string attack_type { get; set; }
         public int bullet_id { get; set; }
+        public float aggro_radius { get; set; }
     }
     public class WaveRoundData
     {

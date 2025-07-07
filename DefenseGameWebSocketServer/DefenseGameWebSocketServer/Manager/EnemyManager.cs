@@ -83,6 +83,7 @@ namespace DefenseGameWebSocketServer.Manager
                 {
                     switch (evt.Type)
                     {
+                        case EnemyState.RangedAttack:
                         case EnemyState.Attack:
                             //prepare animation 재생
                             await _broadcaster.BroadcastAsync(evt.Payload);
@@ -100,6 +101,9 @@ namespace DefenseGameWebSocketServer.Manager
                 // 정확한 프레임 맞추기
                 var elapsed = (sw.ElapsedTicks - nowTicks) / (float)Stopwatch.Frequency;
                 int sleepMs = Math.Max(0, (int)((targetFrameTime - elapsed) * 1000));
+
+                //bulletManager 업데이트
+                await BulletManager.Instance.Update(deltaTime);
                 await Task.Delay(sleepMs, _cts.Token);
             }
             Console.WriteLine("[EnemyManager] FSM 종료됨");

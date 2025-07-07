@@ -27,26 +27,19 @@ namespace DefenseGameWebSocketServer.Handlers
                 // Shared HP 상태 브로드캐스트
                 var hpMessage = new SharedHpMessage(_sharedHpManager.getHpStatus().Item1, _sharedHpManager.getHpStatus().Item2);
                 await broadcaster.BroadcastAsync(hpMessage);
-            } 
+                Console.WriteLine($"[EnemyAttackHitHandler] 공유 HP 감소됨, 현재 HP: {_sharedHpManager.getHpStatus().Item1}");
+            }
             else if (targetEnemy.targetType == TargetType.Player)
             {
                 // 플레이어 공격
                 if(targetEnemy.AggroTarget != null)
                 {
-                    targetEnemy.AggroTarget.TakeDamage((int)targetEnemy.currentAttack);
-                    var playerHpMessage = new PlayerUpdateHpMessage(
-                        targetEnemy.AggroTarget.id, 
-                        new PlayerInfo
-                        {
-                            currentHp = targetEnemy.AggroTarget.currentHp,
-                            currentMaxHp = targetEnemy.AggroTarget.playerBaseData.hp + targetEnemy.AggroTarget.addData.addHp,
-                        }
-                    );
-                    await broadcaster.SendToAsync(targetEnemy.AggroTarget.id, playerHpMessage);
+                    //총알 발사
+                    await BulletManager.Instance.SpawnBullet(targetEnemy, targetEnemy.AggroTarget);
+
                     targetEnemy.OnAttackPerformed(); // 공격 횟수 증가 및 상태 변경
                 }
             }
-            Console.WriteLine($"[EnemyAttackHitHandler] 공유 HP 감소됨, 현재 HP: {_sharedHpManager.getHpStatus().Item1}");
         }
     }
 }

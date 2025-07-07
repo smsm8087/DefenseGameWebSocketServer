@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using DefenseGameWebSocketServer.Manager;
+using System.Numerics;
 
 namespace DefenseGameWebSocketServer.Models
 {
@@ -18,7 +19,27 @@ namespace DefenseGameWebSocketServer.Models
 
         public void Update(Enemy enemy, float deltaTime)
         {
-            
+            if (enemy.AggroTarget == null)
+            {
+                var players = PlayerManager.Instance.GetAllPlayers().ToArray();
+                if (players.Length > 0)
+                {
+                    enemy.UpdateAggro(players);
+                    enemy.ChangeState(EnemyState.Move);
+                    return;
+                }
+            }
+
+            float dx = enemy.AggroTarget.x - enemy.x;
+            float dy = enemy.AggroTarget.y - enemy.y;
+            float distanceSqr = dx * dx + dy * dy;
+            float radius = enemy.enemyBaseData.aggro_radius;
+
+            if (distanceSqr > radius * radius)
+            {
+                enemy.ChangeState(EnemyState.Move);
+                return;
+            }
         }
 
         public void Exit(Enemy enemy)
