@@ -1,3 +1,3 @@
-id,type,prefab_path,hp,speed,attack,defense,base_width,base_height,base_scale,base_offsetx,base_offsety,target_type,spawn_left_pos,spawn_right_pos,attack_type,bullet_id,aggro_radius
-1000,Dust,Prefabs/Enemy/Dust,100,2,1,10,0.5,0.5,3,0.008874312,0.2873794,shared_hp,"[-46,-2]","[45,-2]",melee,0,0
-1001,FlyingDust,Prefabs/Enemy/FlyingDust,40,2,5,1,1.100331,1.007972,3,0.0106504,0.6159631,player,"[-30,0]","[30,0]",ranged,1,9
+id,type,prefab_path,hp,speed,attack,defense,base_width,base_height,base_scale,base_offsetx,base_offsety,target_type,spawn_left_pos,spawn_right_pos,attack_type,bullet_id,aggro_radius,bullet_offset
+1000,Dust,Prefabs/Enemy/Dust,100,2,1,10,0.5,0.5,3,0.008874312,0.2873794,shared_hp,"[-46,-2]","[45,-2]",melee,0,0,"[0,0]"
+1001,FlyingDust,Prefabs/Enemy/FlyingDust,40,2,5,1,1.100331,1.007972,3,0.0106504,0.6159631,player,"[-30,0]","[30,0]",ranged,1,6,"[0.2926045,0.4114196]"

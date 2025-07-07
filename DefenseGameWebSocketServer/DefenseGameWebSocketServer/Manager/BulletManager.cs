@@ -76,9 +76,13 @@ namespace DefenseGameWebSocketServer.Manager
         {
             if (attacker.bulletData == null || target == null)
                 return;
-
             float dx = target.x - attacker.x;
-            float dy = target.y - attacker.y;
+            float bulletSpawnPosX = dx > 0 ? attacker.x + attacker.enemyBaseData.bullet_offset[0] * attacker.enemyBaseData.base_scale : attacker.x - attacker.enemyBaseData.bullet_offset[0] * attacker.enemyBaseData.base_scale;
+            float bulletSpawnPosY = attacker.y + attacker.enemyBaseData.bullet_offset[1] * attacker.enemyBaseData.base_scale;
+
+            dx = target.x - bulletSpawnPosX;
+            //offset scale 적용
+            float dy = target.y + target.playerBaseData.hit_offset[1] * 3f - bulletSpawnPosY;
             float mag = MathF.Sqrt(dx * dx + dy * dy);
             if (mag <= 0.01f) return;
 
@@ -90,8 +94,8 @@ namespace DefenseGameWebSocketServer.Manager
             var bullet = new Bullet(
                 bulletId: bulletId,
                 attackerId: attacker.id,
-                x: attacker.x,
-                y: attacker.y,
+                x: bulletSpawnPosX,
+                y: bulletSpawnPosY,
                 dirX: dirX,
                 dirY: dirY,
                 damage: (int)attacker.currentAttack,
@@ -106,8 +110,8 @@ namespace DefenseGameWebSocketServer.Manager
             var msg = new BulletSpawnMessage(
                 bulletId: bulletId,
                 enemyId: attacker.id,
-                startX: attacker.x,
-                startY: attacker.y
+                startX: bulletSpawnPosX,
+                startY: bulletSpawnPosY
             );
 
             await _broadcaster.BroadcastAsync(msg);

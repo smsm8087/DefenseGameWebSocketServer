@@ -55,14 +55,16 @@ public class Bullet
     }
     public static bool CheckBulletHitsPlayer(Bullet bullet, Player player)
     {
+        float scale = 3f;
         var offset = player.playerBaseData.hit_offset;
         var size = player.playerBaseData.hit_size;
 
-        float centerX = player.x + offset[0];
-        float centerY = player.y + offset[1];
+        //scale 적용
+        float centerX = player.x + offset[0] * scale;
+        float centerY = player.y + offset[1] * scale;
 
-        float halfW = size[0] / 2f;
-        float halfH = size[1] / 2f;
+        float halfW = size[0] * scale / 2f;
+        float halfH = size[1] * scale / 2f;
 
         float left = centerX - halfW;
         float right = centerX + halfW;

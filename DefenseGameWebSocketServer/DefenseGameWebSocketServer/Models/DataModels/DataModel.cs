@@ -44,6 +44,7 @@
         public string attack_type { get; set; }
         public int bullet_id { get; set; }
         public float aggro_radius { get; set; }
+        public List<float> bullet_offset { get; set; }
     }
     public class WaveRoundData
     {
