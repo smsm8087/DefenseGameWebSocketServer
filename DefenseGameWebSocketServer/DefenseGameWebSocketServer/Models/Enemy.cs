@@ -49,6 +49,8 @@ public class Enemy
     private const int MaxAttackBeforeReaggro = 3;
     private const float AggroCooldown = 5f;
 
+    public bool isRangedAttackPending { get; private set; } // 원거리 공격 대기 상태
+
     public BulletData bulletData;
     public Enemy(string id, EnemyData enemyData, float startX, float startY, float targetX, float targetY, WaveData waveData, WaveRoundData waveRoundData, BulletData bulletData = null)
     {
@@ -94,6 +96,7 @@ public class Enemy
                 _currentState = attackState;
                 break;
             case EnemyState.RangedAttack:
+                isRangedAttackPending = true;
                 _currentState = rangedAttackState;
                 break;
             case EnemyState.Dead:
@@ -143,5 +146,6 @@ public class Enemy
     public void OnAttackPerformed()
     {
         attackCount++;
+        isRangedAttackPending = false; // 공격이 수행되면 원거리 공격 대기 상태 해제
     }
 }

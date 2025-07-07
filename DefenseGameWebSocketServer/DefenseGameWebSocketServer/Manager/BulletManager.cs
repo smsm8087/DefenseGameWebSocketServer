@@ -27,16 +27,23 @@ namespace DefenseGameWebSocketServer.Manager
                 {
                     destroyBulletIds.Add(new BulletTickMessage.BulletInfo {bulletId = bullet.bulletId });
 
-                    var playerHpMessage = new PlayerUpdateHpMessage(
-                        bullet.target.id,
-                        new PlayerInfo
-                        {
-                            currentHp = bullet.target.currentHp,
-                            currentMaxHp = bullet.target.playerBaseData.hp + bullet.target.addData.addHp,
-                        }
-                    );
-                    await _broadcaster.SendToAsync(bullet.target.id, playerHpMessage);
-
+                    if(bullet.hitPlayer != null)
+                    {
+                        Console.WriteLine($"[BulletManager] {bullet.bulletId} → {bullet.hitPlayer.id} 피격됨");
+                        var playerHpMessage = new PlayerUpdateHpMessage(
+                            bullet.hitPlayer.id,
+                            new PlayerInfo
+                            {
+                                currentHp = bullet.hitPlayer.currentHp,
+                                currentMaxHp = bullet.hitPlayer.playerBaseData.hp + bullet.hitPlayer.addData.addHp,
+                            }
+                        );
+                        await _broadcaster.SendToAsync(bullet.hitPlayer.id, playerHpMessage);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[BulletManager] {bullet.bulletId} → Ground hit됨");
+                    }
                     _bullets.RemoveAt(i);
                     continue;
                 }
@@ -88,7 +95,6 @@ namespace DefenseGameWebSocketServer.Manager
                 dirX: dirX,
                 dirY: dirY,
                 damage: (int)attacker.currentAttack,
-                target: target,
                 bulletData: attacker.bulletData
             );
             bullet.bulletData = attacker.bulletData;

@@ -6,11 +6,16 @@ using System.Text.Json;
 
 namespace DefenseGameWebSocketServer.Handlers
 {
+    public class EnemyAttackHitMessage
+    {
+        public string type = "enemy_attack_hit";
+        public string enemyId {get; set;}
+    }
     public class EnemyAttackHitHandler
     {
         public async Task HandleAsync(string rawMessage, IWebSocketBroadcaster broadcaster, SharedHpManager _sharedHpManager, EnemyManager _enemyManager)
         {
-            var msg = JsonSerializer.Deserialize<EnemyChangeStateMessage>(rawMessage);
+            var msg = JsonSerializer.Deserialize<EnemyAttackHitMessage>(rawMessage);
             if (msg == null) return;
 
             //해당 적 공격력 가져오기

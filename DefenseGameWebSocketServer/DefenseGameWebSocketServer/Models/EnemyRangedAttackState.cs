@@ -8,12 +8,12 @@ namespace DefenseGameWebSocketServer.Models
         public void Enter(Enemy enemy)
         {
             Console.WriteLine($"[Enemy {enemy.id}] → Attack 상태 진입");
-            
+
             //attack 준비해라 메시지 브로드캐스트
             enemy.OnBroadcastRequired?.Invoke(new EnemyBroadcastEvent(
                     EnemyState.RangedAttack,
                     enemy,
-                    new EnemyChangeStateMessage(enemy.id, "attack")
+                    new EnemyChangeStateMessage(enemy.id, "attack", enemy.AggroTarget)
             ));
         }
 
@@ -35,7 +35,7 @@ namespace DefenseGameWebSocketServer.Models
             float distanceSqr = dx * dx + dy * dy;
             float radius = enemy.enemyBaseData.aggro_radius;
 
-            if (distanceSqr > radius * radius)
+            if (distanceSqr > radius * radius && !enemy.isRangedAttackPending)
             {
                 enemy.ChangeState(EnemyState.Move);
                 return;

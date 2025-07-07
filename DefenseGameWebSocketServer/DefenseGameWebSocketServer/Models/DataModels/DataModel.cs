@@ -21,6 +21,8 @@
         public float move_speed { get; set; }
         public int critical_pct { get; set; }
         public int critical_dmg { get; set; }
+        public List<float> hit_offset { get; set; }
+        public List<float> hit_size { get; set; }
     }
     public class EnemyData
     {
