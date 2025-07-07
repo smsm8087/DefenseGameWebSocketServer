@@ -1,4 +1,4 @@
-id,job_type,hp,ult_gauge,attack_power,move_speed,critical_pct,critical_dmg
-1,tank,500,5,30,6,10,100
-2,programmer,150,5,50,4,40,150
-3,sniper,120,5,80,3,50,250
+﻿id,job_type,hp,ult_gauge,attack_power,attack_speed,move_speed,critical_pct,critical_dmg
+1,tank,500,5,30,10,6,10,100
+2,programmer,150,5,50,10,4,40,150
+3,sniper,120,5,80,10,3,50,250

@@ -254,6 +254,7 @@ public class WaveScheduler
                     currentMaxHp = player.playerBaseData.hp + player.addData.addHp,
                     currentUltGauge = player.playerBaseData.ult_gauge + player.addData.addUlt,
                     currentMoveSpeed = player.currentMoveSpeed,
+                    currentAttackSpeed = player.currentAttackSpeed,
                     currentCriPct = player.playerBaseData.critical_pct + player.addData.addCriPct,
                     currentCriDmg = player.playerBaseData.critical_dmg + player.addData.addCriDmg,
                     currentAttack = player.playerBaseData.attack_power + player.addData.addAttackPower,

@@ -11,6 +11,7 @@ public class PlayerInfo
     public int currentMaxHp { get; set; }
     public float currentUltGauge { get; set; }
     public float currentMoveSpeed { get; set; }
+    public float currentAttackSpeed { get; set; }
     public int currentCriPct { get; set; }
     public int currentCriDmg { get; set; }
     public float currentAttack { get; set; }
@@ -24,6 +25,7 @@ public class PlayerAddData
     public int addHp { get; set; }
     public int addUlt { get; set; }
     public int addAttackPower { get; set; }
+    public float addAttackSpeed { get; set; }
     public int addCriPct { get; set; }
     public int addCriDmg { get; set; }
     public float addMoveSpeed { get; set; }
@@ -38,6 +40,7 @@ public class Player
     public int currentHp { get; private set; }
     public float currentUlt { get; private set; }
     public float currentMoveSpeed { get; private set; }
+    public float currentAttackSpeed { get; private set; }
     public PlayerAddData addData { get; private set; }
     public PlayerData playerBaseData { get; private set; }
     public List<int> CardIds { get; private set; } = new List<int>();
@@ -53,6 +56,7 @@ public class Player
         
         this.currentHp = playerBaseData.hp; // 기본 HP 설정
         this.currentMoveSpeed = playerBaseData.move_speed; // 기본 이동 속도 설정
+        this.currentAttackSpeed = playerBaseData.attack_speed / 10.0f; // 기본 공격 속도 설정
         this.currentUlt = 0; // 기본 ULT 게이지 설정
         this.addData = new PlayerAddData
         {
@@ -61,7 +65,8 @@ public class Player
             addAttackPower = 0,
             addCriPct = 0,
             addCriDmg = 0,
-            addMoveSpeed = 0
+            addMoveSpeed = 0,
+            addAttackSpeed = 0
         };
     }
     public void addCardId(int cardId)
@@ -121,6 +126,14 @@ public class Player
                     else
                         addData.addHp += cardTable.value;
                     currentHp = playerBaseData.hp + addData.addHp;
+                    break;
+                case "add_attackspeed":
+                    float baseSpeed = playerBaseData.attack_speed / 10.0f;
+                    if (cardTable.need_percent == 1)
+                        addData.addAttackSpeed += baseSpeed * (cardTable.value / 100.0f);
+                    else
+                        addData.addAttackSpeed += cardTable.value / 10.0f;
+                    currentAttackSpeed = baseSpeed + addData.addAttackSpeed;
                     break;
             }
         }
