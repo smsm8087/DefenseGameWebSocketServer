@@ -34,7 +34,7 @@ namespace DefenseGameWebSocketServer.Models
             float len = MathF.Sqrt(dirX * dirX + dirY * dirY);
             // 속도 적용
             enemy.x += dirX / len * enemy.currentSpeed * deltaTime;
-            enemy.y += dirY / len * enemy.currentSpeed * deltaTime;
+            //enemy.y += dirY / len * enemy.currentSpeed * deltaTime;
 
             if (enemy.targetType == TargetType.SharedHp)
             {
@@ -48,8 +48,10 @@ namespace DefenseGameWebSocketServer.Models
             } else
             {
                 //"player" 타입의 적은 플레이어와의 거리 계산
-                //근거리 냐 원거리냐
-                enemy.ChangeState(EnemyState.RangedAttack);
+                if(len <= enemy.enemyBaseData.aggro_radius)
+                {
+                    enemy.ChangeState(EnemyState.RangedAttack);
+                }
             }
         }
 
