@@ -29,6 +29,7 @@ public class Enemy
     public float currentAttack;
     public float currentDefense;
     public float currentSpeed;
+    public string killedPlayerId;
 
     public EnemyData enemyBaseData;
     //fsm
@@ -104,13 +105,14 @@ public class Enemy
         _currentState.Enter(this);
         state = _currentState.GetStateType();
     }
-    public void TakeDamage(int dmg)
+    public void TakeDamage(int dmg, string playerId)
     {
         currentHp -= dmg;
         if (currentHp < 0) currentHp = 0;
 
         if (currentHp == 0 && state != EnemyState.Dead)
         {
+            killedPlayerId = playerId;
             ChangeState(EnemyState.Dead);
         }
     }

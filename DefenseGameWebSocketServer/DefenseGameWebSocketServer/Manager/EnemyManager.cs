@@ -84,15 +84,13 @@ namespace DefenseGameWebSocketServer.Manager
                     switch (evt.Type)
                     {
                         case EnemyState.Move:
-                            await _broadcaster.BroadcastAsync(evt.Payload);
-                            break;
                         case EnemyState.RangedAttack:
                         case EnemyState.Attack:
                             //prepare animation 재생
                             await _broadcaster.BroadcastAsync(evt.Payload);
                             break;
                         case EnemyState.Dead:
-                            await _broadcaster.BroadcastAsync(new EnemyDieMessage(new List<string> { evt.EnemyRef.id }));
+                            await _broadcaster.BroadcastAsync(new EnemyDieMessage(new List<string> { evt.EnemyRef.id }, evt.EnemyRef.killedPlayerId));
                             lock (_enemies)
                             {
                                 _enemies.Remove(evt.EnemyRef);
@@ -207,7 +205,7 @@ namespace DefenseGameWebSocketServer.Manager
                         bool isCritical = playerAttackData.Item2;
                         int enemyDefense = (int)enemy.currentDefense;
                         int currentDamage = Math.Max(0, playerDamage - enemyDefense);
-                        enemy.TakeDamage(currentDamage);
+                        enemy.TakeDamage(currentDamage, msg.playerId);
         
                         Console.WriteLine($"[AttackHandler] 적 {enemy.id} {playerDamage} 데미지 남은 HP: {enemy.currentHp}");
 
