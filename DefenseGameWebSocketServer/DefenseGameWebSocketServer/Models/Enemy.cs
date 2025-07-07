@@ -48,6 +48,27 @@ public class Enemy
     private DateTime lastAggroChangeTime;
     private const int MaxAttackBeforeReaggro = 3;
     private const float AggroCooldown = 5f;
+    public float baseY;     // 최초 Y위치
+    public float floatYOffset = 0f;           // 현재 y 추가 오프셋
+    private float floatTargetOffset = 0f;     // 목표 오프셋
+    private float floatTimer = 0f;
+    private float floatDuration = 0.5f;       // 얼마나 자주 변경할지 (초)
+    private float floatRange = 0.05f;         // 위아래 이동 범위
+
+    public void UpdateFloating(float deltaTime)
+    {
+        floatTimer += deltaTime;
+
+        // 목표 위치 갱신
+        if (floatTimer >= floatDuration)
+        {
+            floatTimer = 0f;
+            floatTargetOffset = (float)(new Random().NextDouble() * 2 - 1) * floatRange; // -range ~ +range
+        }
+
+        // 천천히 목표 위치로 이동 lerp 방식 사용
+        floatYOffset = floatYOffset + (floatTargetOffset - floatYOffset) * deltaTime * 3f; 
+    }
 
     public bool isRangedAttackPending { get; private set; } // 원거리 공격 대기 상태
 
@@ -67,7 +88,7 @@ public class Enemy
         this.type = enemyBaseData.type;
         this.waveData = waveData;
         this.bulletData = bulletData;
-
+        this.baseY = startY;
         targetType = enemyBaseData.target_type.ToLower() switch
         {
             "player" => TargetType.Player,

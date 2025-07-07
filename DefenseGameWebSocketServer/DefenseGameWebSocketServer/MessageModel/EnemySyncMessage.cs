@@ -4,13 +4,19 @@
     {
         public string enemyId { get; set; }
         public float x { get; set; }
+        public float y { get; set; }
+        public string enemyType { get; set; } 
         public EnemySyncPacket(
             string enemyId,
-            float x
+            float x,
+            float y,
+            string enemyType
         )
         {
             this.enemyId = enemyId;
             this.x = x;
+            this.y = y;
+            this.enemyType = enemyType;
         }
     }
 

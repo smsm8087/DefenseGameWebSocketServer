@@ -261,7 +261,7 @@ namespace DefenseGameWebSocketServer.Manager
         {
             lock (_enemies)
             {
-                return _enemies.Select(e => new EnemySyncPacket(e.id, e.x)).ToList();
+                return _enemies.Select(e => new EnemySyncPacket(e.id, e.x, e.y,e.enemyBaseData.target_type)).ToList();
             }
         }
         private EnemyData GetEnemyData (int enemyDataId)
