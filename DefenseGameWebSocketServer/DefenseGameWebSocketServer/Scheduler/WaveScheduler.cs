@@ -188,7 +188,8 @@ public class WaveScheduler
 
         await givePlayerRandomCard(playerList);
 
-        if (_wave >= waveData.max_wave)
+        //if (_wave >= waveData.max_wave)
+        if (_wave >= 2)
         {
             Console.WriteLine("[WaveScheduler] Settlement Phase 완료 → Boss Phase 진입");
             _currentPhase = GamePhase.Boss;
@@ -216,7 +217,7 @@ public class WaveScheduler
 
     private async Task StartBossPhaseAsync()
     {
-        await _broadcaster.BroadcastAsync(new { type = "boss_start" });
+        await _broadcaster.BroadcastAsync(new { type = "boss_start", x = -35, y = -2.9 });
 
         // Boss Phase 진행 (예시로 10초)
         await Task.Delay(10000);
