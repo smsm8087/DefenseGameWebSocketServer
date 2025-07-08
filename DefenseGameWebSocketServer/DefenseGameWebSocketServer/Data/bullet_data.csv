@@ -1,2 +1,2 @@
 id,name,speed,range,prefab_path
-1,virus,5,0.54,Prefabs/Enemy/bullet
+1,virus,8,0.54,Prefabs/Enemy/bullet
