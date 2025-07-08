@@ -23,14 +23,12 @@ namespace DefenseGameWebSocketServer.Manager
         {
             if (_playerManager.TryGetPlayer(playerId, out Player player))
             {
-                int maxHp = player.playerBaseData.hp + player.addData.addHp;
-                
                 await _broadcaster.BroadcastAsync(new
                 {
                     type = "party_member_health",
                     player_id = playerId,
                     current_health = player.currentHp,
-                    max_health = maxHp,
+                    max_health = player.currentMaxHp,
                     job_type = player.jobType
                 });
 
@@ -77,7 +75,7 @@ namespace DefenseGameWebSocketServer.Manager
                 id = p.id,
                 job_type = p.jobType,
                 current_health = p.currentHp,
-                max_health = p.playerBaseData.hp + p.addData.addHp,
+                max_health = p.currentMaxHp,
                 current_ult = p.currentUlt,
                 max_ult = 100f
             }).ToList();
@@ -139,7 +137,7 @@ namespace DefenseGameWebSocketServer.Manager
                 id = p.id,
                 job_type = p.jobType,
                 current_health = p.currentHp,
-                max_health = p.playerBaseData.hp + p.addData.addHp,
+                max_health = p.currentMaxHp,
                 current_ult = p.currentUlt,
                 max_ult = 100f
             }).ToList();

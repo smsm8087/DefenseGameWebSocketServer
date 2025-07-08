@@ -46,14 +46,16 @@ public class Enemy
     public Player AggroTarget { get; private set; }
     private int attackCount;
     private DateTime lastAggroChangeTime;
-    private const int MaxAttackBeforeReaggro = 3;
-    private const float AggroCooldown = 5f;
+
     public float baseY;     // 최초 Y위치
     public float floatYOffset = 0f;           // 현재 y 추가 오프셋
     private float floatTargetOffset = 0f;     // 목표 오프셋
     private float floatTimer = 0f;
     private float floatDuration = 0.5f;       // 얼마나 자주 변경할지 (초)
     private float floatRange = 0.05f;         // 위아래 이동 범위
+
+    public bool isRangedAttackPending { get; private set; } // 원거리 공격 대기 상태
+    public BulletData bulletData;
 
     public void UpdateFloating(float deltaTime)
     {
@@ -69,10 +71,6 @@ public class Enemy
         // 천천히 목표 위치로 이동 lerp 방식 사용
         floatYOffset = floatYOffset + (floatTargetOffset - floatYOffset) * deltaTime * 3f; 
     }
-
-    public bool isRangedAttackPending { get; private set; } // 원거리 공격 대기 상태
-
-    public BulletData bulletData;
     public Enemy(string id, EnemyData enemyData, float startX, float startY, float targetX, float targetY, WaveData waveData, WaveRoundData waveRoundData, BulletData bulletData = null)
     {
         this.id = id;
@@ -153,7 +151,8 @@ public class Enemy
     {
         if (targetType != TargetType.Player) return;
 
-        if (AggroTarget == null || (DateTime.UtcNow - lastAggroChangeTime).TotalSeconds >= AggroCooldown || attackCount >= MaxAttackBeforeReaggro)
+        if (AggroTarget == null || (DateTime.UtcNow - lastAggroChangeTime).TotalSeconds >= enemyBaseData.aggro_cool_down || 
+            attackCount >= enemyBaseData.aggro_attack_count)
         {
             var rand = new Random();
             AggroTarget = players[rand.Next(players.Length)];

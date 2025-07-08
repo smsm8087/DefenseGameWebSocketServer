@@ -35,7 +35,7 @@ namespace DefenseGameWebSocketServer.Manager
                             new PlayerInfo
                             {
                                 currentHp = bullet.hitPlayer.currentHp,
-                                currentMaxHp = bullet.hitPlayer.playerBaseData.hp + bullet.hitPlayer.addData.addHp,
+                                currentMaxHp = bullet.hitPlayer.currentMaxHp,
                             }
                         );
                         await _broadcaster.SendToAsync(bullet.hitPlayer.id, playerHpMessage);

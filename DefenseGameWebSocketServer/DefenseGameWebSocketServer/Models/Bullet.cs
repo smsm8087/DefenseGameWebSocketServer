@@ -55,7 +55,7 @@ public class Bullet
     }
     public static bool CheckBulletHitsPlayer(Bullet bullet, Player player)
     {
-        float scale = 3f;
+        float scale = player.playerBaseData.base_scale;
         var offset = player.playerBaseData.hit_offset;
         var size = player.playerBaseData.hit_size;
 

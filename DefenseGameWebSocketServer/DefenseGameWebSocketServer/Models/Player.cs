@@ -38,6 +38,7 @@ public class Player
     public float y;
     
     public int currentHp { get; private set; }
+    public int currentMaxHp { get; private set; }
     public float currentUlt { get; private set; }
     public float currentMoveSpeed { get; private set; }
     public float currentAttackSpeed { get; private set; }
@@ -54,7 +55,7 @@ public class Player
         PlayerData? playerData = GameDataManager.Instance.GetTable<PlayerData>("player_data").Values.FirstOrDefault(x => x.job_type == this.jobType);
         this.playerBaseData = playerData;
         
-        this.currentHp = playerBaseData.hp; // 기본 HP 설정
+        this.currentHp = currentMaxHp = playerBaseData.hp; // 기본 HP 설정
         this.currentMoveSpeed = playerBaseData.move_speed; // 기본 이동 속도 설정
         this.currentAttackSpeed = playerBaseData.attack_speed / 10.0f; // 기본 공격 속도 설정
         this.currentUlt = 0; // 기본 ULT 게이지 설정
@@ -125,7 +126,7 @@ public class Player
                         addData.addHp += (int)(playerBaseData.hp * (cardTable.value / 100.0f));
                     else
                         addData.addHp += cardTable.value;
-                    currentHp = playerBaseData.hp + addData.addHp;
+                    currentMaxHp = playerBaseData.hp + addData.addHp;
                     break;
                 case "add_attackspeed":
                     float baseSpeed = playerBaseData.attack_speed / 10.0f;

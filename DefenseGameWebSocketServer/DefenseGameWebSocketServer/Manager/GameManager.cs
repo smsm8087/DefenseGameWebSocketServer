@@ -105,7 +105,7 @@ namespace DefenseGameWebSocketServer.Manager
                         job_type = assignedJob,
                         currentHp = player.currentHp,
                         currentUlt = player.currentUlt,
-                        currentMaxHp = player.playerBaseData.hp + player.addData.addHp,
+                        currentMaxHp = player.currentMaxHp,
                         currentUltGauge = player.playerBaseData.ult_gauge + player.addData.addUlt,
                         currentMoveSpeed = player.currentMoveSpeed,
                         currentAttackSpeed = player.currentAttackSpeed,

@@ -23,6 +23,7 @@
         public int critical_dmg { get; set; }
         public List<float> hit_offset { get; set; }
         public List<float> hit_size { get; set; }
+        public float base_scale { get; set; }
     }
     public class EnemyData
     {
@@ -45,6 +46,8 @@
         public int bullet_id { get; set; }
         public float aggro_radius { get; set; }
         public List<float> bullet_offset { get; set; }
+        public float aggro_attack_count { get; set; }
+        public float aggro_cool_down { get; set; }
     }
     public class WaveRoundData
     {
