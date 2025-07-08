@@ -53,13 +53,14 @@ public class Bullet
             }
         }
     }
+    //총알 중심좌표가 플레이어 히트박스 사각형 안에 들어있는지 검사
     public static bool CheckBulletHitsPlayer(Bullet bullet, Player player)
     {
         float scale = player.playerBaseData.base_scale;
         var offset = player.playerBaseData.hit_offset;
         var size = player.playerBaseData.hit_size;
 
-        //scale 적용
+        // 스케일 적용된 중심 좌표
         float centerX = player.x + offset[0] * scale;
         float centerY = player.y + offset[1] * scale;
 
@@ -73,15 +74,7 @@ public class Bullet
 
         float bx = bullet.x;
         float by = bullet.y;
-        float radius = bullet.bulletData?.range ?? 0.5f;
 
-        // 가장 가까운 점 찾기
-        float closestX = MathF.Max(left, MathF.Min(bx, right));
-        float closestY = MathF.Max(bottom, MathF.Min(by, top));
-
-        float dx = bx - closestX;
-        float dy = by - closestY;
-
-        return (dx * dx + dy * dy) < (radius * radius);
+        return bx > left && bx < right && by > bottom && by < top;
     }
 }
