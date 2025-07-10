@@ -30,6 +30,8 @@ public class WaveScheduler
     private Dictionary<string, List<CardData>> _selectCardPlayerDict = new Dictionary<string, List<CardData>>();
     private WaveData waveData;
     private List<WaveRoundData> waveRoundDataList = new List<WaveRoundData>();
+    private Boss _boss;
+    private BossFSM _bossFSM;
 
     public WaveScheduler(IWebSocketBroadcaster broadcaster, CancellationTokenSource cts, Func<bool> hasPlayerCount, Func<int> getPlayerCount, Func<List<string>> getPlayerList, SharedHpManager sharedHpManager, EnemyManager enemyManager)
     {
@@ -143,7 +145,7 @@ public class WaveScheduler
                     await StartSettlementPhaseAsync();
                     break;
                 case GamePhase.Boss:
-                    await StartBossPhaseAsync();
+                    await StartBossPhaseAsync(waveData, waveRoundDataList);
                     break;
             }
         }
@@ -188,8 +190,7 @@ public class WaveScheduler
 
         await givePlayerRandomCard(playerList);
 
-        //if (_wave >= waveData.max_wave)
-        if (_wave >= 2)
+        if (_wave == waveData.boss_wave)
         {
             Console.WriteLine("[WaveScheduler] Settlement Phase 완료 → Boss Phase 진입");
             _currentPhase = GamePhase.Boss;
@@ -214,13 +215,61 @@ public class WaveScheduler
             remaining -= 0.1f;
         }
     }
-
-    private async Task StartBossPhaseAsync()
+    public BossFSM GetBossFSM()
     {
-        await _broadcaster.BroadcastAsync(new { type = "boss_start", x = -35, y = -2.9 });
+        return _bossFSM;
+    }
+    private async Task StartBossPhaseAsync(WaveData waveData, List<WaveRoundData> waveRoundDataList)
+    {
+        await Task.Delay(2000);
+        int boss_table_id = waveData.boss_table_id;
+        var bossData = GameDataManager.Instance.GetData<BossData>("boss_data", boss_table_id);
+        if (bossData == null)
+        {
+            Console.WriteLine($"[WaveScheduler] 보스 데이터가 없습니다. 보스 ID: {boss_table_id}");
+            return;
+        }
+        Console.WriteLine($"[WaveScheduler] Boss Phase 시작: {bossData.id}");
+        // 보스 페이즈 시작
+        List<float> bossPosition = bossData.spawn_pos;
+        await _broadcaster.BroadcastAsync(new { type = "boss_start", x = bossPosition[0], y = bossPosition[1], maxHp = bossData.max_hp });
 
-        // Boss Phase 진행 (예시로 10초)
-        await Task.Delay(10000);
+        await Task.Delay(5000);
+        await StartBossPhase(bossData, bossPosition[0], bossPosition[1], waveData, waveRoundDataList); // 보스 페이즈 시작
+    }
+
+    
+
+    public async Task StartBossPhase(BossData bossData, float x, float y, WaveData waveData, List<WaveRoundData> waveRoundDataList)
+    {
+        var patternData = GameDataManager.Instance.GetTable<BossPatternData>("boss_pattern_data")
+            .Values.Where(p => p.boss_id == bossData.id).ToList();
+
+        _boss = new Boss
+        {
+            bossId = bossData.id,
+            maxHp = bossData.max_hp,
+            currentHp = bossData.max_hp,
+            aggro_cool_down = bossData.aggro_cool_down,
+            range = bossData.range,
+            speed = bossData.speed,
+            bossBaseData = bossData,
+            x = x,
+            y = y,
+        };
+
+        _bossFSM = new BossFSM(_boss, patternData, _broadcaster, _enemyManager, _sharedHpManager, waveData, waveRoundDataList);
+        float deltaTime = 0.1f; // Update 주기 (100ms)
+        while(_boss != null && _boss.IsAlive)
+        {
+            UpdateBoss(deltaTime);
+            await Task.Delay(TimeSpan.FromSeconds(deltaTime), _cts.Token);
+        }
+    }
+
+    public void UpdateBoss(float deltaTime)
+    {
+        _bossFSM?.Update(deltaTime);
     }
 
     public void PlayerReady(string playerId)

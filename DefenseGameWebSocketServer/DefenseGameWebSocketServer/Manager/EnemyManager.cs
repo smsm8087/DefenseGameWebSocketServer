@@ -1,6 +1,5 @@
 using DefenseGameWebSocketServer.MessageModel;
 using DefenseGameWebSocketServer.Model;
-using DefenseGameWebSocketServer.Models;
 using DefenseGameWebSocketServer.Models.DataModels;
 using Newtonsoft.Json.Linq;
 using System;
@@ -180,7 +179,7 @@ namespace DefenseGameWebSocketServer.Manager
                     enemy.OnBroadcastRequired = evt => _broadcastEvents.Enqueue(evt);
                     lock (_enemies) _enemies.Add(enemy);
 
-                    var msg = new SpawnEnemyMessage(enemyId, waveIndex, spawnX, spawnY, enemyDataId);
+                    var msg = new SpawnEnemyMessage(enemyId, spawnX, spawnY, enemyDataId);
                     await _broadcaster.BroadcastAsync(msg);
                     await Task.Delay(500, _cts.Token);
                 }
@@ -267,6 +266,27 @@ namespace DefenseGameWebSocketServer.Manager
         private EnemyData GetEnemyData (int enemyDataId)
         {
             return GameDataManager.Instance.GetData<EnemyData>("enemy_data", enemyDataId);
+        }
+        public async void SpawnDustEnemy(float x, float y, int enemyDataId, SharedHpManager sharedHpManager, WaveData waveData, List<WaveRoundData> waveRoundDataList)
+        {
+            string enemyId = Guid.NewGuid().ToString();
+            var dustEnemy = new Enemy(
+                enemyId,
+                GameDataManager.Instance.GetData<EnemyData>("enemy_data", enemyDataId),
+                x,
+                y,
+                sharedHpManager.GetPosition()[0],
+                sharedHpManager.GetPosition()[1],
+                waveData,
+                waveRoundDataList[0]
+            );
+
+            dustEnemy.OnBroadcastRequired = evt => _broadcastEvents.Enqueue(evt);
+            lock (_enemies) _enemies.Add(dustEnemy);
+
+            var msg = new SpawnEnemyMessage(enemyId,x, y, enemyDataId);
+            Console.WriteLine($"[EnemyManager] 먼지 몬스터 소환 at ({x}, {y})");
+            await _broadcaster.BroadcastAsync(msg);
         }
     }
 }

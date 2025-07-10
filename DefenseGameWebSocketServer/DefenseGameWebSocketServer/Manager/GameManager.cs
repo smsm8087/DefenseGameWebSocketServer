@@ -289,7 +289,7 @@ namespace DefenseGameWebSocketServer.Manager
                 case MessageType.PlayerAttack:
                     {
                         if (!_isGameLoopRunning) return;
-                        var AttackHandler = new AttackHandler(_enemyManager, _playerManager);
+                        var AttackHandler = new AttackHandler(_enemyManager, _playerManager, _waveScheduler);
                         await AttackHandler.HandleAsync(playerId, rawMessage, _broadcaster);
                         
                         // 공격 후 궁극기 게이지 변화 가능성 있으므로 파티 정보 업데이트

@@ -70,6 +70,8 @@
         public int settlement_phase_round { get; set; }
         public string background { get; set; }
         public int shared_hp_id { get; set; }
+        public int boss_wave { get; set; }
+        public int boss_table_id { get; set; }
     }
     public class SharedData
     {
@@ -86,5 +88,33 @@
         public float speed { get; set; }
         public float range { get; set; }
         public string prefab_path { get; set; }
+    }
+    public class BossData
+    {
+        public int id { get; set; }
+        public string name { get; set; }
+        public int max_hp { get; set; }
+        public string intro_clip { get; set; }
+        public int pattern_table { get; set; }
+        public bool use_random_pattern { get; set; }
+        public List<float> spawn_pos { get; set; }
+        public float aggro_cool_down { get; set; }
+        public float speed { get; set; }
+        public float range { get; set; }
+        public float base_width { get; set; }
+        public float base_height { get; set; }
+        public float base_scale { get; set; }
+        public float base_offsetx { get; set; }
+        public float base_offsety { get; set; }
+    }
+    public class BossPatternData
+    {
+        public int id { get; set; }
+        public int boss_id { get; set; }
+        public string pattern_name { get; set; }
+        public float delay_after_start { get; set; }
+        public bool use_target { get; set; }
+        public int enemy_table_id { get; set; }
+        public int enemy_summon_count { get; set; }
     }
 }

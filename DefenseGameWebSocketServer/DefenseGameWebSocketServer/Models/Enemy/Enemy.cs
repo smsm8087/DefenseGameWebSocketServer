@@ -1,5 +1,4 @@
-﻿using DefenseGameWebSocketServer.Models;
-using DefenseGameWebSocketServer.Models.DataModels;
+﻿using DefenseGameWebSocketServer.Models.DataModels;
 
 public enum EnemyState
 {

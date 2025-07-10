@@ -19,6 +19,9 @@ namespace DefenseGameWebSocketServer.Manager
             _tableDict["shared_data"] = CsvLoader.Load<SharedData>("Data/shared_data.csv");
             _tableDict["bullet_data"] = CsvLoader.Load<BulletData>("Data/bullet_data.csv");
 
+            _tableDict["boss_data"] = CsvLoader.Load<BossData>("Data/boss_data.csv");
+            _tableDict["boss_pattern_data"] = CsvLoader.Load<BossPatternData>("Data/boss_pattern_data.csv");
+
             Console.WriteLine("[GameDataManager] 모든 데이터 로드 완료!");
         }
 

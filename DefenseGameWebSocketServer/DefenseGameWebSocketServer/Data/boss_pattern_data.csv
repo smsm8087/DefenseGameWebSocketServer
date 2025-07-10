@@ -1,0 +1,2 @@
+id,boss_id,pattern_name,delay_after_start,use_target,enemy_table_id,enemy_summon_count
+1,1,DustSummon,6,FALSE,1000,3

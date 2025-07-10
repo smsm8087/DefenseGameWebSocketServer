@@ -1,0 +1,2 @@
+id,name,max_hp,intro_clip,pattern_table,use_random_pattern,spawn_pos,aggro_cool_down,speed,range,base_width,base_height,base_scale,base_offsetx,base_offsety
+1,DustQueen,5000,DustQueen_intro,1,TRUE,"[-35,-2.9]",2,2,5,1.66,2.1,3,-0.05999994,1.24
