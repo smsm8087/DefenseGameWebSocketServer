@@ -4,6 +4,7 @@ namespace DefenseGameWebSocketServer.MessageModel
 {
     public class BossDamageInfo
     {
+        public string playerId { get; set; }
         public int currentHp { get; set; }
         public int maxHp { get; set; }
         public int damage { get; set; }
