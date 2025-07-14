@@ -222,7 +222,6 @@ namespace DefenseGameWebSocketServer.Manager
             _cts = null;
             _sharedHpManager = null;
             _waveScheduler = null;
-            _revivalManager = null;
         }
 
         public void Stop()
