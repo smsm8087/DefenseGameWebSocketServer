@@ -1,2 +1,2 @@
-id,title,difficulty,max_wave,settlement_phase_round,background,shared_hp_id,boss_wave,boss_table_id
-1,base_wave,easy,10,2,BackGround/BACKGROUND,1,2,1
+id,title,difficulty,max_wave,settlement_phase_round,background,shared_hp_id,boss_wave,boss_table_id,boss_icon,hp_icon
+1,base_wave,easy,10,2,BackGround/BACKGROUND,1,2,1,UI/hp/DustQueen_Hpbaricon,UI/hp/PanCake_Hpbaricon
