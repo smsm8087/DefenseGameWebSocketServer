@@ -136,12 +136,13 @@ namespace DefenseGameWebSocketServer.Model
                 // 데미지 메시지 브로드캐스트
                 dmgMsg.damagedBoss = new BossDamageInfo
                 {
+                    playerId = msg.playerId,
                     currentHp = _boss.currentHp,
                     maxHp = _boss.maxHp,
                     damage = playerDamage,
                     isCritical = isCritical
                 };
-                await _broadcaster.SendToAsync(msg.playerId, dmgMsg);
+                await _broadcaster.BroadcastAsync(dmgMsg);
             }
         }
     }

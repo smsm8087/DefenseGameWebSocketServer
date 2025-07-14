@@ -8,7 +8,7 @@ public class DustSummonExecutor : IBossPatternExecutor
         List<(float, float)> spawnPositions = new List<(float, float)>();
         
         // 1. 소환 위치 선정 
-        float x = -15f + boss.x + new Random().NextSingle() * 30f; // -10 ~ +10 범위 랜덤
+        float x = -10f + boss.x + new Random().NextSingle() * 20f; // -10 ~ +10 범위 랜덤
         float y = -3f;
         for (int i = 0; i < pattern.enemy_summon_count; i++)
         {
