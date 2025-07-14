@@ -45,6 +45,17 @@ public class Player
     public PlayerAddData addData { get; private set; }
     public PlayerData playerBaseData { get; private set; }
     public List<int> CardIds { get; private set; } = new List<int>();
+    
+    public bool IsDead { get; private set; } = false;
+    public DateTime? DeathTime { get; private set; } = null;
+    public float DeathPositionX { get; private set; } = 0f;
+    public float DeathPositionY { get; private set; } = 0f;
+    public bool IsBeingRevived { get; set; } = false;
+    public string RevivedBy { get; set; } = null;
+    public DateTime? ReviveStartTime { get; set; } = null;
+    public bool IsInvulnerable { get; set; } = false;
+    public DateTime? InvulnerabilityEndTime { get; set; } = null;
+    
     public Player(string id, float x, float y, string job_type)
     {
         this.id = id;
@@ -170,7 +181,92 @@ public class Player
     }
     public void TakeDamage(int damage)
     {
+        if (IsInvulnerable) 
+        {
+            Console.WriteLine($"[Player] {id} 무적 상태로 데미지 무시: {damage}");
+            return; // 무적 상태에서는 데미지 무시
+        }
+        
         this.currentHp -= damage;
-        if (this.currentHp < 0) this.currentHp = 0; // HP가 0 이하로 떨어지지 않도록
+        if (this.currentHp <= 0) 
+        {
+            this.currentHp = 0;
+            if (!IsDead)
+            {
+                Die();
+            }
+        }
+    }
+    
+    public void Die()
+    {
+        if (IsDead) return;
+        
+        IsDead = true;
+        DeathTime = DateTime.Now;
+        DeathPositionX = x;
+        DeathPositionY = y;
+        currentHp = 0;
+        
+        ClearRevivalState();
+        
+        Console.WriteLine($"[Player] {id} 사망 - 위치: ({DeathPositionX}, {DeathPositionY})");
+    }
+
+    public void Revive(bool withFullHp = false)
+    {
+        if (!IsDead) return;
+
+        IsDead = false;
+        DeathTime = null;
+        IsBeingRevived = false;
+        RevivedBy = null;
+        ReviveStartTime = null;
+        
+        // 부활 위치로 이동
+        x = DeathPositionX;
+        y = DeathPositionY;
+        
+        // 체력 회복
+        currentHp = withFullHp ? currentMaxHp : Math.Max(1, currentMaxHp / 2);
+        
+        // 무적 상태 시작
+        IsInvulnerable = true;
+        InvulnerabilityEndTime = DateTime.Now.AddSeconds(3.0f);
+        
+        Console.WriteLine($"[Player] {id} 부활 완료 - HP: {currentHp}/{currentMaxHp}");
+    }
+
+    public void ClearRevivalState()
+    {
+        IsBeingRevived = false;
+        RevivedBy = null;
+        ReviveStartTime = null;
+    }
+
+    public void UpdateInvulnerability()
+    {
+        if (IsInvulnerable && InvulnerabilityEndTime.HasValue && DateTime.Now >= InvulnerabilityEndTime.Value)
+        {
+            IsInvulnerable = false;
+            InvulnerabilityEndTime = null;
+            Console.WriteLine($"[Player] {id} 무적 상태 해제");
+        }
+    }
+
+    public float GetDistanceTo(float targetX, float targetY)
+    {
+        float dx = x - targetX;
+        float dy = y - targetY;
+        return (float)Math.Sqrt(dx * dx + dy * dy);
+    }
+
+    public float GetDistanceToDeathPosition(float targetX, float targetY)
+    {
+        if (!IsDead) return float.MaxValue;
+        
+        float dx = DeathPositionX - targetX;
+        float dy = DeathPositionY - targetY;
+        return (float)Math.Sqrt(dx * dx + dy * dy);
     }
 }

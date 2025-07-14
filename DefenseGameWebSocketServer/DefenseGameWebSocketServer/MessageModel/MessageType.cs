@@ -14,6 +14,9 @@
         EnemyAttackHit,
         AttackSuccess,
         SettlementReady,
+        StartRevival,
+        UpdateRevival,
+        CancelRevival,
         Unknown,
     }
 
@@ -30,6 +33,9 @@
                 "enemy_attack_hit" => MessageType.EnemyAttackHit,
                 "attack_success" => MessageType.AttackSuccess,
                 "settlement_ready" => MessageType.SettlementReady,
+                "start_revival" => MessageType.StartRevival,
+                "update_revival" => MessageType.UpdateRevival,
+                "cancel_revival" => MessageType.CancelRevival,
                 _ => MessageType.Unknown,
             };
         }

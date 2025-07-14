@@ -17,6 +17,7 @@ namespace DefenseGameWebSocketServer.Manager
         private EnemyManager _enemyManager;
         private WebSocketBroadcaster _broadcaster;
         private PartyMemberManager _partyMemberManager;
+        private RevivalManager _revivalManager;
         private CancellationTokenSource _cts;
         private Func<bool> _hasPlayerCount;
         private Func<int> _getPlayerCount;
@@ -39,6 +40,7 @@ namespace DefenseGameWebSocketServer.Manager
             _sharedHpManager = new SharedHpManager(waveId);
             _playerManager = new PlayerManager();
             _partyMemberManager = new PartyMemberManager(_playerManager, broadcaster);
+            _revivalManager = new RevivalManager(_playerManager, broadcaster);
             _cts = new CancellationTokenSource();
             _hasPlayerCount = () => _playerManager._playersDict.Count > 0;
             _getPlayerCount = () => _playerManager._playersDict.Count;
@@ -172,7 +174,8 @@ namespace DefenseGameWebSocketServer.Manager
                         Dispose();
                         break;
                     }
-
+                    
+                    await _revivalManager.UpdateInvulnerabilities();
                     await Task.Delay(100, _cts.Token);
                 }
             });
@@ -197,6 +200,7 @@ namespace DefenseGameWebSocketServer.Manager
             _cts = new CancellationTokenSource();
             _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount,_getPlayerCount, _getPlayerList,  _sharedHpManager, _enemyManager);
             BulletManager.Instance.Initialize(_broadcaster);
+            _revivalManager = new RevivalManager(_playerManager, _broadcaster);
 
             // 게임 재시작 시 직업 할당 초기화
             lock (_jobLock)
@@ -218,6 +222,7 @@ namespace DefenseGameWebSocketServer.Manager
             _cts = null;
             _sharedHpManager = null;
             _waveScheduler = null;
+            _revivalManager = null;
         }
 
         public void Stop()
@@ -252,6 +257,11 @@ namespace DefenseGameWebSocketServer.Manager
         public async Task OnPlayerDamaged(string playerId)
         {
             await _partyMemberManager.OnPlayerDamaged(playerId);
+            
+            if (_playerManager.TryGetPlayer(playerId, out Player player) && player.IsDead)
+            {
+                await _revivalManager.OnPlayerDeath(playerId);
+            }
         }
 
         public async Task OnPlayerHealed(string playerId)
@@ -274,18 +284,21 @@ namespace DefenseGameWebSocketServer.Manager
                         await moveHandler.HandleAsync(rawMessage, _broadcaster, _playerManager);
                     }
                     break;
+                
                 case MessageType.Restart:
                     {
                         var restartHandler = new RestartHandler();
                         await restartHandler.HandleAsync(playerId, _broadcaster, RestartGame);
                     }
                     break;
+                
                 case MessageType.PlayerAnimation:
                     {
                         var playerAnimationHandler = new PlayerAnimationHandler();
                         await playerAnimationHandler.HandleAsync(playerId, rawMessage, _broadcaster);
                     }
                     break;
+                
                 case MessageType.PlayerAttack:
                     {
                         if (!_isGameLoopRunning) return;
@@ -296,11 +309,12 @@ namespace DefenseGameWebSocketServer.Manager
                         await OnPlayerUltGaugeChanged(playerId);
                     }
                     break;
+                
                 case MessageType.EnemyAttackHit:
                     {
                         if (!_isGameLoopRunning) return;
                         var enemyAttackHitHandler = new EnemyAttackHitHandler();
-                        await enemyAttackHitHandler.HandleAsync(rawMessage, _broadcaster, _sharedHpManager, _enemyManager);
+                        await enemyAttackHitHandler.HandleAsync(rawMessage, _broadcaster, _sharedHpManager, _enemyManager, _revivalManager);
                         // 적의 공격으로 플레이어가 데미지를 받았을 수 있으므로
                         foreach (var pid in _playerManager.GetAllPlayerIds())
                         {
@@ -308,11 +322,33 @@ namespace DefenseGameWebSocketServer.Manager
                         }
                     }
                     break;
+                
                 case MessageType.SettlementReady:
                     {
                         var settlementReadyHandler = new SettlementReadyHandler();
                         await settlementReadyHandler.HandleAsync(playerId, rawMessage, _broadcaster, _waveScheduler, _playerManager);
                     }
+                    break;
+                
+                case MessageType.StartRevival:
+                {
+                    var startRevivalHandler = new StartRevivalHandler();
+                    await startRevivalHandler.HandleAsync(playerId, rawMessage, _broadcaster, _revivalManager);
+                }
+                    break;
+                
+                case MessageType.UpdateRevival:
+                {
+                    var updateRevivalHandler = new UpdateRevivalHandler();
+                    await updateRevivalHandler.HandleAsync(playerId, rawMessage, _broadcaster, _revivalManager);
+                }
+                    break;
+                
+                case MessageType.CancelRevival:
+                {
+                    var cancelRevivalHandler = new CancelRevivalHandler();
+                    await cancelRevivalHandler.HandleAsync(playerId, rawMessage, _broadcaster, _revivalManager);
+                }
                     break;
             }
         }

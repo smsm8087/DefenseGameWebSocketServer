@@ -13,7 +13,7 @@ namespace DefenseGameWebSocketServer.Handlers
     }
     public class EnemyAttackHitHandler
     {
-        public async Task HandleAsync(string rawMessage, IWebSocketBroadcaster broadcaster, SharedHpManager _sharedHpManager, EnemyManager _enemyManager)
+        public async Task HandleAsync(string rawMessage, IWebSocketBroadcaster broadcaster, SharedHpManager _sharedHpManager, EnemyManager _enemyManager, RevivalManager _revivalManager = null)
         {
             var msg = JsonSerializer.Deserialize<EnemyAttackHitMessage>(rawMessage);
             if (msg == null) return;
@@ -41,6 +41,14 @@ namespace DefenseGameWebSocketServer.Handlers
                 {
                     //총알 발사
                     await BulletManager.Instance.SpawnBullet(targetEnemy, targetEnemy.AggroTarget);
+                    
+                    //부활 중단 체크
+                    if (_revivalManager != null && targetEnemy.AggroTarget.IsBeingRevived)
+                    {
+                        await _revivalManager.CancelRevival(targetEnemy.AggroTarget.id, "hit_during_revival");
+                        Console.WriteLine($"[EnemyAttackHitHandler] {targetEnemy.AggroTarget.id} 부활 중 피격으로 부활 중단");
+                    }
+
 
                     targetEnemy.OnAttackPerformed(); // 공격 횟수 증가 및 상태 변경
                 }
