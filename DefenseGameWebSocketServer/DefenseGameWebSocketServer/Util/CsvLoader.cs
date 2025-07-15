@@ -14,15 +14,18 @@ namespace DefenseGameWebSocketServer.Util
     {
         public static Dictionary<int, T> Load<T>(string csvPath) where T : class
         {
-            if (!File.Exists(csvPath))
+            var baseDir = AppContext.BaseDirectory;
+            var fullPath = Path.Combine(baseDir, csvPath.Replace('/', Path.DirectorySeparatorChar));
+
+            if (!File.Exists(fullPath))
             {
-                Console.WriteLine($"[Error] CSV 파일 없음: {csvPath}");
+                Console.WriteLine($"[Error] CSV 파일 없음: {fullPath}");
                 return new Dictionary<int, T>();
             }
 
             try
             {
-                using var reader = new StreamReader(csvPath);
+                using var reader = new StreamReader(fullPath);
                 using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture)
                 {
                     HasHeaderRecord = true,
