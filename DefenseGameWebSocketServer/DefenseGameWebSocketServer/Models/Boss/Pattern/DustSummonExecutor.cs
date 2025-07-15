@@ -29,7 +29,7 @@ public class DustSummonExecutor : IBossPatternExecutor
         );
 
         // 3. 몇 초 뒤 먼지 몬스터 실제로 소환
-        _ = Task.Delay(TimeSpan.FromSeconds(2)).ContinueWith(_ =>
+        _ = Task.Delay(TimeSpan.FromSeconds(1.5)).ContinueWith(_ =>
         {
             for(int i = 0; i < pattern.enemy_summon_count; i++)
             {
