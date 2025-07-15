@@ -169,6 +169,13 @@ namespace DefenseGameWebSocketServer.Manager
                         await GameOver();
                         break;
                     }
+                    
+                    if (_playerManager.AreAllPlayersDead())
+                    {
+                        await GameOver();
+                        break;
+                    }
+                    
                     if(!_hasPlayerCount())
                     {
                         Dispose();
