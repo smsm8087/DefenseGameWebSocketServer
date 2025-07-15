@@ -9,7 +9,9 @@ using System.Text.Json;
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.ListenAnyIP(5215); // HTTP 포트 지정
+    var port = Environment.GetEnvironmentVariable("PORT");
+    var parsedPort = string.IsNullOrEmpty(port) ? 80 : int.Parse(port);
+    options.ListenAnyIP(parsedPort); 
 });
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -43,6 +45,7 @@ app.Map("/ws", async context =>
     if (context.WebSockets.IsWebSocketRequest)
     {
         var playerId = Guid.NewGuid().ToString();
+        Console.WriteLine($"[WebSocket] 플레이어 접속 시도: {playerId}");
         var webSocket = await context.WebSockets.AcceptWebSocketAsync();
 
         broadcaster.Register(playerId, webSocket);
