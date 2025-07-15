@@ -88,5 +88,13 @@ namespace DefenseGameWebSocketServer.Manager
             int index = random.Next(_playersDict.Count);
             return _playersDict.ElementAt(index).Value;
         }
+        
+        public bool AreAllPlayersDead()
+        {
+            if (_playersDict.Count == 0)
+                return false;
+        
+            return _playersDict.Values.All(player => player.IsDead);
+        }
     }
 }

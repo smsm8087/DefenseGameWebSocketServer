@@ -157,11 +157,21 @@ public class WaveScheduler
 
         Console.WriteLine("[WaveScheduler] Settlement Phase 시작");
 
-        // 플레이어 마다 카드 3장 뽑기
+        // 살아있는 플레이어만 필터링
         var playerList = _getPlayerList();
-        if (playerList.Count == 0)
+        var alivePlayerList = new List<string>();
+   
+        foreach (var playerId in playerList)
         {
-            Console.WriteLine("[WaveScheduler] 플레이어가 없습니다. Settlement Phase를 건너뜁니다.");
+            if (PlayerManager.Instance.TryGetPlayer(playerId, out Player player) && !player.IsDead)
+            {
+                alivePlayerList.Add(playerId);
+            }
+        }
+   
+        if (alivePlayerList.Count == 0)
+        {
+            Console.WriteLine("[WaveScheduler] 살아있는 플레이어가 없습니다. Settlement Phase를 건너뜁니다.");
             _currentPhase = GamePhase.Wave;
             return;
         }
@@ -169,26 +179,29 @@ public class WaveScheduler
         float settlementSeconds = 60f;
 
         _selectCardPlayerDict.Clear();
-        foreach (var playerId in playerList)
+   
+        // 살아있는 플레이어에게만 카드 선택 메시지 전송
+        foreach (var playerId in alivePlayerList)
         {
             List<CardData> cards = CardTableManager.Instance.DrawCards(3);
-            var msg = new SettlementStartMessage(playerId, (int)settlementSeconds, cards);
-            _selectCardPlayerDict[playerId] = cards; // 플레이어별 카드 저장
-
-            await _broadcaster.SendToAsync(playerId,msg);
+            var msg = new SettlementStartMessage(playerId, (int)settlementSeconds, cards, alivePlayerList.Count);
+            _selectCardPlayerDict[playerId] = cards;
+            await _broadcaster.SendToAsync(playerId, msg);
         }
+   
         var settlementDuration = TimeSpan.FromSeconds(settlementSeconds);
         var settlementTask = Task.Delay(settlementDuration, _cts.Token);
 
         //타이머 시작
-        _ = BroadcastSettlementTimer(settlementSeconds);
+        _ = BroadcastSettlementTimer(settlementSeconds, alivePlayerList);
 
-        while (_readyCount < _getPlayerCount() && !settlementTask.IsCompleted)
+        // 살아있는 플레이어 수를 기준으로 대기
+        while (_readyCount < alivePlayerList.Count && !settlementTask.IsCompleted)
         {
             await Task.Delay(100);
         }
 
-        await givePlayerRandomCard(playerList);
+        await givePlayerRandomCard(alivePlayerList);
 
         if (_wave == waveData.boss_wave)
         {
@@ -200,17 +213,23 @@ public class WaveScheduler
             _currentPhase = GamePhase.Wave;
         }
     }
-    private async Task BroadcastSettlementTimer(float duration)
+    private async Task BroadcastSettlementTimer(float duration, List<string> alivePlayerList)
     {
         float remaining = duration;
 
         while (remaining > 0 && !_cts.Token.IsCancellationRequested)
         {
-            bool isReady = _readyCount >= _getPlayerCount();
+            bool isReady = _readyCount >= alivePlayerList.Count;
             if (isReady) break;
+        
             var msg = new SettlementTimerUpdateMessage(remaining, _readyCount);
 
-            await _broadcaster.BroadcastAsync(msg);
+            // 살아있는 플레이어에게만 전송
+            foreach (var playerId in alivePlayerList)
+            {
+                await _broadcaster.SendToAsync(playerId, msg);
+            }
+        
             await Task.Delay(100, _cts.Token);
             remaining -= 0.1f;
         }
@@ -283,10 +302,10 @@ public class WaveScheduler
         _readyCount++;
         Console.WriteLine($"[WaveScheduler] PlayerReady {_readyCount}/{_getPlayerCount()}");
     }
-    private async Task givePlayerRandomCard(List<string> playerList)
+    private async Task givePlayerRandomCard(List<string> alivePlayerList)
     {
         //선택 안한 플레이어의 카드 랜덤 지급
-        foreach (var playerId in playerList)
+        foreach (var playerId in alivePlayerList)
         {
             if (!_selectCardPlayerDict.ContainsKey(playerId)) continue; // 이미 선택한 플레이어는 건너뜀
             var cards = _selectCardPlayerDict[playerId];
@@ -319,8 +338,14 @@ public class WaveScheduler
                 Console.WriteLine($"[WaveScheduler] {playerId} 플레이어 정보가 없습니다. 카드 지급 실패.");
             }
         }
+    
         var finishMsg = new SettlementTimerUpdateMessage(0, _readyCount);
-        await _broadcaster.BroadcastAsync(finishMsg);
+    
+        // 살아있는 플레이어에게만 전송
+        foreach (var playerId in alivePlayerList)
+        {
+            await _broadcaster.SendToAsync(playerId, finishMsg);
+        }
     }
     public void Dispose()
     {
