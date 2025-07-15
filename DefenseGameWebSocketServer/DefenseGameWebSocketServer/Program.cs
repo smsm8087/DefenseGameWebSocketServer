@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.ConfigureKestrel(options =>
 {
     var port = Environment.GetEnvironmentVariable("PORT");
-    var parsedPort = string.IsNullOrEmpty(port) ? 5215 : int.Parse(port);
+    var parsedPort = string.IsNullOrEmpty(port) ? 80 : int.Parse(port);
     options.ListenAnyIP(parsedPort); 
 });
 builder.Services.AddControllers();
