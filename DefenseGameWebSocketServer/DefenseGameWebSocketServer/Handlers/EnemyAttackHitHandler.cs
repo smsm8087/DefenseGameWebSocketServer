@@ -39,9 +39,18 @@ namespace DefenseGameWebSocketServer.Handlers
                 // 플레이어 공격
                 if(targetEnemy.AggroTarget != null)
                 {
+                    if (targetEnemy.HasAttacked)
+                    {
+                        Console.WriteLine($"[Handler] 적 {targetEnemy.id} 중복 총알 방지");
+                        return;
+                    }
+
+                    targetEnemy.HasAttacked = true;
                     //총알 발사
                     await BulletManager.Instance.SpawnBullet(targetEnemy, targetEnemy.AggroTarget);
-                    
+
+                    _ = Task.Delay(300).ContinueWith(_ => targetEnemy.HasAttacked = false);
+
                     //부활 중단 체크
                     if (_revivalManager != null && targetEnemy.AggroTarget.IsBeingRevived)
                     {

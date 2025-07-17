@@ -55,6 +55,7 @@ public class Enemy
 
     public bool isRangedAttackPending { get; private set; } // 원거리 공격 대기 상태
     public BulletData bulletData;
+    public bool HasAttacked = false;
 
     public void UpdateFloating(float deltaTime)
     {
