@@ -61,8 +61,11 @@ namespace DefenseGameWebSocketServer.Manager
 
                 lock (_enemies)
                 {
-                    foreach (var enemy in _enemies)
+                    foreach (var enemy in _enemies.ToList())
                     {
+                        if (enemy.state == EnemyState.Dead)
+                            continue;
+
                         enemy.UpdateFSM(targetFrameTime);
                         if (enemy.state == EnemyState.Move || 
                             enemy.state == EnemyState.Attack || 
@@ -100,13 +103,12 @@ namespace DefenseGameWebSocketServer.Manager
                             break;
                     }
                 }
+                //bulletManager 업데이트
+                await BulletManager.Instance.Update(deltaTime);
 
                 // 정확한 프레임 맞추기
                 var elapsed = (sw.ElapsedTicks - nowTicks) / (float)Stopwatch.Frequency;
                 int sleepMs = Math.Max(0, (int)((targetFrameTime - elapsed) * 1000));
-
-                //bulletManager 업데이트
-                await BulletManager.Instance.Update(deltaTime);
                 await Task.Delay(sleepMs, _cts.Token);
             }
             Console.WriteLine("[EnemyManager] FSM 종료됨");

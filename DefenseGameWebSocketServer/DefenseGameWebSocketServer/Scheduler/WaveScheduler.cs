@@ -32,8 +32,9 @@ public class WaveScheduler
     private List<WaveRoundData> waveRoundDataList = new List<WaveRoundData>();
     private Boss _boss;
     private BossFSM _bossFSM;
+    private readonly Action _onGameClear;
 
-    public WaveScheduler(IWebSocketBroadcaster broadcaster, CancellationTokenSource cts, Func<bool> hasPlayerCount, Func<int> getPlayerCount, Func<List<string>> getPlayerList, SharedHpManager sharedHpManager, EnemyManager enemyManager)
+    public WaveScheduler(IWebSocketBroadcaster broadcaster, CancellationTokenSource cts, Func<bool> hasPlayerCount, Func<int> getPlayerCount, Func<List<string>> getPlayerList, SharedHpManager sharedHpManager, EnemyManager enemyManager, Action onGameClear)
     {
         _broadcaster = broadcaster;
         _cts = cts;
@@ -42,6 +43,7 @@ public class WaveScheduler
         _getPlayerList = getPlayerList;
         _sharedHpManager = sharedHpManager;
         _enemyManager = enemyManager;
+        _onGameClear = onGameClear;
     }
     public void TryStart(int wave_id)
     {
@@ -279,11 +281,13 @@ public class WaveScheduler
 
         _bossFSM = new BossFSM(_boss, patternData, _broadcaster, _enemyManager, _sharedHpManager, waveData, waveRoundDataList);
         float deltaTime = 0.1f; // Update 주기 (100ms)
-        while(_boss != null && _boss.IsAlive)
+        while(_boss != null && !_boss.isDead)
         {
             UpdateBoss(deltaTime);
             await Task.Delay(TimeSpan.FromSeconds(deltaTime), _cts.Token);
         }
+        Console.WriteLine("[WaveScheduler] 보스 처치 완료 → 게임 클리어 콜백 호출");
+        _onGameClear?.Invoke();
     }
 
     public void UpdateBoss(float deltaTime)

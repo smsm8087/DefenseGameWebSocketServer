@@ -9,6 +9,14 @@ using System.Threading.Tasks;
 
 namespace DefenseGameWebSocketServer.Manager
 {
+    public enum GameResult
+    {
+        None,
+        GameOver,
+        Clear
+    }
+
+
     public class GameManager
     {
         private SharedHpManager _sharedHpManager;
@@ -25,6 +33,8 @@ namespace DefenseGameWebSocketServer.Manager
         private bool _isGameLoopRunning = false;
         private Task _gameLoopTask;
         private int waveId = 0; // 현재 웨이브 ID
+        private GameResult _gameResult = GameResult.None;
+        private bool _isGameEnded = false;
 
         // 직업 관리를 위한 필드 추가
         private readonly List<string> _availableJobs = new List<string> 
@@ -47,7 +57,7 @@ namespace DefenseGameWebSocketServer.Manager
             _getPlayerList = () => _playerManager.GetAllPlayerIds().ToList();
             _broadcaster = broadcaster;
             _enemyManager = new EnemyManager((IWebSocketBroadcaster)broadcaster);
-            _waveScheduler = new WaveScheduler((IWebSocketBroadcaster)broadcaster, _cts, _hasPlayerCount,_getPlayerCount, _getPlayerList, _sharedHpManager, _enemyManager);
+            _waveScheduler = new WaveScheduler((IWebSocketBroadcaster)broadcaster, _cts, _hasPlayerCount,_getPlayerCount, _getPlayerList, _sharedHpManager, _enemyManager, async ()=> await GameClear());
             BulletManager.Instance.Initialize(broadcaster);
         }
 
@@ -91,7 +101,7 @@ namespace DefenseGameWebSocketServer.Manager
         {
             if (_cts == null) _cts = new CancellationTokenSource();
             if( _sharedHpManager == null) _sharedHpManager = new SharedHpManager(waveId);
-            if (_waveScheduler == null) _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount,_getPlayerCount,_getPlayerList, _sharedHpManager, _enemyManager);
+            if (_waveScheduler == null) _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount,_getPlayerCount,_getPlayerList, _sharedHpManager, _enemyManager, async () => await GameClear());
             BulletManager.Instance.Initialize(_broadcaster);
 
             string assignedJob = AssignJobToPlayer();
@@ -190,13 +200,26 @@ namespace DefenseGameWebSocketServer.Manager
 
         public async Task GameOver()
         {
+            if (_isGameEnded) return;
+            _isGameEnded = true;
+            _gameResult = GameResult.GameOver;
             _isGameLoopRunning = false;
-
+            Console.WriteLine("[GameManager] 게임 오버");
             var msg = new GameOverMessage("Game Over!!");
             await _broadcaster.BroadcastAsync(msg);
             Dispose();
-            await Task.Delay(1000);
         }
+        public async Task GameClear()
+        {
+            if (_isGameEnded) return;
+            _isGameEnded = true;
+            _gameResult = GameResult.Clear;
+            _isGameLoopRunning = false;
+            Console.WriteLine("[GameManager] 게임 클리어!");
+            await _broadcaster.BroadcastAsync(new GameOverMessage("Clear"));
+            Dispose();
+        }
+        public GameResult GetGameResult() => _gameResult;
 
         public bool RestartGame()
         {
@@ -205,7 +228,7 @@ namespace DefenseGameWebSocketServer.Manager
             if (_cts != null) _cts.Dispose();                  
 
             _cts = new CancellationTokenSource();
-            _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount,_getPlayerCount, _getPlayerList,  _sharedHpManager, _enemyManager);
+            _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount,_getPlayerCount, _getPlayerList,  _sharedHpManager, _enemyManager, async () => await GameClear());
             BulletManager.Instance.Initialize(_broadcaster);
             _revivalManager = new RevivalManager(_playerManager, _broadcaster);
 

@@ -38,7 +38,7 @@ namespace DefenseGameWebSocketServer.Model
 
         public void Update(float deltaTime)
         {
-            if (!_boss.IsAlive || _patterns.Count == 0) return;
+            if (_boss.isDead || _patterns.Count == 0) return;
 
             _syncTimer += deltaTime;
             if (_syncTimer >= _syncInterval)
@@ -84,7 +84,8 @@ namespace DefenseGameWebSocketServer.Model
                     break;
 
                 case BossState.Dead:
-                    // 아무것도 안함
+                    _boss.isDead = true;
+                    _broadcaster.BroadcastAsync(new { type = "boss_dead"});
                     break;
             }
         }

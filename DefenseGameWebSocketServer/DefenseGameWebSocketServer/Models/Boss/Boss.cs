@@ -22,13 +22,14 @@ public class Boss
 
     private DateTime _lastAggroCheck = DateTime.UtcNow;
     private Player _aggroTarget;
+    public bool isDead = false;
+
 
     public void SetState(BossState newState)
     {
         State = newState;
     }
 
-    public bool IsAlive => currentHp > 0;
 
     public void TakeDamage(int amount)
     {

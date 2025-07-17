@@ -96,5 +96,10 @@ namespace DefenseGameWebSocketServer.Manager
         
             return _playersDict.Values.All(player => player.IsDead);
         }
+
+        public IEnumerable<Player> GetAlivePlayers()
+        {
+            return _playersDict.Values.Where(player => !player.IsDead);
+        }
     }
 }
