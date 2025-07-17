@@ -98,7 +98,16 @@ namespace DefenseGameWebSocketServer.Manager
                             await _broadcaster.BroadcastAsync(new EnemyDieMessage(new List<string> { evt.EnemyRef.id }, evt.EnemyRef.killedPlayerId));
                             lock (_enemies)
                             {
-                                _enemies.Remove(evt.EnemyRef);
+                                var target = _enemies.FirstOrDefault(e => e.id == evt.EnemyRef.id);
+                                if (target != null)
+                                {
+                                    _enemies.Remove(target);
+                                    Console.WriteLine($"[EnemyManager] Enemy {target.id} 제거 완료");
+                                }
+                                else
+                                {
+                                    Console.WriteLine($"[EnemyManager] Enemy {evt.EnemyRef.id} 제거 실패");
+                                }
                             }
                             break;
                     }
