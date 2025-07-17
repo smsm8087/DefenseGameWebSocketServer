@@ -63,6 +63,7 @@ public class EnemyMoveState : IEnemyFSMState
 
                             enemy.y += enemy.floatYOffset;
                             enemy.y = MathF.Max(enemy.y, 0); // 바닥보다 아래로 내려가지 않도록
+                            enemy.y = MathF.Min(enemy.y, 2.5f); // 최대 높이 제한
 
                             //"player" 타입의 적은 플레이어와의 거리 계산
                             if (len <= enemy.enemyBaseData.aggro_radius)

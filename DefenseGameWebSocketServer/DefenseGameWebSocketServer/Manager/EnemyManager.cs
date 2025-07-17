@@ -64,7 +64,10 @@ namespace DefenseGameWebSocketServer.Manager
                     foreach (var enemy in _enemies)
                     {
                         enemy.UpdateFSM(targetFrameTime);
-                        if (enemy.state == EnemyState.Move)
+                        if (enemy.state == EnemyState.Move || 
+                            enemy.state == EnemyState.Attack || 
+                            enemy.state == EnemyState.RangedAttack
+                        )
                         {
                             syncList = SyncEnemy();
                         }
