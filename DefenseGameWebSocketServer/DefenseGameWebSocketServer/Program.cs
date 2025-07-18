@@ -87,7 +87,7 @@ app.Map("/ws", async context =>
         {
             // remove socket
             broadcaster.Unregister(playerId);
-            GameManager.RemovePlayer(playerId);
+            await GameManager.RemovePlayer(playerId);
             webSocket.Dispose();
         }
     }

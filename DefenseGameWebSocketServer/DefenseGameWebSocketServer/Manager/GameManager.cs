@@ -34,7 +34,6 @@ namespace DefenseGameWebSocketServer.Manager
         private Task _gameLoopTask;
         private int waveId = 0; // 현재 웨이브 ID
         private GameResult _gameResult = GameResult.None;
-        private bool _isGameEnded = false;
 
         // 직업 관리를 위한 필드 추가
         private readonly List<string> _availableJobs = new List<string> 
@@ -172,51 +171,59 @@ namespace DefenseGameWebSocketServer.Manager
         {
             _gameLoopTask = Task.Run(async () =>
             {
-                while (!_cts.Token.IsCancellationRequested)
+                try
                 {
-                    if (_sharedHpManager.isGameOver())
+                    Console.WriteLine("[GameManager] 게임 루프 시작");
+                    while (!_cts.Token.IsCancellationRequested)
                     {
-                        await GameOver();
-                        break;
+                        if (_sharedHpManager.isGameOver())
+                        {
+                            Console.WriteLine("[GameManager] 공유 HP가 0이 되어 게임 오버");
+                            await GameOver();
+                            break;
+                        }
+
+                        if (_playerManager.AreAllPlayersDead())
+                        {
+                            Console.WriteLine("[GameManager] 모든 플레이어가 죽어 게임 오버");
+                            await GameOver();
+                            break;
+                        }
+
+                        if (!_hasPlayerCount())
+                        {
+                            Console.WriteLine("[GameManager] 플레이어가 없어 게임 루프 종료");
+                            Dispose();
+                            break;
+                        }
+
+                        await _revivalManager.UpdateInvulnerabilities();
+                        await Task.Delay(100, _cts.Token);
                     }
-                    
-                    if (_playerManager.AreAllPlayersDead())
-                    {
-                        await GameOver();
-                        break;
-                    }
-                    
-                    if(!_hasPlayerCount())
-                    {
-                        Dispose();
-                        break;
-                    }
-                    
-                    await _revivalManager.UpdateInvulnerabilities();
-                    await Task.Delay(100, _cts.Token);
+                    Console.WriteLine("[GameManager] 게임 루프 종료");
+                }
+                catch(Exception e)
+                {
+                    Console.WriteLine($"[GameManager] 게임 루프 중 예외 발생: {e.Message}");
                 }
             });
         }
 
         public async Task GameOver()
         {
-            if (_isGameEnded) return;
-            _isGameEnded = true;
             _gameResult = GameResult.GameOver;
             _isGameLoopRunning = false;
             Console.WriteLine("[GameManager] 게임 오버");
-            var msg = new GameOverMessage("Game Over!!");
+            var msg = new GameResultMessage("gameover");
             await _broadcaster.BroadcastAsync(msg);
             Dispose();
         }
         public async Task GameClear()
         {
-            if (_isGameEnded) return;
-            _isGameEnded = true;
             _gameResult = GameResult.Clear;
             _isGameLoopRunning = false;
             Console.WriteLine("[GameManager] 게임 클리어!");
-            await _broadcaster.BroadcastAsync(new GameOverMessage("Clear"));
+            await _broadcaster.BroadcastAsync(new GameResultMessage("clear"));
             Dispose();
         }
         public GameResult GetGameResult() => _gameResult;
