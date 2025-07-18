@@ -37,7 +37,7 @@ namespace DefenseGameWebSocketServer.Handlers
             else if (targetEnemy.targetType == TargetType.Player)
             {
                 // 플레이어 공격
-                if(targetEnemy.AggroTarget != null)
+                if(targetEnemy.AggroTarget != null && !targetEnemy.AggroTarget.IsDead)
                 {
                     if (targetEnemy.HasAttacked)
                     {
@@ -58,8 +58,18 @@ namespace DefenseGameWebSocketServer.Handlers
                         Console.WriteLine($"[EnemyAttackHitHandler] {targetEnemy.AggroTarget.id} 부활 중 피격으로 부활 중단");
                     }
 
-
                     targetEnemy.OnAttackPerformed(); // 공격 횟수 증가 및 상태 변경
+                }
+                else if(targetEnemy.AggroTarget != null && targetEnemy.AggroTarget.IsDead)
+                {
+                    // 어그로 타겟이 죽었으면 새로운 생존 플레이어로 변경
+                    var alivePlayers = PlayerManager.Instance.GetAlivePlayers().ToArray();
+                    if(alivePlayers.Length > 0)
+                    {
+                        var rand = new Random();
+                        targetEnemy.SetAggroTarget(alivePlayers[rand.Next(alivePlayers.Length)]);
+                        Console.WriteLine($"[EnemyAttackHitHandler] 적 {targetEnemy.id}의 어그로 타겟이 죽어서 새로운 타겟으로 변경");
+                    }
                 }
             }
         }

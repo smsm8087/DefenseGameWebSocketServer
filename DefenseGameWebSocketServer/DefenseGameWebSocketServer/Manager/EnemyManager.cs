@@ -157,7 +157,7 @@ namespace DefenseGameWebSocketServer.Manager
                     Enemy enemy;
                     if (enemyData.target_type == "player")
                     {
-                        var targetPlayer = PlayerManager.Instance.GetRandomPlayer();
+                        var targetPlayer = PlayerManager.Instance.GetAlivePlayers().FirstOrDefault();
                         if (targetPlayer == null) continue;
 
                         var bulletData = GameDataManager.Instance.GetData<BulletData>("bullet_data", enemyData.bullet_id);

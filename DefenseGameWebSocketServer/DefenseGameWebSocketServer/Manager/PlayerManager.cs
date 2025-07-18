@@ -80,13 +80,14 @@ namespace DefenseGameWebSocketServer.Manager
         }
         public Player GetRandomPlayer()
         {
-            if (_playersDict.Count == 0)
+            var alivePlayers = _playersDict.Values.Where(p => !p.IsDead).ToArray();
+            if (alivePlayers.Length == 0)
             {
                 return null;
             }
             var random = new Random();
-            int index = random.Next(_playersDict.Count);
-            return _playersDict.ElementAt(index).Value;
+            int index = random.Next(alivePlayers.Length);
+            return alivePlayers[index];
         }
         
         public bool AreAllPlayersDead()

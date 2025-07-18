@@ -150,12 +150,16 @@ public class Enemy
     public void UpdateAggro(Player[] players)
     {
         if (targetType != TargetType.Player) return;
+    
+        var alivePlayers = players.Where(p => !p.IsDead).ToArray();
+        if (alivePlayers.Length == 0) return;
 
-        if (AggroTarget == null || (DateTime.UtcNow - lastAggroChangeTime).TotalSeconds >= enemyBaseData.aggro_cool_down || 
+        if (AggroTarget == null || AggroTarget.IsDead ||
+            (DateTime.UtcNow - lastAggroChangeTime).TotalSeconds >= enemyBaseData.aggro_cool_down || 
             attackCount >= enemyBaseData.aggro_attack_count)
         {
             var rand = new Random();
-            AggroTarget = players[rand.Next(players.Length)];
+            AggroTarget = alivePlayers[rand.Next(alivePlayers.Length)];
             targetX = AggroTarget.x;
             targetY = AggroTarget.y;
             lastAggroChangeTime = DateTime.UtcNow;
