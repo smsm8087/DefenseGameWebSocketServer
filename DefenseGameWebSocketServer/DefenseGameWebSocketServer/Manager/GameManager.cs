@@ -4,6 +4,7 @@ using DefenseGameWebSocketServer.Models.DataModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,6 +20,7 @@ namespace DefenseGameWebSocketServer.Manager
 
     public class GameManager
     {
+        private RoomManager _roomManager;
         private SharedHpManager _sharedHpManager;
         private WaveScheduler _waveScheduler;
         private PlayerManager _playerManager;
@@ -58,6 +60,7 @@ namespace DefenseGameWebSocketServer.Manager
             _enemyManager = new EnemyManager((IWebSocketBroadcaster)broadcaster);
             _waveScheduler = new WaveScheduler((IWebSocketBroadcaster)broadcaster, _cts, _hasPlayerCount,_getPlayerCount, _getPlayerList, _sharedHpManager, _enemyManager, async ()=> await GameClear());
             BulletManager.Instance.Initialize(broadcaster);
+            _roomManager = new RoomManager();
         }
 
         public void SetPlayerData(string playerId, string job_type)
@@ -95,25 +98,57 @@ namespace DefenseGameWebSocketServer.Manager
                 }
             }
         }
+        public async Task TryConnectGame(List<string> playerIds)
+        {
+            if (_cts == null) _cts = new CancellationTokenSource();
+            if (_sharedHpManager == null) _sharedHpManager = new SharedHpManager(waveId);
+            if (_waveScheduler == null) _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount, _getPlayerCount, _getPlayerList, _sharedHpManager, _enemyManager, async () => await GameClear());
+            BulletManager.Instance.Initialize(_broadcaster);
+
+            await _broadcaster.BroadcastAsync(new
+            {
+                type = "started_game"
+            });
+
+            for (int i = 0; i < playerIds.Count; i++)
+            {
+                await InitializeGame(playerIds[i]);
+            }
+
+            await _broadcaster.BroadcastAsync(new
+            {
+                type = "player_list",
+                players = _playerManager.GetAllPlayers().Select(p => new PlayerInfo
+                {
+                    id = p.id,
+                    nickname = p.nickname,
+                    job_type = p.jobType,
+                })
+            });
+            TryStartWave(this.waveId);
+        }
 
         public async Task InitializeGame(string playerId)
         {
-            if (_cts == null) _cts = new CancellationTokenSource();
-            if( _sharedHpManager == null) _sharedHpManager = new SharedHpManager(waveId);
-            if (_waveScheduler == null) _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount,_getPlayerCount,_getPlayerList, _sharedHpManager, _enemyManager, async () => await GameClear());
-            BulletManager.Instance.Initialize(_broadcaster);
-
             string assignedJob = AssignJobToPlayer();
-            SetPlayerData(playerId,assignedJob);
-            if(_playerManager.TryGetPlayer(playerId, out Player player))
+            SetPlayerData(playerId, assignedJob);
+
+            if (_playerManager.TryGetPlayer(playerId, out Player player))
             {
+                var initialMsg = new
+                {
+                    type = "initial_game",
+                    wave_id = this.waveId
+                };
+                await _broadcaster.SendToAsync(playerId, initialMsg);
+
                 await _broadcaster.BroadcastAsync(new
                 {
                     type = "player_join",
                     playerInfo = new PlayerInfo
                     {
                         id = playerId,
-                        job_type = assignedJob,
+                        job_type = player.jobType,
                         currentHp = player.currentHp,
                         currentUlt = player.currentUlt,
                         currentMaxHp = player.currentMaxHp,
@@ -127,30 +162,10 @@ namespace DefenseGameWebSocketServer.Manager
                     }
                 });
             }
-            var initialMsg = new
-            {
-                type = "initial_game",
-                wave_id = this.waveId
-            };
-            await _broadcaster.BroadcastAsync(initialMsg);
+            
 
             // 파티 정보 브로드캐스트 (새 플레이어 참여)
             await _partyMemberManager.OnPlayerJoined(playerId);
-
-            if (_broadcaster.ConnectedCount >= 1)
-            {
-                TryStartWave(this.waveId);
-            }
-
-            await _broadcaster.SendToAsync(playerId, new
-            {
-                type = "player_list",
-                players = _playerManager.GetAllPlayers().Select(p => new PlayerInfo
-                { 
-                    id = p.id,              
-                    job_type = p.jobType,
-                })
-            });
 
             // 새 플레이어에게 파티 정보 전송
             await _partyMemberManager.SendPartyInfoToPlayer(playerId);
@@ -314,6 +329,27 @@ namespace DefenseGameWebSocketServer.Manager
         {
             switch (msgType)
             {
+                case MessageType.CreateRoom:
+                    {
+                        if (_isGameLoopRunning) return;
+                        var createRoomHandler = new CreateRoomHandler();
+                        await createRoomHandler.HandleAsync(rawMessage, _broadcaster, _roomManager);
+                    }
+                    break;
+                case MessageType.JoinRoom:
+                    {
+                        if (_isGameLoopRunning) return;
+                        var joinRoomHandler = new JoinRoomHandler();
+                        await joinRoomHandler.HandleAsync(rawMessage, _broadcaster, _roomManager);
+                    }
+                    break;
+                case MessageType.StartGame:
+                    {
+                        if (_isGameLoopRunning) return;
+                        var startGameHandler = new StartGameHandler();
+                        await startGameHandler.HandleAsync(playerId, rawMessage, _broadcaster, _roomManager, this);
+                    }
+                    break;
                 case MessageType.Move:
                     {
                         var moveHandler = new MoveHandler();

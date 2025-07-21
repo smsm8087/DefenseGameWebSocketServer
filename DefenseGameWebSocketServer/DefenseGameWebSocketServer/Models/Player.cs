@@ -5,6 +5,7 @@ using System;
 public class PlayerInfo
 {
     public string id { get; set; }
+    public string nickname { get; set; }
     public string job_type { get; set; }
     public int currentHp { get; set; }
     public float currentUlt { get; set; }
@@ -33,6 +34,7 @@ public class PlayerAddData
 public class Player
 {
     public string id;
+    public string nickname;
     public string jobType;
     public float x;
     public float y;

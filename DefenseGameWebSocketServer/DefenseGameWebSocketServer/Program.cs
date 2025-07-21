@@ -43,24 +43,45 @@ app.Map("/ws", async context =>
 {
     if (context.WebSockets.IsWebSocketRequest)
     {
-        var playerId = Guid.NewGuid().ToString();
-        Console.WriteLine($"[WebSocket] 플레이어 접속 시도: {playerId}");
+        string playerId = null;
         var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-
-        broadcaster.Register(playerId, webSocket);
-
-        //임시로 wave_id = 1로 설정
-        await GameManager.InitializeGame(playerId);
-
         var buffer = new byte[1024 * 4];
         try
         {
+            // 최초 메시지를 기다림 (여기서 playerId를 받아야 함)
+            var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+            if (result.MessageType == WebSocketMessageType.Text)
+            {
+                
+                var msg = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                var root = JsonDocument.Parse(msg).RootElement;
+
+                playerId = root.GetProperty("playerId").GetString();
+                if(playerId == null)
+                {
+                    Console.WriteLine("[WebSocket] playerId 누락된 요청");
+                    await webSocket.CloseAsync(WebSocketCloseStatus.PolicyViolation, "Missing playerId", CancellationToken.None);
+                    return;
+                }
+                Console.WriteLine($"[WebSocket] 플레이어 접속: {playerId}");
+                broadcaster.Register(playerId, webSocket);
+
+                // 첫 메시지도 처리해줘야 하면 여기서 처리
+                var typeString = root.GetProperty("type").GetString();
+                var msgType = MessageTypeHelper.Parse(typeString);
+                await GameManager.ProcessHandler(playerId, msgType, msg);
+            }
+            else
+            {
+                await webSocket.CloseAsync(WebSocketCloseStatus.InvalidMessageType, "Expected text message", CancellationToken.None);
+                return;
+            }
+
             while (webSocket.State == WebSocketState.Open)
             {
-                var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
                 if (result.MessageType == WebSocketMessageType.Text)
                 {
-                    var msg = Encoding.UTF8.GetString(buffer, 0, result.Count);
                     var rawMessage = Encoding.UTF8.GetString(buffer, 0, result.Count);
 
                     try
@@ -83,11 +104,17 @@ app.Map("/ws", async context =>
                 }
             }
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[WebSocket Error] {ex.Message}");
+        }
         finally
         {
-            // remove socket
-            broadcaster.Unregister(playerId);
-            await GameManager.RemovePlayer(playerId);
+            if (playerId != null)
+            {
+                broadcaster.Unregister(playerId);
+                await GameManager.RemovePlayer(playerId);
+            }
             webSocket.Dispose();
         }
     }

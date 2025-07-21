@@ -7,6 +7,9 @@
     
     public enum MessageType
     {
+        CreateRoom,
+        JoinRoom,
+        StartGame,
         Move,
         Restart,
         PlayerAnimation,
@@ -26,6 +29,9 @@
         {
             return type switch
             {
+                "create_room" => MessageType.CreateRoom,
+                "join_room" => MessageType.JoinRoom,
+                "start_game" => MessageType.StartGame,
                 "move" => MessageType.Move,
                 "restart" => MessageType.Restart,
                 "player_animation" => MessageType.PlayerAnimation,
