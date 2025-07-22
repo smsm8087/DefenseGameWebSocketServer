@@ -6,14 +6,15 @@ namespace DefenseGameWebSocketServer.Manager
     {
         private readonly Dictionary<string, Room> _rooms = new();
 
-        public void CreateRoom(string roomCode, string hostId)
+        public Room CreateRoom(string roomCode, string hostId)
         {
-            _rooms[roomCode] = new Room
-            {
+            Room room = new Room() {
                 RoomCode = roomCode,
                 HostId = hostId
             };
+            _rooms[roomCode] = room;
             AddPlayer(roomCode, hostId, true);
+            return room;
         }
 
         public bool RoomExists(string roomCode) => _rooms.ContainsKey(roomCode);

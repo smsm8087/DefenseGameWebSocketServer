@@ -4,17 +4,17 @@
     {
         public string playerId { get; set; }
         public string roomCode { get; set; }
-        public int playerCount { get; set; }
+        public List<string> players { get; set; }
         public StartRoomMessage(
             string playerId,
             string roomCode,
-            int playerCount
+            List<string> players
         )
         {
             type = "start_game";
             this.playerId = playerId;
             this.roomCode = roomCode;
-            this.playerCount = playerCount;
+            this.players = players;
         }
     }
 }

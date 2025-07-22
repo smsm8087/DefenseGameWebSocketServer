@@ -1,5 +1,6 @@
 ﻿using DefenseGameWebSocketServer.Manager;
 using DefenseGameWebSocketServer.Model;
+using DefenseGameWebSocketServer.Models;
 using System.Text.Json;
 
 public class StartGameHandler
@@ -12,38 +13,32 @@ public class StartGameHandler
             Console.WriteLine("[JoinRoomHandler] 잘못된 메시지 수신");
             return;
         }
-        var roomCode = msg.roomCode;
-        var room = roomManager.GetRoom(roomCode);
+        string roomCode = msg.roomCode;
+        string hostId = msg.playerId;
+        List<string> participants = msg.players;
 
-        if (room == null)
+        if(roomManager.RoomExists(roomCode))
         {
-            Console.WriteLine($"방 {roomCode} 없음");
+            Console.WriteLine($"[{roomCode}] 방이 이미 존재합니다.");
             return;
         }
 
-        if (room.HostId != playerId)
+        //room 초기화 및 참가자 추가
+        Room room = roomManager.CreateRoom(roomCode, hostId);
+        for(int i = 0; i < participants.Count; i++)
         {
-            Console.WriteLine($"[{playerId}]는 방장이 아님");
-            return;
+            roomManager.AddPlayer(roomCode, participants[i]);
         }
-
-        if(room.GetPlayerCount() != msg.playerCount)
-        {
-            Console.WriteLine($"[{roomCode}] 플레이어 수 불일치: 기대 {msg.playerCount}, 현재 {room.GetPlayerCount()}");
-            return;
-        }
-        Console.WriteLine($"[{roomCode}] 게임 시작!");
-
-        room.IsGameStarted = true;
         //TODO: 게임 시작 로직 추가
         await gameManager.TryConnectGame(room);
-        if (room.AllPlayersReady())
-        {
+        room.IsGameStarted = true;
+        //if (room.AllPlayersReady())
+        //{
             
-        }
-        else
-        {
-            Console.WriteLine($"[{roomCode}] 아직 준비 안된 플레이어 있음");
-        }
+        //}
+        //else
+        //{
+        //    Console.WriteLine($"[{roomCode}] 아직 준비 안된 플레이어 있음");
+        //}
     }
 }
