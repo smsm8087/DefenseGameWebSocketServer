@@ -41,7 +41,7 @@ namespace DefenseGameWebSocketServer.Manager
         // 직업 관리를 위한 필드 추가
         private readonly List<string> _availableJobs = new List<string> 
         { 
-            "tank", "programmer", "sniper"
+            "tank", "programmer", "sniper", "maid"
         };
         private readonly HashSet<string> _assignedJobs = new HashSet<string>();
         private readonly object _jobLock = new object();
