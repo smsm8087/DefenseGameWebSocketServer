@@ -4,16 +4,13 @@ namespace DefenseGameWebSocketServer.Manager
 {
     public class BulletManager
     {
-        private static BulletManager _instance;
-        public static BulletManager Instance => _instance ??= new BulletManager();
-
         private IWebSocketBroadcaster _broadcaster;
         private readonly List<Bullet> _bullets = new();
-
-        public void Initialize(IWebSocketBroadcaster broadcaster)
+        public BulletManager(IWebSocketBroadcaster broadcaster)
         {
             _broadcaster = broadcaster;
         }
+       
         public async Task Update(float deltaTime)
         {
             if (_bullets.Count == 0) return;

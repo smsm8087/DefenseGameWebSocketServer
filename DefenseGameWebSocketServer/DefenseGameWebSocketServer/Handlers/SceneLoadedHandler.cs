@@ -1,14 +1,15 @@
 ﻿using DefenseGameWebSocketServer.Manager;
+using DefenseGameWebSocketServer.Models;
 using System.Text.Json;
 
 public class SceneLoadedHandler
 {
-    private readonly RoomManager _roomManager;
     private readonly GameManager _gameManager;
+    private readonly Room _room;
 
-    public SceneLoadedHandler(RoomManager roomManager, GameManager gameManager)
+    public SceneLoadedHandler(Room room, GameManager gameManager)
     {
-        _roomManager = roomManager;
+        _room = room;
         _gameManager = gameManager;
     }
 
@@ -25,25 +26,18 @@ public class SceneLoadedHandler
             return;
         }
 
-        var room = _roomManager.GetRoom(roomCode);
-        if(room == null)
-        {
-            Console.WriteLine($"방 {roomCode} 없음");
-            return;
-        }
-
-        if(!room.PlayerLoadingStatus.ContainsKey(playerId))
+        if(!_room.PlayerLoadingStatus.ContainsKey(playerId))
         {
             Console.WriteLine($"[{playerId}] 플레이어 로딩 상태가 없습니다.");
             return;
         }
-        _roomManager.SetLoadingComplete(roomCode, playerId);
+        _room.PlayerLoadingStatus[playerId] = true;
         Console.WriteLine($"[{playerId}] 씬 로딩완료!");
 
         // 모든 플레이어가 로딩을 완료했는지 확인하고 게임 초기화 시도
-        if (room.AllPlayersLoading())
+        if (_room.AllPlayersLoading())
         {
-            await _gameManager.InitializeGame(room.PlayerLoadingStatus.Keys.ToList());
+            await _gameManager.InitializeGame(_room.playerIds);
         }
     }
 }

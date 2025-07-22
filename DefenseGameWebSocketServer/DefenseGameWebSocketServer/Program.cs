@@ -1,5 +1,6 @@
 using DefenseGameWebSocketServer.Manager;
 using DefenseGameWebSocketServer.Model;
+using DefenseGameWebSocketServer.Models;
 using DefenseGameWebSocketServer.Models.DataModels;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
@@ -21,10 +22,6 @@ builder.Services.AddSingleton<IWebSocketBroadcaster>(broadcaster);
 
 GameDataManager.Instance.LoadAllData();
 
-int wave_id = 1; // 임시로 웨이브 ID 설정, 실제 게임 로직에 따라 변경 필요
-var GameManager = new GameManager(broadcaster, wave_id);
-// 게임 데이터 초기화
-
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -44,42 +41,14 @@ app.Map("/ws", async context =>
     if (context.WebSockets.IsWebSocketRequest)
     {
         string playerId = null;
+        string roomCode = null;
         var webSocket = await context.WebSockets.AcceptWebSocketAsync();
         var buffer = new byte[1024 * 4];
         try
         {
-            // 최초 메시지를 기다림 (여기서 playerId를 받아야 함)
-            var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-            if (result.MessageType == WebSocketMessageType.Text)
-            {
-                
-                var msg = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                var root = JsonDocument.Parse(msg).RootElement;
-
-                playerId = root.GetProperty("playerId").GetString();
-                if(playerId == null)
-                {
-                    Console.WriteLine("[WebSocket] playerId 누락된 요청");
-                    await webSocket.CloseAsync(WebSocketCloseStatus.PolicyViolation, "Missing playerId", CancellationToken.None);
-                    return;
-                }
-                Console.WriteLine($"[WebSocket] 플레이어 접속: {playerId}");
-                broadcaster.Register(playerId, webSocket);
-
-                // 첫 메시지도 처리해줘야 하면 여기서 처리
-                var typeString = root.GetProperty("type").GetString();
-                var msgType = MessageTypeHelper.Parse(typeString);
-                await GameManager.ProcessHandler(playerId, msgType, msg);
-            }
-            else
-            {
-                await webSocket.CloseAsync(WebSocketCloseStatus.InvalidMessageType, "Expected text message", CancellationToken.None);
-                return;
-            }
-
             while (webSocket.State == WebSocketState.Open)
             {
-                result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
                 if (result.MessageType == WebSocketMessageType.Text)
                 {
                     var rawMessage = Encoding.UTF8.GetString(buffer, 0, result.Count);
@@ -90,14 +59,26 @@ app.Map("/ws", async context =>
                         var typeString = root.GetProperty("type").GetString();
                         var msgType = MessageTypeHelper.Parse(typeString);
                         playerId = root.GetProperty("playerId").GetString();
-                        if (playerId == null)
+                        roomCode = root.GetProperty("roomCode").GetString();
+                        if (playerId == null || roomCode == null)
                         {
-                            Console.WriteLine("[WebSocket] playerId 누락된 요청");
-                            await webSocket.CloseAsync(WebSocketCloseStatus.PolicyViolation, "Missing playerId", CancellationToken.None);
+                            Console.WriteLine($"[WebSocket] playerId|roomCode {playerId} | {roomCode} 누락된 요청");
+                            await webSocket.CloseAsync(WebSocketCloseStatus.PolicyViolation, "Missing playerId or roomCode", CancellationToken.None);
                             return;
                         }
+                        //없으면 플레이어 새로 등록
+                        if(!broadcaster.ExistPlayer(playerId))
+                        {
+                            broadcaster.Register(playerId, webSocket);
+                        }
+                        Room room = RoomManager.Instance.GetRoom(roomCode);
+                        if (!RoomManager.Instance.RoomExists(roomCode))
+                        {
+                            //첫 시작 요청은 방장이하므로 방장이 호스팅임.
+                            room = RoomManager.Instance.CreateRoom(roomCode, playerId, broadcaster);
+                        }
                         //메시지 처리핸들러
-                        await GameManager.ProcessHandler(playerId, msgType, rawMessage);
+                        await room._gameManager.ProcessHandler(playerId, msgType, rawMessage);
                     }
                     catch (Exception ex)
                     {
@@ -119,7 +100,19 @@ app.Map("/ws", async context =>
             if (playerId != null)
             {
                 broadcaster.Unregister(playerId);
-                await GameManager.RemovePlayer(playerId);
+                if (roomCode != null && RoomManager.Instance.RoomExists(roomCode))
+                {
+                    var room = RoomManager.Instance.GetRoom(roomCode);
+                    if (room != null && room.playerIds.Contains(playerId))
+                    {
+                        room.playerIds.Remove(playerId);
+                        await room._gameManager.RemovePlayer(playerId);
+                        if (room.playerIds.Count <= 0)
+                        {
+                            RoomManager.Instance.RemoveRoom(roomCode);
+                        }
+                    }
+                }
             }
             webSocket.Dispose();
         }
@@ -131,9 +124,9 @@ app.Map("/ws", async context =>
 });
 #endregion
 // 서버 종료 시 안전하게 취소
-app.Lifetime.ApplicationStopping.Register(() =>
+app.Lifetime.ApplicationStopping.Register(async () =>
 {
     Console.WriteLine("서버 종료 요청됨 - 웨이브 중지");
-    GameManager.Dispose();
+    await broadcaster.Dispose();
 });
 app.Run();

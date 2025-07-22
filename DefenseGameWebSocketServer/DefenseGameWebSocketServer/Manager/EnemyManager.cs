@@ -21,9 +21,11 @@ namespace DefenseGameWebSocketServer.Manager
         private CancellationTokenSource _cts;
         private bool _isRunning = false;
         private readonly ConcurrentQueue<EnemyBroadcastEvent> _broadcastEvents = new();
-        public EnemyManager(IWebSocketBroadcaster broadcaster)
+        private readonly BulletManager _bulletManager;
+        public EnemyManager(IWebSocketBroadcaster broadcaster, BulletManager bulletManager)
         {
             _broadcaster = broadcaster;
+            _bulletManager = bulletManager;
         }
         public void setCancellationTokenSource(CancellationTokenSource cts)
         {
@@ -113,7 +115,7 @@ namespace DefenseGameWebSocketServer.Manager
                     }
                 }
                 //bulletManager 업데이트
-                await BulletManager.Instance.Update(deltaTime);
+                await _bulletManager.Update(deltaTime);
 
                 // 정확한 프레임 맞추기
                 var elapsed = (sw.ElapsedTicks - nowTicks) / (float)Stopwatch.Frequency;

@@ -17,6 +17,25 @@ public class WebSocketBroadcaster : IWebSocketBroadcaster
     public bool HasPlayers() => _sockets.Count > 0;
     public int GetPlayerCount() => _sockets.Count;
 
+    public async Task Dispose()
+    {
+        foreach (var socket in _sockets.Values)
+        {
+            if (socket.State == WebSocketState.Open)
+            {
+                try
+                {
+                    await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Server shutting down", CancellationToken.None);
+                }
+                catch
+                {
+                    // Ignore errors during shutdown
+                }
+            }
+            socket.Dispose();
+        }
+        _sockets.Clear();
+    }
     public void Register(string playerId, WebSocket socket)
     {
         _sockets[playerId] = socket;
@@ -25,6 +44,10 @@ public class WebSocketBroadcaster : IWebSocketBroadcaster
     public void Unregister(string playerId)
     {
         _sockets.TryRemove(playerId, out _);
+    }
+    public bool ExistPlayer(string playerId)
+    {
+        return _sockets.ContainsKey(playerId);
     }
 
     public async Task BroadcastAsync(object message)

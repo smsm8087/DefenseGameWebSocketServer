@@ -1,13 +1,6 @@
 ﻿using DefenseGameWebSocketServer.Handlers;
 using DefenseGameWebSocketServer.Model;
 using DefenseGameWebSocketServer.Models;
-using DefenseGameWebSocketServer.Models.DataModels;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace DefenseGameWebSocketServer.Manager
 {
@@ -21,7 +14,7 @@ namespace DefenseGameWebSocketServer.Manager
 
     public class GameManager
     {
-        private RoomManager _roomManager;
+        private BulletManager _bulletManager;
         private SharedHpManager _sharedHpManager;
         private WaveScheduler _waveScheduler;
         private PlayerManager _playerManager;
@@ -38,6 +31,7 @@ namespace DefenseGameWebSocketServer.Manager
         private int waveId = 0; // 현재 웨이브 ID
         private GameResult _gameResult = GameResult.None;
 
+        private Room _room; // 현재 방 정보
         // 직업 관리를 위한 필드 추가
         private readonly List<string> _availableJobs = new List<string> 
         { 
@@ -46,9 +40,11 @@ namespace DefenseGameWebSocketServer.Manager
         private readonly HashSet<string> _assignedJobs = new HashSet<string>();
         private readonly object _jobLock = new object();
 
-        public GameManager(WebSocketBroadcaster broadcaster, int wave_id)
+        public GameManager(Room room, WebSocketBroadcaster broadcaster, int wave_id)
         {
             this.waveId = wave_id;
+            _broadcaster = broadcaster;
+
             _sharedHpManager = new SharedHpManager(waveId);
             _playerManager = new PlayerManager();
             _partyMemberManager = new PartyMemberManager(_playerManager, broadcaster);
@@ -57,11 +53,11 @@ namespace DefenseGameWebSocketServer.Manager
             _hasPlayerCount = () => _playerManager._playersDict.Count > 0;
             _getPlayerCount = () => _playerManager._playersDict.Count;
             _getPlayerList = () => _playerManager.GetAllPlayerIds().ToList();
-            _broadcaster = broadcaster;
-            _enemyManager = new EnemyManager((IWebSocketBroadcaster)broadcaster);
+
+            _bulletManager = new BulletManager((IWebSocketBroadcaster)broadcaster);
+            _enemyManager = new EnemyManager((IWebSocketBroadcaster)broadcaster, _bulletManager);
             _waveScheduler = new WaveScheduler((IWebSocketBroadcaster)broadcaster, _cts, _hasPlayerCount,_getPlayerCount, _getPlayerList, _sharedHpManager, _enemyManager, async ()=> await GameClear());
-            BulletManager.Instance.Initialize(broadcaster);
-            _roomManager = new RoomManager();
+            _room = room;
         }
 
         public void SetPlayerData(string playerId, string job_type)
@@ -99,12 +95,11 @@ namespace DefenseGameWebSocketServer.Manager
                 }
             }
         }
-        public async Task TryConnectGame(Room room)
+        public async Task TryConnectGame()
         {
             if (_cts == null) _cts = new CancellationTokenSource();
             if (_sharedHpManager == null) _sharedHpManager = new SharedHpManager(waveId);
             if (_waveScheduler == null) _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount, _getPlayerCount, _getPlayerList, _sharedHpManager, _enemyManager, async () => await GameClear());
-            BulletManager.Instance.Initialize(_broadcaster);
 
             await _broadcaster.BroadcastAsync(new
             {
@@ -254,7 +249,6 @@ namespace DefenseGameWebSocketServer.Manager
 
             _cts = new CancellationTokenSource();
             _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount,_getPlayerCount, _getPlayerList,  _sharedHpManager, _enemyManager, async () => await GameClear());
-            BulletManager.Instance.Initialize(_broadcaster);
             _revivalManager = new RevivalManager(_playerManager, _broadcaster);
 
             // 게임 재시작 시 직업 할당 초기화
@@ -334,7 +328,7 @@ namespace DefenseGameWebSocketServer.Manager
             {
                 case MessageType.SceneLoaded:
                     {
-                        var sceneLoadedHandler = new SceneLoadedHandler(_roomManager,this);
+                        var sceneLoadedHandler = new SceneLoadedHandler(_room,this);
                         await sceneLoadedHandler.HandleAsync(playerId, rawMessage);
                     }
                     break;
@@ -342,7 +336,7 @@ namespace DefenseGameWebSocketServer.Manager
                     {
                         if (_isGameLoopRunning) return;
                         var startGameHandler = new StartGameHandler();
-                        await startGameHandler.HandleAsync(playerId, rawMessage, _broadcaster, _roomManager, this);
+                        await startGameHandler.HandleAsync(playerId, rawMessage, _broadcaster, this);
                     }
                     break;
                 case MessageType.Move:
@@ -381,7 +375,7 @@ namespace DefenseGameWebSocketServer.Manager
                     {
                         if (!_isGameLoopRunning) return;
                         var enemyAttackHitHandler = new EnemyAttackHitHandler();
-                        await enemyAttackHitHandler.HandleAsync(rawMessage, _broadcaster, _sharedHpManager, _enemyManager, _revivalManager);
+                        await enemyAttackHitHandler.HandleAsync(rawMessage, _broadcaster, _sharedHpManager, _enemyManager,_bulletManager, _revivalManager);
                         // 적의 공격으로 플레이어가 데미지를 받았을 수 있으므로
                         foreach (var pid in _playerManager.GetAllPlayerIds())
                         {

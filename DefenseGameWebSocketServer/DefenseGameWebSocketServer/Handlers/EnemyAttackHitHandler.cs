@@ -13,7 +13,7 @@ namespace DefenseGameWebSocketServer.Handlers
     }
     public class EnemyAttackHitHandler
     {
-        public async Task HandleAsync(string rawMessage, IWebSocketBroadcaster broadcaster, SharedHpManager _sharedHpManager, EnemyManager _enemyManager, RevivalManager _revivalManager = null)
+        public async Task HandleAsync(string rawMessage, IWebSocketBroadcaster broadcaster, SharedHpManager _sharedHpManager, EnemyManager _enemyManager, BulletManager _bulletManager, RevivalManager _revivalManager = null)
         {
             var msg = JsonSerializer.Deserialize<EnemyAttackHitMessage>(rawMessage);
             if (msg == null) return;
@@ -47,7 +47,7 @@ namespace DefenseGameWebSocketServer.Handlers
 
                     targetEnemy.HasAttacked = true;
                     //총알 발사
-                    await BulletManager.Instance.SpawnBullet(targetEnemy, targetEnemy.AggroTarget);
+                    await _bulletManager.SpawnBullet(targetEnemy, targetEnemy.AggroTarget);
 
                     _ = Task.Delay(300).ContinueWith(_ => targetEnemy.HasAttacked = false);
 
