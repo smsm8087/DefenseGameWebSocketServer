@@ -89,7 +89,13 @@ app.Map("/ws", async context =>
                         var root = JsonDocument.Parse(rawMessage).RootElement;
                         var typeString = root.GetProperty("type").GetString();
                         var msgType = MessageTypeHelper.Parse(typeString);
-
+                        playerId = root.GetProperty("playerId").GetString();
+                        if (playerId == null)
+                        {
+                            Console.WriteLine("[WebSocket] playerId 누락된 요청");
+                            await webSocket.CloseAsync(WebSocketCloseStatus.PolicyViolation, "Missing playerId", CancellationToken.None);
+                            return;
+                        }
                         //메시지 처리핸들러
                         await GameManager.ProcessHandler(playerId, msgType, rawMessage);
                     }
