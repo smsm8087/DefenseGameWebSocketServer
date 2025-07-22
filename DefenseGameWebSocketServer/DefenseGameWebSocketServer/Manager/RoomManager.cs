@@ -27,6 +27,8 @@ namespace DefenseGameWebSocketServer.Manager
             {
                 if (!room.PlayerReadyStatus.ContainsKey(playerId))
                     room.PlayerReadyStatus[playerId] = isReady;
+                if (!room.PlayerLoadingStatus.ContainsKey(playerId))
+                    room.PlayerLoadingStatus[playerId] = false;
             }
         }
 
@@ -36,6 +38,14 @@ namespace DefenseGameWebSocketServer.Manager
             {
                 if (room.PlayerReadyStatus.ContainsKey(playerId))
                     room.PlayerReadyStatus[playerId] = true;
+            }
+        }
+        public void SetLoadingComplete(string roomCode, string playerId)
+        {
+            if (_rooms.TryGetValue(roomCode, out var room))
+            {
+                if (room.PlayerLoadingStatus.ContainsKey(playerId))
+                    room.PlayerLoadingStatus[playerId] = true;
             }
         }
     }

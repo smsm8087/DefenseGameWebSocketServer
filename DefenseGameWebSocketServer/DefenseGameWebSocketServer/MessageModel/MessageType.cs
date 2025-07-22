@@ -7,6 +7,7 @@
     
     public enum MessageType
     {
+        SceneLoaded,
         CreateRoom,
         JoinRoom,
         StartGame,
@@ -29,6 +30,7 @@
         {
             return type switch
             {
+                "scene_loaded" => MessageType.SceneLoaded,
                 "create_room" => MessageType.CreateRoom,
                 "join_room" => MessageType.JoinRoom,
                 "start_game" => MessageType.StartGame,

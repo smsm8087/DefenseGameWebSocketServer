@@ -32,14 +32,14 @@ public class StartGameHandler
             Console.WriteLine($"[{roomCode}] 플레이어 수 불일치: 기대 {msg.playerCount}, 현재 {room.GetPlayerCount()}");
             return;
         }
+        Console.WriteLine($"[{roomCode}] 게임 시작!");
 
+        room.IsGameStarted = true;
+        //TODO: 게임 시작 로직 추가
+        await gameManager.TryConnectGame(room);
         if (room.AllPlayersReady())
         {
-            Console.WriteLine($"[{roomCode}] 게임 시작!");
             
-
-            room.IsGameStarted = true;
-            await gameManager.TryConnectGame(room.PlayerReadyStatus.Keys.ToList());
         }
         else
         {

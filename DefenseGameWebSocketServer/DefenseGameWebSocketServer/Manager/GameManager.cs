@@ -1,5 +1,6 @@
 ﻿using DefenseGameWebSocketServer.Handlers;
 using DefenseGameWebSocketServer.Model;
+using DefenseGameWebSocketServer.Models;
 using DefenseGameWebSocketServer.Models.DataModels;
 using System;
 using System.Collections.Generic;
@@ -98,7 +99,7 @@ namespace DefenseGameWebSocketServer.Manager
                 }
             }
         }
-        public async Task TryConnectGame(List<string> playerIds)
+        public async Task TryConnectGame(Room room)
         {
             if (_cts == null) _cts = new CancellationTokenSource();
             if (_sharedHpManager == null) _sharedHpManager = new SharedHpManager(waveId);
@@ -109,10 +110,13 @@ namespace DefenseGameWebSocketServer.Manager
             {
                 type = "started_game"
             });
-
+        }
+        public async Task InitializeGame(List<string> playerIds)
+        {
+            //씬로딩완료 게임 이니셜라이징
             for (int i = 0; i < playerIds.Count; i++)
             {
-                await InitializeGame(playerIds[i]);
+                await SettingGame(playerIds[i]);
             }
 
             await _broadcaster.BroadcastAsync(new
@@ -127,8 +131,7 @@ namespace DefenseGameWebSocketServer.Manager
             });
             TryStartWave(this.waveId);
         }
-
-        public async Task InitializeGame(string playerId)
+        public async Task SettingGame(string playerId)
         {
             string assignedJob = AssignJobToPlayer();
             SetPlayerData(playerId, assignedJob);
@@ -329,6 +332,12 @@ namespace DefenseGameWebSocketServer.Manager
         {
             switch (msgType)
             {
+                case MessageType.SceneLoaded:
+                    {
+                        var sceneLoadedHandler = new SceneLoadedHandler(_roomManager,this);
+                        await sceneLoadedHandler.HandleAsync(playerId, rawMessage);
+                    }
+                    break;
                 case MessageType.CreateRoom:
                     {
                         if (_isGameLoopRunning) return;
