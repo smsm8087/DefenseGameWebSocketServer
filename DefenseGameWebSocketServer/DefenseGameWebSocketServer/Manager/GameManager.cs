@@ -339,6 +339,18 @@ namespace DefenseGameWebSocketServer.Manager
                         await startGameHandler.HandleAsync(playerId, rawMessage, _broadcaster, this);
                     }
                     break;
+                case MessageType.CreateRoom:
+                {
+                    var createRoomHandler = new CreateRoomHandler();
+                    await createRoomHandler.HandleAsync(playerId, rawMessage, _broadcaster);
+                }
+                break;
+                case MessageType.JoinRoom:
+                {
+                    var joinRoomHandler = new JoinRoomHandler();
+                    await joinRoomHandler.HandleAsync(playerId, rawMessage, _broadcaster);
+                }
+                break;
                 case MessageType.Move:
                     {
                         var moveHandler = new MoveHandler();

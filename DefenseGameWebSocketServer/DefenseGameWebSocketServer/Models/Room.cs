@@ -7,6 +7,7 @@ namespace DefenseGameWebSocketServer.Models
     {
         public string RoomCode { get; set; }
         public string HostId { get; set; }
+        public WebSocketBroadcaster broadCaster { get; }
         public Dictionary<string, bool> PlayerReadyStatus { get; set; } = new();
         public Dictionary<string, bool> PlayerLoadingStatus { get; set; } = new();
         public bool IsGameStarted { get; set; } = false;
@@ -18,9 +19,10 @@ namespace DefenseGameWebSocketServer.Models
         public EnemyManager _enemyManager { get; private set; }
 
         private int wave_id = 1;//임시
-        public Room(WebSocketBroadcaster broadcaster)
+        public Room()
         {
-            _gameManager = new GameManager(this, broadcaster, wave_id);
+            broadCaster = new WebSocketBroadcaster();
+            _gameManager = new GameManager(this, broadCaster, wave_id);
         }
 
         public bool AllPlayersReady()

@@ -17,8 +17,6 @@ builder.WebHost.ConfigureKestrel(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-var broadcaster = new WebSocketBroadcaster();
-builder.Services.AddSingleton<IWebSocketBroadcaster>(broadcaster);
 
 GameDataManager.Instance.LoadAllData();
 
@@ -66,16 +64,25 @@ app.Map("/ws", async context =>
                             await webSocket.CloseAsync(WebSocketCloseStatus.PolicyViolation, "Missing playerId or roomCode", CancellationToken.None);
                             return;
                         }
-                        //없으면 플레이어 새로 등록
-                        if(!broadcaster.ExistPlayer(playerId))
-                        {
-                            broadcaster.Register(playerId, webSocket);
-                        }
+                        
                         Room room = RoomManager.Instance.GetRoom(roomCode);
+                        
                         if (!RoomManager.Instance.RoomExists(roomCode))
                         {
                             //첫 시작 요청은 방장이하므로 방장이 호스팅임.
-                            room = RoomManager.Instance.CreateRoom(roomCode, playerId, broadcaster);
+                            room = RoomManager.Instance.CreateRoom(roomCode, playerId);
+                        } else
+                        {
+                            //방이 존재하는 경우 플레이어 추가
+                            if (!RoomManager.Instance.ExistPlayer(roomCode, playerId))
+                            {
+                                RoomManager.Instance.AddPlayer(roomCode, playerId);
+                            }
+                        }
+                        //브로드캐스터에 등록
+                        if (!room.broadCaster.ExistPlayer(playerId))
+                        {
+                            room.broadCaster.Register(playerId, webSocket);
                         }
                         //메시지 처리핸들러
                         await room._gameManager.ProcessHandler(playerId, msgType, rawMessage);
@@ -99,12 +106,12 @@ app.Map("/ws", async context =>
         {
             if (playerId != null)
             {
-                broadcaster.Unregister(playerId);
                 if (roomCode != null && RoomManager.Instance.RoomExists(roomCode))
                 {
                     var room = RoomManager.Instance.GetRoom(roomCode);
                     if (room != null && room.playerIds.Contains(playerId))
                     {
+                        room.broadCaster.Unregister(playerId);
                         room.playerIds.Remove(playerId);
                         await room._gameManager.RemovePlayer(playerId);
                         if (room.playerIds.Count <= 0)
@@ -124,9 +131,12 @@ app.Map("/ws", async context =>
 });
 #endregion
 // 서버 종료 시 안전하게 취소
-app.Lifetime.ApplicationStopping.Register(async () =>
+app.Lifetime.ApplicationStopping.Register(() =>
 {
     Console.WriteLine("서버 종료 요청됨 - 웨이브 중지");
-    await broadcaster.Dispose();
+    // RoomManager의 모든 Room의 Broadcaster를 Dispose
+    var rooms = RoomManager.Instance.GetAllRooms();
+    var tasks = rooms.Select(room => room.broadCaster.Dispose());
+    Task.WhenAll(tasks).GetAwaiter().GetResult();
 });
 app.Run();

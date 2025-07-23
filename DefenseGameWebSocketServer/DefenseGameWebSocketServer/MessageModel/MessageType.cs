@@ -9,6 +9,8 @@
     {
         SceneLoaded,
         StartGame,
+        CreateRoom,
+        JoinRoom,
         Move,
         Restart,
         PlayerAnimation,
@@ -30,6 +32,8 @@
             {
                 "scene_loaded" => MessageType.SceneLoaded,
                 "start_game" => MessageType.StartGame,
+                "create_room" => MessageType.CreateRoom,
+                "join_room" => MessageType.JoinRoom,
                 "move" => MessageType.Move,
                 "restart" => MessageType.Restart,
                 "player_animation" => MessageType.PlayerAnimation,
