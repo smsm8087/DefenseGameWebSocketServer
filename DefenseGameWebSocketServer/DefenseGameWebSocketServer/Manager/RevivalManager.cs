@@ -307,5 +307,14 @@ namespace DefenseGameWebSocketServer.Manager
 
             await _broadcaster.BroadcastAsync(message);
         }
+
+        public void ClearAllRevivals()
+        {
+            lock (_revivalLock)
+            {
+                _activeRevivals.Clear();
+            }
+            Console.WriteLine("[RevivalManager] 모든 부활 상태를 초기화했습니다.");
+        }
     }
 }

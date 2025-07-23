@@ -6,23 +6,11 @@ namespace DefenseGameWebSocketServer.Manager
 
     public class PlayerManager
     {
-        private static PlayerManager _instance;
         public ConcurrentDictionary<string, Player> _playersDict;
-        public static PlayerManager Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    _instance = new PlayerManager();
-                }
-                return _instance;
-            }
-        }
+        
         public PlayerManager()
         {
             _playersDict = new ConcurrentDictionary<string, Player>();
-            _instance = this;
         }
         
         public void AddOrUpdatePlayer(Player player)
@@ -101,6 +89,10 @@ namespace DefenseGameWebSocketServer.Manager
         public IEnumerable<Player> GetAlivePlayers()
         {
             return _playersDict.Values.Where(player => !player.IsDead);
+        }
+        public void Dispose()
+        {
+            _playersDict.Clear();
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using DefenseGameWebSocketServer.Handlers;
 using DefenseGameWebSocketServer.Manager;
 using DefenseGameWebSocketServer.Model;
+using DefenseGameWebSocketServer.Models;
 using DefenseGameWebSocketServer.Models.DataModels;
 using Newtonsoft.Json;
 
@@ -19,7 +20,8 @@ public class SettlementReadyHandler
         playerManager.TryGetPlayer(playerId, out Player player);
         if (player == null)
         {
-            Console.WriteLine($"[SettlementReadyHandler] 플레이어 {playerId} 정보가 없습니다.");
+            Room room = RoomManager.Instance.GetRoomByPlayerId(playerId);
+            LogManager.Info($"[SettlementReadyHandler] 플레이어 {playerId} 정보가 없습니다.", room.RoomCode, playerId);
             return;
         }
         var response = new UpdatePlayerDataMessage(new PlayerInfo

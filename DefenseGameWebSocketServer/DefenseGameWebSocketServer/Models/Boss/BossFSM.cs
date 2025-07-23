@@ -10,6 +10,7 @@ namespace DefenseGameWebSocketServer.Model
         private readonly List<BossPatternData> _patterns;
         private readonly IWebSocketBroadcaster _broadcaster;
         private readonly EnemyManager _enemyManager;
+        private readonly PlayerManager _playerManager;
         private readonly SharedHpManager _sharedHpManager;
         private readonly WaveData _waveData;
         private readonly List<WaveRoundData> _waveRoundDataList;
@@ -24,7 +25,8 @@ namespace DefenseGameWebSocketServer.Model
             EnemyManager enemyManager,
             SharedHpManager sharedHpManager,
             WaveData waveData,
-            List<WaveRoundData> waveRoundDataList
+            List<WaveRoundData> waveRoundDataList,
+            PlayerManager playerManager
         )
         {
             _boss = boss;
@@ -34,6 +36,7 @@ namespace DefenseGameWebSocketServer.Model
             _sharedHpManager = sharedHpManager;
             _waveData = waveData;
             _waveRoundDataList = waveRoundDataList;
+            _playerManager = playerManager;
         }
 
         public void Update(float deltaTime)
@@ -55,7 +58,7 @@ namespace DefenseGameWebSocketServer.Model
                 case BossState.Idle:
                     if (_stateTimer <= 0f)
                     {
-                        _boss.UpdateAggro(PlayerManager.Instance.GetRandomPlayer());
+                        _boss.UpdateAggro(_playerManager.GetRandomPlayer());
                         _boss.SetState(BossState.Moving);
                     }
                     break;

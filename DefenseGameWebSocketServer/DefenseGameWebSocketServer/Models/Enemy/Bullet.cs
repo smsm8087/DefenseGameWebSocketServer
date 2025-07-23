@@ -15,8 +15,9 @@ public class Bullet
     public bool isActive = true;
     public BulletData bulletData;
     private const float groundHitY = -2.91f;
+    private readonly PlayerManager _playerManager;
 
-    public Bullet(string bulletId, string attackerId, float x, float y, float dirX, float dirY, int damage, BulletData bulletData)
+    public Bullet(string bulletId, string attackerId, float x, float y, float dirX, float dirY, int damage, BulletData bulletData, PlayerManager playerManager)
     {
         this.bulletId = bulletId;
         this.attackerId = attackerId;
@@ -26,6 +27,7 @@ public class Bullet
         this.dirY = dirY;
         this.damage = damage;
         this.bulletData = bulletData;
+        _playerManager = playerManager;
     }
 
     public void Update(float deltaTime)
@@ -42,7 +44,7 @@ public class Bullet
             return;
         }
         //플레이어피격 체크
-        foreach (var player in PlayerManager.Instance.GetAllPlayers())
+        foreach (var player in _playerManager.GetAllPlayers())
         {
             if (CheckBulletHitsPlayer(this, player))
             {

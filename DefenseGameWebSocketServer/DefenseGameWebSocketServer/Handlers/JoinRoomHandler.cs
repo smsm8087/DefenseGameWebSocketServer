@@ -1,5 +1,6 @@
 ﻿using DefenseGameWebSocketServer.Manager;
 using DefenseGameWebSocketServer.Model;
+using DefenseGameWebSocketServer.Models;
 using System.Text.Json;
 
 public class JoinRoomHandler
@@ -9,7 +10,8 @@ public class JoinRoomHandler
         var msg = JsonSerializer.Deserialize<JoinRoomMessage>(rawMessage);
         if (msg == null)
         {
-            Console.WriteLine("[JoinRoomHandler] 잘못된 메시지 수신");
+            Room room = RoomManager.Instance.GetRoomByPlayerId(playerId);
+            LogManager.Error($"[JoinRoomHandler] 잘못된 메시지 수신: {rawMessage}", room?.RoomCode, playerId);
             return;
         }
         await broadcaster.SendToAsync(playerId, new

@@ -1,4 +1,5 @@
-﻿using DefenseGameWebSocketServer.Models.DataModels;
+﻿using DefenseGameWebSocketServer.Manager;
+using DefenseGameWebSocketServer.Models.DataModels;
 
 public enum EnemyState
 {
@@ -97,9 +98,9 @@ public class Enemy
         ChangeState(EnemyState.Move);
     }
     
-    public void UpdateFSM(float deltaTime)
+    public void UpdateFSM(float deltaTime, PlayerManager playerManager)
     {
-        _currentState?.Update(this, deltaTime);
+        _currentState?.Update(this, deltaTime, playerManager);
     }
 
     public void ChangeState(EnemyState newState)

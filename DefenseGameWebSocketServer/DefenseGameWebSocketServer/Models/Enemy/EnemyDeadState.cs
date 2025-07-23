@@ -1,4 +1,6 @@
-﻿public class EnemyDeadState : IEnemyFSMState
+﻿using DefenseGameWebSocketServer.Manager;
+
+public class EnemyDeadState : IEnemyFSMState
 {
     public void Enter(Enemy enemy)
     {
@@ -9,7 +11,7 @@
         ));
     }
 
-    public void Update(Enemy enemy, float deltaTime)
+    public void Update(Enemy enemy, float deltaTime, PlayerManager playerManager)
     {
         // 죽은 상태 유지
     }

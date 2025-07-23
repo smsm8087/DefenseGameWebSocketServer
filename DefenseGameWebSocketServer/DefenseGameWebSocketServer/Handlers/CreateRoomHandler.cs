@@ -1,5 +1,6 @@
 ﻿using DefenseGameWebSocketServer.Manager;
 using DefenseGameWebSocketServer.Model;
+using DefenseGameWebSocketServer.Models;
 using System.Text.Json;
 
 public class CreateRoomHandler
@@ -9,7 +10,8 @@ public class CreateRoomHandler
         var msg = JsonSerializer.Deserialize<CreateRoomMessage>(rawMessage);
         if (msg == null)
         {
-            Console.WriteLine("[CreateRoomHandler] 잘못된 메시지 수신");
+            Room room = RoomManager.Instance.GetRoomByPlayerId(playerId);
+            LogManager.Error("[CreateRoomHandler] 잘못된 메시지 수신", room.RoomCode, playerId);
             return;
         }
         //이미 플레이어는 상위에서 브로드캐스터에 add 되어있음

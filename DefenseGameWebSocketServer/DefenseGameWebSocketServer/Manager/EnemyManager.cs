@@ -22,10 +22,12 @@ namespace DefenseGameWebSocketServer.Manager
         private bool _isRunning = false;
         private readonly ConcurrentQueue<EnemyBroadcastEvent> _broadcastEvents = new();
         private readonly BulletManager _bulletManager;
-        public EnemyManager(IWebSocketBroadcaster broadcaster, BulletManager bulletManager)
+        private readonly PlayerManager _playerManager;
+        public EnemyManager(IWebSocketBroadcaster broadcaster, BulletManager bulletManager, PlayerManager playerManager)
         {
             _broadcaster = broadcaster;
             _bulletManager = bulletManager;
+            _playerManager = playerManager;
         }
         public void setCancellationTokenSource(CancellationTokenSource cts)
         {
@@ -68,7 +70,7 @@ namespace DefenseGameWebSocketServer.Manager
                         if (enemy.state == EnemyState.Dead)
                             continue;
 
-                        enemy.UpdateFSM(targetFrameTime);
+                        enemy.UpdateFSM(targetFrameTime, _playerManager);
                         if (enemy.state == EnemyState.Move || 
                             enemy.state == EnemyState.Attack || 
                             enemy.state == EnemyState.RangedAttack
@@ -159,7 +161,7 @@ namespace DefenseGameWebSocketServer.Manager
                     Enemy enemy;
                     if (enemyData.target_type == "player")
                     {
-                        var targetPlayer = PlayerManager.Instance.GetAlivePlayers().FirstOrDefault();
+                        var targetPlayer = _playerManager.GetAlivePlayers().FirstOrDefault();
                         if (targetPlayer == null) continue;
 
                         var bulletData = GameDataManager.Instance.GetData<BulletData>("bullet_data", enemyData.bullet_id);

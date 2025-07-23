@@ -22,17 +22,22 @@ public class SceneLoadedHandler
 
         if(string.IsNullOrEmpty(roomCode))
         {
-            Console.WriteLine("[SceneLoadedHandler] 방 코드가 없습니다.");
+            LogManager.Error($"[SceneLoadedHandler] 방 코드가 없습니다. 메시지: {message}", _room.RoomCode, playerId);
+            return;
+        }
+        if(roomCode != _room.RoomCode)
+        {
+            LogManager.Error($"[SceneLoadedHandler] 방 코드 불일치. 메시지: {message}", _room.RoomCode, playerId);
             return;
         }
 
-        if(!_room.PlayerLoadingStatus.ContainsKey(playerId))
+        if (!_room.PlayerLoadingStatus.ContainsKey(playerId))
         {
-            Console.WriteLine($"[{playerId}] 플레이어 로딩 상태가 없습니다.");
+            LogManager.Error($"[SceneLoadedHandler] 플레이어 로딩 상태가 없습니다. 메시지: {message}", _room.RoomCode, playerId);
             return;
         }
         _room.PlayerLoadingStatus[playerId] = true;
-        Console.WriteLine($"[{playerId}] 씬 로딩완료!");
+        LogManager.Info($"[{playerId}] 씬 로딩 상태 업데이트: 로딩 완료", _room.RoomCode, playerId);
 
         // 모든 플레이어가 로딩을 완료했는지 확인하고 게임 초기화 시도
         if (_room.AllPlayersLoading())

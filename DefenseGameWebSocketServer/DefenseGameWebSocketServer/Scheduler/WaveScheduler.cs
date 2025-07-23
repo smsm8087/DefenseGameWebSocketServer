@@ -18,6 +18,7 @@ public class WaveScheduler
     private readonly Func<int> _getPlayerCount;
     private readonly Func<List<string>> _getPlayerList;
     private readonly SharedHpManager _sharedHpManager;
+    private readonly PlayerManager _playerManager;
     private EnemyManager _enemyManager;
     private CountDownScheduler _countDownScheduler;
 
@@ -34,7 +35,7 @@ public class WaveScheduler
     private BossFSM _bossFSM;
     private readonly Action _onGameClear;
 
-    public WaveScheduler(IWebSocketBroadcaster broadcaster, CancellationTokenSource cts, Func<bool> hasPlayerCount, Func<int> getPlayerCount, Func<List<string>> getPlayerList, SharedHpManager sharedHpManager, EnemyManager enemyManager, Action onGameClear)
+    public WaveScheduler(IWebSocketBroadcaster broadcaster, CancellationTokenSource cts, Func<bool> hasPlayerCount, Func<int> getPlayerCount, Func<List<string>> getPlayerList, SharedHpManager sharedHpManager, EnemyManager enemyManager, PlayerManager playerManager,  Action onGameClear)
     {
         _broadcaster = broadcaster;
         _cts = cts;
@@ -43,6 +44,7 @@ public class WaveScheduler
         _getPlayerList = getPlayerList;
         _sharedHpManager = sharedHpManager;
         _enemyManager = enemyManager;
+        _playerManager = playerManager;
         _onGameClear = onGameClear;
     }
     public void TryStart(int wave_id)
@@ -165,7 +167,7 @@ public class WaveScheduler
    
         foreach (var playerId in playerList)
         {
-            if (PlayerManager.Instance.TryGetPlayer(playerId, out Player player) && !player.IsDead)
+            if (_playerManager.TryGetPlayer(playerId, out Player player) && !player.IsDead)
             {
                 alivePlayerList.Add(playerId);
             }
@@ -279,7 +281,7 @@ public class WaveScheduler
             y = y,
         };
 
-        _bossFSM = new BossFSM(_boss, patternData, _broadcaster, _enemyManager, _sharedHpManager, waveData, waveRoundDataList);
+        _bossFSM = new BossFSM(_boss, patternData, _broadcaster, _enemyManager, _sharedHpManager, waveData, waveRoundDataList, _playerManager);
         float deltaTime = 0.1f; // Update 주기 (100ms)
         while(_boss != null && !_boss.isDead)
         {
@@ -316,7 +318,7 @@ public class WaveScheduler
             int randomIndex = new Random().Next(cards.Count);
 
             var selectedCard = cards[randomIndex];
-            if (PlayerManager.Instance.TryGetPlayer(playerId, out Player player))
+            if (_playerManager.TryGetPlayer(playerId, out Player player))
             {
                 player.addCardId(selectedCard.id); // 플레이어에게 카드 추가
                 Console.WriteLine($"[WaveScheduler] {playerId}에게 랜덤 카드 지급: {selectedCard.id}");

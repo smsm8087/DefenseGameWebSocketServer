@@ -5,32 +5,39 @@ using System.Text.Json;
 
 public class StartGameHandler
 {
-    public async Task HandleAsync(string playerId, string rawMessage, IWebSocketBroadcaster broadcaster, GameManager gameManager)
+    private readonly Room room;
+    private readonly GameManager gameManager;
+    public StartGameHandler(Room room, GameManager gameManager)
+    {
+        this.room = room;
+        this.gameManager = gameManager;
+    }
+    public async Task HandleAsync(string playerId, string rawMessage, IWebSocketBroadcaster broadcaster)
     {
         var msg = JsonSerializer.Deserialize<StartRoomMessage>(rawMessage);
         if (msg == null)
         {
-            Console.WriteLine("[JoinRoomHandler] 잘못된 메시지 수신");
+            LogManager.Error($"[StartGameHandler] 잘못된 메시지 수신: {rawMessage}", room.RoomCode, playerId);
             return;
         }
         string roomCode = msg.roomCode;
-        Room room = RoomManager.Instance.GetRoom(msg.roomCode);
-        if (room == null)
+        Room temp_room = RoomManager.Instance.GetRoom(msg.roomCode);
+        if (temp_room == null)
         {
-            Console.WriteLine($"[StartGameHandler] 방 {roomCode}가 존재하지 않음");
+            LogManager.Error($"[StartGameHandler] 방 {roomCode}가 존재하지 않음", room.RoomCode, playerId);
             return;
         }
         // 방장이 맞는지 확인
         if (room.HostId != playerId)
         {
-            Console.WriteLine($"[StartGameHandler] 플레이어 {playerId}는 방장 권한이 없음");
+            LogManager.Error($"[StartGameHandler] 플레이어 {playerId}는 방장 권한이 없음", room.RoomCode, playerId);
             return;
         }
        
         List<string> playerIds = msg.players;
         if (playerIds == null || playerIds.Count == 0)
         {
-            Console.WriteLine("[StartGameHandler] 플레이어 목록이 비어있음");
+            LogManager.Error("[StartGameHandler] 플레이어 목록이 비어있음", room.RoomCode, playerId);
             return;
         }
         // 플레이어가 방에 있는지 확인
@@ -38,7 +45,7 @@ public class StartGameHandler
         {
             if (!RoomManager.Instance.ExistPlayer(roomCode, id))
             {
-                Console.WriteLine($"[StartGameHandler] 플레이어 {id}가 방에 존재하지 않음");
+                LogManager.Error($"[StartGameHandler] 플레이어 {id}가 방에 존재하지 않음", room.RoomCode, playerId);
                 return;
             }
         }

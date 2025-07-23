@@ -13,7 +13,7 @@ public class EnemyMoveState : IEnemyFSMState
         ));
     }
 
-    public void Update(Enemy enemy, float deltaTime)
+    public void Update(Enemy enemy, float deltaTime, PlayerManager playerManager)
     {
         if (!enemy.IsAlive) return;
 
@@ -44,7 +44,7 @@ public class EnemyMoveState : IEnemyFSMState
             case TargetType.Player:
                 {
                     // 플레이어 타겟형은 플레이어의 위치로 이동
-                    var players = PlayerManager.Instance.GetAllPlayers().ToArray();
+                    var players = playerManager.GetAllPlayers().ToArray();
                     if (players.Length > 0)
                     {
                         enemy.UpdateAggro(players);

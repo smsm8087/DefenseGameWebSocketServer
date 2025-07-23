@@ -1,6 +1,7 @@
 ﻿using DefenseGameWebSocketServer.Manager;
 using DefenseGameWebSocketServer.MessageModel;
 using DefenseGameWebSocketServer.Model;
+using DefenseGameWebSocketServer.Models;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -14,7 +15,8 @@ namespace DefenseGameWebSocketServer.Handlers
             if (msg == null) return;
 
             await revivalManager.CancelRevival(msg.targetId, "player_cancelled");
-            Console.WriteLine($"[CancelRevivalHandler] {playerId}가 {msg.targetId} 부활 취소");
+            Room room = RoomManager.Instance.GetRoomByPlayerId(playerId);
+            LogManager.Info($"[CancelRevivalHandler] {playerId}가 {msg.targetId} 부활 취소", room.RoomCode, playerId);
         }
     }
 }

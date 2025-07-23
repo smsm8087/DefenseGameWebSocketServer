@@ -15,11 +15,11 @@ public class EnemyRangedAttackState : IEnemyFSMState
         ));
     }
 
-    public void Update(Enemy enemy, float deltaTime)
+    public void Update(Enemy enemy, float deltaTime, PlayerManager playerManager)
     {
         if (enemy.AggroTarget == null)
         {
-            var players = PlayerManager.Instance.GetAllPlayers().ToArray();
+            var players = playerManager.GetAllPlayers().ToArray();
             if (players.Length > 0)
             {
                 enemy.UpdateAggro(players);

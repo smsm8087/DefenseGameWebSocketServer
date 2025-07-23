@@ -1,8 +1,7 @@
 ﻿using DefenseGameWebSocketServer.Manager;
 using DefenseGameWebSocketServer.MessageModel;
-using DefenseGameWebSocketServer.Model;
+using DefenseGameWebSocketServer.Models;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace DefenseGameWebSocketServer.Handlers
 {
@@ -10,29 +9,30 @@ namespace DefenseGameWebSocketServer.Handlers
     {
         public async Task HandleAsync(string playerId, string rawMessage, IWebSocketBroadcaster broadcaster, RevivalManager revivalManager)
         {
-            Console.WriteLine($"[서버] StartRevivalHandler 시작 - playerId: {playerId}");
-            Console.WriteLine($"[서버] 받은 메시지: {rawMessage}");
+            Room room = RoomManager.Instance.GetRoomByPlayerId(playerId);
+            LogManager.Info($"[StartRevivalHandler] {playerId} 부활 요청 처리 시작", room.RoomCode, playerId);
+            LogManager.Info($"[StartRevivalHandler] 받은 메시지: {rawMessage}", room.RoomCode, playerId);
             
             var msg = JsonSerializer.Deserialize<StartRevivalRequest>(rawMessage);
             if (msg == null) 
             {
-                Console.WriteLine($"[서버] StartRevivalRequest 파싱 실패");
+                LogManager.Error($"[StartRevivalHandler] StartRevivalRequest 파싱 실패: {rawMessage}", room.RoomCode, playerId);
                 return;
             }
 
-            Console.WriteLine($"[서버] 부활 요청: reviver={playerId}, target={msg.targetId}");
+            LogManager.Info($"[StartRevivalHandler] 부활 요청 reviver={playerId}, target={msg.targetId}", room.RoomCode, playerId);
             
             bool success = await revivalManager.StartRevival(playerId, msg.targetId);
             
-            Console.WriteLine($"[서버] 부활 요청 결과: {success}");
+            LogManager.Info($"[StartRevivalHandler] 부활 요청 처리 결과: {success}", room.RoomCode, playerId);
             
             if (!success)
             {
-                Console.WriteLine($"[StartRevivalHandler] {playerId}가 {msg.targetId} 부활 시작 실패");
+                LogManager.Info($"[StartRevivalHandler] {playerId}가 {msg.targetId} 부활 시작 실패", room.RoomCode, playerId);
             }
             else
             {
-                Console.WriteLine($"[StartRevivalHandler] {playerId}가 {msg.targetId} 부활 시작 성공");
+                LogManager.Info($"[StartRevivalHandler] {playerId}가 {msg.targetId} 부활 시작 성공", room.RoomCode, playerId);
             }
         }
     }

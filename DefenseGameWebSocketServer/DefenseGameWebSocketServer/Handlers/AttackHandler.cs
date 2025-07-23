@@ -1,6 +1,7 @@
 ﻿using DefenseGameWebSocketServer.Manager;
 using DefenseGameWebSocketServer.MessageModel;
 using DefenseGameWebSocketServer.Model;
+using DefenseGameWebSocketServer.Models;
 using System.Text.Json;
 
 public class AttackHandler
@@ -21,7 +22,8 @@ public class AttackHandler
         var msg = JsonSerializer.Deserialize<PlayerAttackRequest>(rawMessage);
         if (msg == null)
         {
-            Console.WriteLine("[AttackHandler] 잘못된 메시지 수신");
+            Room room = RoomManager.Instance.GetRoomByPlayerId(playerId);
+            LogManager.Error($"[AttackHandler] 잘못된 메시지 수신: {rawMessage}", room.RoomCode, playerId);
             return;
         }
         

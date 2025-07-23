@@ -6,9 +6,11 @@ namespace DefenseGameWebSocketServer.Manager
     {
         private IWebSocketBroadcaster _broadcaster;
         private readonly List<Bullet> _bullets = new();
-        public BulletManager(IWebSocketBroadcaster broadcaster)
+        private readonly PlayerManager _playerManager;
+        public BulletManager(IWebSocketBroadcaster broadcaster, PlayerManager playerManager)
         {
             _broadcaster = broadcaster;
+            _playerManager = playerManager;
         }
        
         public async Task Update(float deltaTime)
@@ -96,7 +98,8 @@ namespace DefenseGameWebSocketServer.Manager
                 dirX: dirX,
                 dirY: dirY,
                 damage: (int)attacker.currentAttack,
-                bulletData: attacker.bulletData
+                bulletData: attacker.bulletData,
+                playerManager : _playerManager
             );
             bullet.bulletData = attacker.bulletData;
 
@@ -113,6 +116,11 @@ namespace DefenseGameWebSocketServer.Manager
 
             await _broadcaster.BroadcastAsync(msg);
             Console.WriteLine($"[BulletManager] 총알 생성됨: {bulletId}");
+        }
+        public void ClearBullets()
+        {
+            _bullets.Clear();
+            Console.WriteLine("[BulletManager] 모든 총알이 제거되었습니다.");
         }
     }
 }

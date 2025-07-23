@@ -20,6 +20,15 @@ namespace DefenseGameWebSocketServer.Manager
             AddPlayer(roomCode, hostId, true);
             return room;
         }
+        public Room GetRoomByPlayerId(string playerId)
+        {
+            if(string.IsNullOrEmpty(playerId))
+            {
+                LogManager.Error("[RoomManager] GetRoomByPlayerId: playerId is null or empty.");
+                return null;
+            }
+            return _rooms.Values.FirstOrDefault(room => room.playerIds.Contains(playerId));
+        }
         public void RemoveRoom(string roomCode)
         {
             if (_rooms.ContainsKey(roomCode))

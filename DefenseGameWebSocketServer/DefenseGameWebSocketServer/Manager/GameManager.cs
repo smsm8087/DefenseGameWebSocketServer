@@ -54,9 +54,9 @@ namespace DefenseGameWebSocketServer.Manager
             _getPlayerCount = () => _playerManager._playersDict.Count;
             _getPlayerList = () => _playerManager.GetAllPlayerIds().ToList();
 
-            _bulletManager = new BulletManager((IWebSocketBroadcaster)broadcaster);
-            _enemyManager = new EnemyManager((IWebSocketBroadcaster)broadcaster, _bulletManager);
-            _waveScheduler = new WaveScheduler((IWebSocketBroadcaster)broadcaster, _cts, _hasPlayerCount,_getPlayerCount, _getPlayerList, _sharedHpManager, _enemyManager, async ()=> await GameClear());
+            _bulletManager = new BulletManager((IWebSocketBroadcaster)broadcaster, _playerManager);
+            _enemyManager = new EnemyManager((IWebSocketBroadcaster)broadcaster, _bulletManager, _playerManager);
+            _waveScheduler = new WaveScheduler((IWebSocketBroadcaster)broadcaster, _cts, _hasPlayerCount,_getPlayerCount, _getPlayerList, _sharedHpManager, _enemyManager, _playerManager, async ()=> await GameClear());
             _room = room;
         }
 
@@ -99,7 +99,7 @@ namespace DefenseGameWebSocketServer.Manager
         {
             if (_cts == null) _cts = new CancellationTokenSource();
             if (_sharedHpManager == null) _sharedHpManager = new SharedHpManager(waveId);
-            if (_waveScheduler == null) _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount, _getPlayerCount, _getPlayerList, _sharedHpManager, _enemyManager, async () => await GameClear());
+            if (_waveScheduler == null) _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount, _getPlayerCount, _getPlayerList, _sharedHpManager, _enemyManager, _playerManager, async () => await GameClear());
 
             await _broadcaster.BroadcastAsync(new
             {
@@ -248,7 +248,7 @@ namespace DefenseGameWebSocketServer.Manager
             if (_cts != null) _cts.Dispose();                  
 
             _cts = new CancellationTokenSource();
-            _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount,_getPlayerCount, _getPlayerList,  _sharedHpManager, _enemyManager, async () => await GameClear());
+            _waveScheduler = new WaveScheduler(_broadcaster, _cts, _hasPlayerCount,_getPlayerCount, _getPlayerList,  _sharedHpManager, _enemyManager, _playerManager, async () => await GameClear());
             _revivalManager = new RevivalManager(_playerManager, _broadcaster);
 
             // 게임 재시작 시 직업 할당 초기화
@@ -271,6 +271,9 @@ namespace DefenseGameWebSocketServer.Manager
             _cts = null;
             _sharedHpManager = null;
             _waveScheduler = null;
+            _playerManager.Dispose();
+            _bulletManager.ClearBullets();
+            _revivalManager.ClearAllRevivals();
         }
 
         public void Stop()
@@ -278,6 +281,9 @@ namespace DefenseGameWebSocketServer.Manager
             _isGameLoopRunning = false;
             if(_cts != null) _cts.Cancel();
             if(_waveScheduler != null) _waveScheduler.Stop();
+            _playerManager.Dispose();
+            _bulletManager.ClearBullets();
+            _revivalManager.ClearAllRevivals();
         }
 
         public async Task RemovePlayer(string playerId)
@@ -328,15 +334,14 @@ namespace DefenseGameWebSocketServer.Manager
             {
                 case MessageType.SceneLoaded:
                     {
-                        var sceneLoadedHandler = new SceneLoadedHandler(_room,this);
+                        var sceneLoadedHandler = new SceneLoadedHandler(_room , this);
                         await sceneLoadedHandler.HandleAsync(playerId, rawMessage);
                     }
                     break;
                 case MessageType.StartGame:
                     {
-                        if (_isGameLoopRunning) return;
-                        var startGameHandler = new StartGameHandler();
-                        await startGameHandler.HandleAsync(playerId, rawMessage, _broadcaster, this);
+                        var startGameHandler = new StartGameHandler(_room, this);
+                        await startGameHandler.HandleAsync(playerId, rawMessage, _broadcaster);
                     }
                     break;
                 case MessageType.CreateRoom:
@@ -386,8 +391,8 @@ namespace DefenseGameWebSocketServer.Manager
                 case MessageType.EnemyAttackHit:
                     {
                         if (!_isGameLoopRunning) return;
-                        var enemyAttackHitHandler = new EnemyAttackHitHandler();
-                        await enemyAttackHitHandler.HandleAsync(rawMessage, _broadcaster, _sharedHpManager, _enemyManager,_bulletManager, _revivalManager);
+                        var enemyAttackHitHandler = new EnemyAttackHitHandler(_room, playerId);
+                        await enemyAttackHitHandler.HandleAsync(rawMessage, _broadcaster, _sharedHpManager, _enemyManager,_bulletManager, _playerManager, _revivalManager);
                         // 적의 공격으로 플레이어가 데미지를 받았을 수 있으므로
                         foreach (var pid in _playerManager.GetAllPlayerIds())
                         {

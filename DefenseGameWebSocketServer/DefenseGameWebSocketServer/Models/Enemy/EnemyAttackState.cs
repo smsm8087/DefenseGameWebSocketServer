@@ -1,4 +1,6 @@
 ﻿
+using DefenseGameWebSocketServer.Manager;
+
 public class EnemyAttackState : IEnemyFSMState
 {
     public void Enter(Enemy enemy)
@@ -13,7 +15,7 @@ public class EnemyAttackState : IEnemyFSMState
         ));
     }
 
-    public void Update(Enemy enemy, float deltaTime)
+    public void Update(Enemy enemy, float deltaTime, PlayerManager playerManager)
     {
             
     }
