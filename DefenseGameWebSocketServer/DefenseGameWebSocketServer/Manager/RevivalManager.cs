@@ -87,6 +87,20 @@ namespace DefenseGameWebSocketServer.Manager
         {
             Console.WriteLine($"[서버] UpdateRevival 호출 - reviverId: {reviverId}, targetId: {targetId}, progress: {progress}");
     
+            if (!_playerManager.TryGetPlayer(reviverId, out Player reviver) ||
+                !_playerManager.TryGetPlayer(targetId,  out Player target))
+                return false;
+
+            float dx = reviver.x - target.DeathPositionX;
+            float dy = reviver.y - target.DeathPositionY;
+            float distance = (float)Math.Sqrt(dx*dx + dy*dy);
+            if (distance > RevivalConstants.REVIVE_INTERACTION_RANGE)
+            {
+                // 범위 벗어나면 즉시 취소
+                await CancelRevival(targetId, "distance");
+                return false;
+            }
+            
             lock (_revivalLock)
             {
                 if (!_activeRevivals.TryGetValue(targetId, out RevivalData revivalData))
@@ -129,6 +143,32 @@ namespace DefenseGameWebSocketServer.Manager
             await _broadcaster.BroadcastAsync(message);
             Console.WriteLine($"[서버] 진행률 브로드캐스트 완료: {progress}%");
             return true;
+        }
+        
+        public async Task CheckAllRevivalDistancesAsync()
+        {
+            var toCancel = new List<string>();
+            lock (_revivalLock)
+            {
+                foreach (var kv in _activeRevivals)
+                {
+                    var data = kv.Value;
+                    if (!_playerManager.TryGetPlayer(data.ReviverId, out Player reviver) ||
+                        !_playerManager.TryGetPlayer(data.TargetId,  out Player target))
+                        continue;
+
+                    float dx = reviver.x - target.DeathPositionX;
+                    float dy = reviver.y - target.DeathPositionY;
+                    float distance = (float)Math.Sqrt(dx*dx + dy*dy);
+
+                    if (distance > RevivalConstants.REVIVE_INTERACTION_RANGE)
+                        toCancel.Add(data.TargetId);
+                }
+            }
+
+            // 락 해제 후 취소 호출
+            foreach (var targetId in toCancel)
+                await CancelRevival(targetId, "distance");
         }
 
         public async Task CompleteRevival(string targetId)
@@ -189,6 +229,7 @@ namespace DefenseGameWebSocketServer.Manager
             var message = new RevivalCancelledMessage
             {
                 targetId = targetId,
+                reviverId  = revivalData.ReviverId,
                 reason = reason
             };
 
@@ -315,6 +356,22 @@ namespace DefenseGameWebSocketServer.Manager
                 _activeRevivals.Clear();
             }
             Console.WriteLine("[RevivalManager] 모든 부활 상태를 초기화했습니다.");
+        }
+        
+        public List<string> GetRevivalTargetsByReviver(string reviverId)
+        {
+            var targets = new List<string>();
+            lock (_revivalLock)
+            {
+                foreach (var kvp in _activeRevivals)
+                {
+                    if (kvp.Value.ReviverId == reviverId)
+                    {
+                        targets.Add(kvp.Key);
+                    }
+                }
+            }
+            return targets;
         }
     }
 }

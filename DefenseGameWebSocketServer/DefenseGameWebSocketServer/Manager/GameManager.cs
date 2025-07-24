@@ -49,6 +49,7 @@ namespace DefenseGameWebSocketServer.Manager
             _playerManager = new PlayerManager();
             _partyMemberManager = new PartyMemberManager(_playerManager, broadcaster);
             _revivalManager = new RevivalManager(_playerManager, broadcaster);
+            _playerManager.SetRevivalManager(_revivalManager);
             _cts = new CancellationTokenSource();
             _hasPlayerCount = () => _playerManager._playersDict.Count > 0;
             _getPlayerCount = () => _playerManager._playersDict.Count;
@@ -211,6 +212,8 @@ namespace DefenseGameWebSocketServer.Manager
                         }
 
                         await _revivalManager.UpdateInvulnerabilities();
+                        await _revivalManager.CheckAllRevivalDistancesAsync();
+
                         await Task.Delay(100, _cts.Token);
                     }
                     Console.WriteLine("[GameManager] 게임 루프 종료");

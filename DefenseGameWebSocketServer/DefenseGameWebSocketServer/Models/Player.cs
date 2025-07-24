@@ -57,6 +57,7 @@ public class Player
     public DateTime? ReviveStartTime { get; set; } = null;
     public bool IsInvulnerable { get; set; } = false;
     public DateTime? InvulnerabilityEndTime { get; set; } = null;
+    public RevivalManager? RevivalManagerReference { get; set; }
     
     public Player(string id, float x, float y, string job_type)
     {
@@ -196,6 +197,15 @@ public class Player
             if (!IsDead)
             {
                 Die();
+            }
+        }
+        
+        if (RevivalManagerReference != null)
+        {
+            var revivalsToCancel = RevivalManagerReference.GetRevivalTargetsByReviver(id);
+            foreach (var targetId in revivalsToCancel)
+            {
+                _ = RevivalManagerReference.CancelRevival(targetId, "reviver_damaged");
             }
         }
     }

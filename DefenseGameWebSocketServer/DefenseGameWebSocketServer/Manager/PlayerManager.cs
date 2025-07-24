@@ -6,17 +6,29 @@ namespace DefenseGameWebSocketServer.Manager
 
     public class PlayerManager
     {
+        private RevivalManager _revivalManager;
         public ConcurrentDictionary<string, Player> _playersDict;
-        
         public PlayerManager()
         {
             _playersDict = new ConcurrentDictionary<string, Player>();
         }
-        
+
+        public PlayerManager(RevivalManager revivalManager) : this()
+        {
+            _revivalManager = revivalManager;
+        }
+
+        public void SetRevivalManager(RevivalManager revivalManager)
+        {
+            _revivalManager = revivalManager;
+        }
+
         public void AddOrUpdatePlayer(Player player)
         {
+            player.RevivalManagerReference = _revivalManager;
             _playersDict[player.id] = player;
         }
+        
         public bool TryGetPlayer(string playerId, out Player player)
         {
             return _playersDict.TryGetValue(playerId, out player);

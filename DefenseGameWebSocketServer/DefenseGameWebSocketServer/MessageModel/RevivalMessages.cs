@@ -32,6 +32,7 @@
     {
         public string type = "revival_cancelled";
         public string targetId { get; set; }
+        public string reviverId { get; set; }
         public string reason { get; set; }
     }
 
