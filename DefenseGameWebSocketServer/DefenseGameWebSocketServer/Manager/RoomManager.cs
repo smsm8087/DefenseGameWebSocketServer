@@ -8,7 +8,7 @@ namespace DefenseGameWebSocketServer.Manager
         private readonly Dictionary<string, Room> _rooms = new();
         private static RoomManager _instance;
         public static RoomManager Instance => _instance ??= new RoomManager();
-        public Room CreateRoom(string roomCode, string hostId)
+        public Room CreateRoom(string roomCode, string hostId, string nickName)
         {
             Room room = new Room() {
                 RoomCode = roomCode,
@@ -17,7 +17,7 @@ namespace DefenseGameWebSocketServer.Manager
             Console.WriteLine($"[Room] Created room with code: {roomCode} | hostId : {hostId}");
 
             _rooms[roomCode] = room;
-            AddPlayer(roomCode, hostId, true);
+            AddPlayer(roomCode, hostId, nickName, true);
             return room;
         }
         public Room GetRoomByPlayerId(string playerId)
@@ -27,7 +27,7 @@ namespace DefenseGameWebSocketServer.Manager
                 LogManager.Error("[RoomManager] GetRoomByPlayerId: playerId is null or empty.");
                 return null;
             }
-            return _rooms.Values.FirstOrDefault(room => room.playerIds.Contains(playerId));
+            return _rooms.Values.FirstOrDefault(room => room.RoomInfos.Find(x => x.playerId == playerId) != null);
         }
         public void RemoveRoom(string roomCode)
         {
@@ -42,12 +42,12 @@ namespace DefenseGameWebSocketServer.Manager
         public Room GetRoom(string roomCode) =>
             _rooms.TryGetValue(roomCode, out var room) ? room : null;
 
-        public void AddPlayer(string roomCode, string playerId, bool isReady = false)
+        public void AddPlayer(string roomCode, string playerId, string nickName, bool isReady = false)
         {
             if (_rooms.TryGetValue(roomCode, out var room))
             {
-                if(!room.playerIds.Contains(playerId))
-                    room.playerIds.Add(playerId);
+                if (room.RoomInfos.Find(x => x.playerId == playerId) == null)
+                    room.RoomInfos.Add(new RoomInfo { playerId = playerId , nickName = nickName} );
                 if (!room.PlayerReadyStatus.ContainsKey(playerId))
                     room.PlayerReadyStatus[playerId] = isReady;
                 if (!room.PlayerLoadingStatus.ContainsKey(playerId))
@@ -59,7 +59,7 @@ namespace DefenseGameWebSocketServer.Manager
         {
             if (_rooms.TryGetValue(roomCode, out var room))
             {
-                return room.playerIds.Contains(playerId);
+                return room.RoomInfos.Find(x => x.playerId == playerId) != null;
             }
             return false;
         }

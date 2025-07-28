@@ -70,13 +70,27 @@ app.Map("/ws", async context =>
                         if (!RoomManager.Instance.RoomExists(roomCode))
                         {
                             //첫 시작 요청은 방장이하므로 방장이 호스팅임.
-                            room = RoomManager.Instance.CreateRoom(roomCode, playerId);
+                            string nickName = root.GetProperty("nickName").GetString();
+                            if (nickName == null)
+                            {
+                                Console.WriteLine($"[WebSocket] nickName 누락된 요청");
+                                await webSocket.CloseAsync(WebSocketCloseStatus.PolicyViolation, "Missing playerId or roomCode", CancellationToken.None);
+                                return;
+                            }
+                            room = RoomManager.Instance.CreateRoom(roomCode, playerId, nickName);
                         } else
                         {
                             //방이 존재하는 경우 플레이어 추가
                             if (!RoomManager.Instance.ExistPlayer(roomCode, playerId))
                             {
-                                RoomManager.Instance.AddPlayer(roomCode, playerId);
+                                string nickName = root.GetProperty("nickName").GetString();
+                                if (nickName == null)
+                                {
+                                    Console.WriteLine($"[WebSocket] nickName 누락된 요청");
+                                    await webSocket.CloseAsync(WebSocketCloseStatus.PolicyViolation, "Missing playerId or roomCode", CancellationToken.None);
+                                    return;
+                                }
+                                RoomManager.Instance.AddPlayer(roomCode, playerId, nickName);
                             }
                         }
                         //브로드캐스터에 등록
@@ -109,12 +123,13 @@ app.Map("/ws", async context =>
                 if (roomCode != null && RoomManager.Instance.RoomExists(roomCode))
                 {
                     var room = RoomManager.Instance.GetRoom(roomCode);
-                    if (room != null && room.playerIds.Contains(playerId))
+                    var roomInfo = room.RoomInfos.Find(x => x.playerId == playerId);
+                    if (room != null && roomInfo != null)
                     {
                         room.broadCaster.Unregister(playerId);
-                        room.playerIds.Remove(playerId);
+                        room.RoomInfos.Remove(roomInfo);
                         await room._gameManager.RemovePlayer(playerId);
-                        if (room.playerIds.Count <= 0)
+                        if (room.RoomInfos.Count <= 0)
                         {
                             RoomManager.Instance.RemoveRoom(roomCode);
                         }

@@ -42,7 +42,7 @@ public class SceneLoadedHandler
         // 모든 플레이어가 로딩을 완료했는지 확인하고 게임 초기화 시도
         if (_room.AllPlayersLoading())
         {
-            await _gameManager.InitializeGame(_room.playerIds);
+            await _gameManager.InitializeGame(_room.RoomInfos);
         }
     }
 }

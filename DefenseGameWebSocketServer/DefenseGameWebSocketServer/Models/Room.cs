@@ -3,6 +3,11 @@ using DefenseGameWebSocketServer.Manager;
 
 namespace DefenseGameWebSocketServer.Models
 {
+    public class RoomInfo
+    {
+        public string playerId;
+        public string nickName;
+    }
     public class Room
     {
         public string RoomCode { get; set; }
@@ -11,7 +16,7 @@ namespace DefenseGameWebSocketServer.Models
         public Dictionary<string, bool> PlayerReadyStatus { get; set; } = new();
         public Dictionary<string, bool> PlayerLoadingStatus { get; set; } = new();
         public bool IsGameStarted { get; set; } = false;
-        public List<string> playerIds { get; set; } = new();
+        public List<RoomInfo> RoomInfos { get; set; } = new();
 
 
         public GameManager _gameManager { get; private set; }

@@ -107,8 +107,9 @@ namespace DefenseGameWebSocketServer.Manager
                 type = "started_game"
             });
         }
-        public async Task InitializeGame(List<string> playerIds)
+        public async Task InitializeGame(List<RoomInfo> roomInfos)
         {
+            List<string> playerIds = roomInfos.Select(info => info.playerId).ToList();
             //씬로딩완료 게임 이니셜라이징
             for (int i = 0; i < playerIds.Count; i++)
             {
@@ -335,6 +336,12 @@ namespace DefenseGameWebSocketServer.Manager
         {
             switch (msgType)
             {
+                case MessageType.GetRoomInfo:
+                    {
+                        var getRoomInfoHandler = new GetRoomInfoHandler();
+                        await getRoomInfoHandler.HandleAsync(playerId, rawMessage, _room, _broadcaster);
+                    }
+                    break;
                 case MessageType.SceneLoaded:
                     {
                         var sceneLoadedHandler = new SceneLoadedHandler(_room , this);
