@@ -384,6 +384,12 @@ namespace DefenseGameWebSocketServer.Manager
                     await joinRoomHandler.HandleAsync(playerId, rawMessage, _broadcaster);
                 }
                 break;
+                case MessageType.ChatRoom:
+                {
+                    var chatRoomHandler = new ChatRoomHandler();
+                    await chatRoomHandler.HandleAsync(playerId, rawMessage, _broadcaster);
+                }
+                break;
                 case MessageType.Move:
                     {
                         var moveHandler = new MoveHandler();
