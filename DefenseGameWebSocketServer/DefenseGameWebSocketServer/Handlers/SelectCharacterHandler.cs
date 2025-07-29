@@ -43,6 +43,7 @@ public class SelectCharacterHandler
         {
             LogManager.Error("[SelectCharacterHandler] 방에 참여하지 않았습니다", room.RoomCode, playerId);
         }
+        roomInfo.jobType = msg.jobType;
         roomInfo.isReady = true;
         bool isAllReady = room.AllPlayersReady();
 

@@ -7,6 +7,7 @@ namespace DefenseGameWebSocketServer.Models
     {
         public string playerId;
         public string nickName;
+        public string jobType;
         public bool isReady = false;
         public bool isLoading = false;
     }
