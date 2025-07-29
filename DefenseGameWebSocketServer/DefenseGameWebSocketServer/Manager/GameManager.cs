@@ -336,6 +336,12 @@ namespace DefenseGameWebSocketServer.Manager
         {
             switch (msgType)
             {
+                case MessageType.OutRoom:
+                    {
+                        var outRoomHandler = new OutRoomHandler();
+                        await outRoomHandler.HandleAsync(playerId, rawMessage, _room, _broadcaster);
+                    }
+                    break;
                 case MessageType.GetRoomInfo:
                     {
                         var getRoomInfoHandler = new GetRoomInfoHandler();

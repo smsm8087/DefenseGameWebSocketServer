@@ -47,13 +47,20 @@ namespace DefenseGameWebSocketServer.Manager
             if (_rooms.TryGetValue(roomCode, out var room))
             {
                 if (room.RoomInfos.Find(x => x.playerId == playerId) == null)
-                    room.RoomInfos.Add(new RoomInfo { playerId = playerId , nickName = nickName} );
-                if (!room.PlayerReadyStatus.ContainsKey(playerId))
-                    room.PlayerReadyStatus[playerId] = isReady;
-                if (!room.PlayerLoadingStatus.ContainsKey(playerId))
-                    room.PlayerLoadingStatus[playerId] = false;
+                    room.RoomInfos.Add(new RoomInfo { playerId = playerId, nickName = nickName });
                 Console.WriteLine($"[Room] addPlayer: {roomCode} | playerId : {playerId}");
             }
+        }
+        public bool RemovePlayer(string roomCode, string playerId)
+        {
+            if (_rooms.TryGetValue(roomCode, out var room))
+            {
+                if (room.RoomInfos.Find(x => x.playerId == playerId) != null)
+                    room.RemoveRoomInfo(playerId);
+                Console.WriteLine($"[Room] removePlayer: {roomCode} | playerId : {playerId}");
+                return true;
+            }
+            return false;
         }
         public bool ExistPlayer(string roomCode, string playerId)
         {

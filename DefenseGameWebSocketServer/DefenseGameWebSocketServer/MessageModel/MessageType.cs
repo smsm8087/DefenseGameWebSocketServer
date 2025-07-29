@@ -7,6 +7,7 @@
     
     public enum MessageType
     {
+        OutRoom,
         GetRoomInfo,
         SceneLoaded,
         StartGame,
@@ -31,6 +32,7 @@
         {
             return type switch
             {
+                "out_room" => MessageType.OutRoom,
                 "get_room_info" => MessageType.GetRoomInfo,
                 "scene_loaded" => MessageType.SceneLoaded,
                 "start_game" => MessageType.StartGame,

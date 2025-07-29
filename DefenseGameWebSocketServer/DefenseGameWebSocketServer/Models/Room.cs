@@ -7,17 +7,16 @@ namespace DefenseGameWebSocketServer.Models
     {
         public string playerId;
         public string nickName;
+        public bool isReady = false;
+        public bool isLoading = false;
     }
     public class Room
     {
         public string RoomCode { get; set; }
         public string HostId { get; set; }
         public WebSocketBroadcaster broadCaster { get; }
-        public Dictionary<string, bool> PlayerReadyStatus { get; set; } = new();
-        public Dictionary<string, bool> PlayerLoadingStatus { get; set; } = new();
         public bool IsGameStarted { get; set; } = false;
         public List<RoomInfo> RoomInfos { get; set; } = new();
-
 
         public GameManager _gameManager { get; private set; }
         public WaveScheduler _waveScheduler { get; private set; }
@@ -29,18 +28,31 @@ namespace DefenseGameWebSocketServer.Models
             broadCaster = new WebSocketBroadcaster();
             _gameManager = new GameManager(this, broadCaster, wave_id);
         }
-
+        public RoomInfo GetRoomInfo(string playerId)
+        {
+            return RoomInfos.FirstOrDefault(info => info.playerId == playerId);
+        }
+        public bool RemoveRoomInfo(string playerId)
+        {
+            var roomInfo = GetRoomInfo(playerId);
+            if (roomInfo != null)
+            {
+                RoomInfos.Remove(roomInfo);
+                return true;
+            }
+            return false;
+        }
         public bool AllPlayersReady()
         {
-            return PlayerReadyStatus.Values.All(ready => ready);
+            return RoomInfos.All(x => x.isReady);
         }
         public bool AllPlayersLoading()
         {
-            return PlayerLoadingStatus.Values.All(loading => loading);
+            return RoomInfos.All(x => x.isLoading);
         }
         public int GetPlayerCount()
         {
-            return PlayerReadyStatus.Count;
+            return RoomInfos.Count;
         }   
     }
 }
