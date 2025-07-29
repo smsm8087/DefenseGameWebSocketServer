@@ -10,16 +10,19 @@ public class GetRoomInfoHandler
         public string playerId { get; set; }
         public string roomCode { get; set; }
         public List<RoomInfo> RoomInfos { get; set; }
+        public string hostId { get; set; }
         public GetRoomInfoMessage(
             string playerId,
             string roomCode,
-            List<RoomInfo> RoomInfos
+            List<RoomInfo> RoomInfos,
+            string hostId
         )
         {
             type = "room_info";
             this.playerId = playerId;
             this.roomCode = roomCode;
             this.RoomInfos = RoomInfos;
+            this.hostId = hostId;
         }
     }
     public async Task HandleAsync(string playerId, string rawMessage, Room room, IWebSocketBroadcaster broadcaster)
@@ -36,7 +39,7 @@ public class GetRoomInfoHandler
             return;
         }
         //이미 플레이어는 상위에서 브로드캐스터에 add 되어있음
-        await broadcaster.BroadcastAsync(new GetRoomInfoMessage(playerId, room.RoomCode, room.RoomInfos));
+        await broadcaster.BroadcastAsync(new GetRoomInfoMessage(playerId, room.RoomCode, room.RoomInfos, room.HostId));
         
     }
 }
