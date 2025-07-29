@@ -336,6 +336,18 @@ namespace DefenseGameWebSocketServer.Manager
         {
             switch (msgType)
             {
+                case MessageType.DeSelectCharacter:
+                    {
+                        var deselectCharacterHandler = new DeSelectCharacterHandler();
+                        await deselectCharacterHandler.HandleAsync(playerId, rawMessage, _room, _broadcaster);
+                    }
+                break;
+                case MessageType.SelectCharacter:
+                    {
+                        var selectCharacterHandler = new SelectCharacterHandler();
+                        await selectCharacterHandler.HandleAsync(playerId, rawMessage, _room, _broadcaster);
+                    }
+                break;
                 case MessageType.OutRoom:
                     {
                         var outRoomHandler = new OutRoomHandler();

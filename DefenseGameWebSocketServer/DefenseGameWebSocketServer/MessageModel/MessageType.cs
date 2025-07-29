@@ -7,6 +7,8 @@
     
     public enum MessageType
     {
+        DeSelectCharacter,
+        SelectCharacter,
         OutRoom,
         GetRoomInfo,
         SceneLoaded,
@@ -32,6 +34,8 @@
         {
             return type switch
             {
+                "deselect_character" => MessageType.DeSelectCharacter,
+                "select_character" => MessageType.SelectCharacter,
                 "out_room" => MessageType.OutRoom,
                 "get_room_info" => MessageType.GetRoomInfo,
                 "scene_loaded" => MessageType.SceneLoaded,
