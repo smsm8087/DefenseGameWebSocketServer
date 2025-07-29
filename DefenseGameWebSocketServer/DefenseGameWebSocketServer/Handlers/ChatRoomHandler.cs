@@ -15,7 +15,7 @@ public class ChatRoomHandler
             return;
         }
         //이미 플레이어는 상위에서 브로드캐스터에 add 되어있음
-        await broadcaster.BroadcastAsync(new ChatRoomMessage(playerId, msg.message));
+        await broadcaster.BroadcastAsync(new ChatRoomMessage(playerId, msg.nickName, msg.message, msg.chatData));
         //sendToAsync 대신 BroadcastAsync
     }
 }
