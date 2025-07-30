@@ -5,20 +5,18 @@
         public string playerId { get; set; }
         public string nickName { get; set; }
         public string message { get; set; }
-        public Dictionary<string, string> chatData { get; set; }
+        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
         
         public ChatRoomMessage(
             string playerId,
             string nickName,
-            string message,
-            Dictionary<string, string> chatData
+            string message
         )
         {
             type = "chat_room";
             this.playerId = playerId;
             this.nickName = nickName;
             this.message = message;
-            this.chatData = chatData;
         }
     }
 }
