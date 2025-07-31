@@ -1,4 +1,4 @@
-﻿namespace DefenseGameWebSocketServer.Model
+namespace DefenseGameWebSocketServer.Model
 {
     public class BaseMessage
     {
@@ -7,6 +7,8 @@
     
     public enum MessageType
     {
+        DeSelectCharacter,
+        SelectCharacter,
         OutRoom,
         GetRoomInfo,
         SceneLoaded,
@@ -14,6 +16,7 @@
         CreateRoom,
         JoinRoom,
         ConfirmResponse,
+        ChatRoom,
         Move,
         Restart,
         PlayerAnimation,
@@ -33,12 +36,15 @@
         {
             return type switch
             {
+                "deselect_character" => MessageType.DeSelectCharacter,
+                "select_character" => MessageType.SelectCharacter,
                 "out_room" => MessageType.OutRoom,
                 "get_room_info" => MessageType.GetRoomInfo,
                 "scene_loaded" => MessageType.SceneLoaded,
                 "start_game" => MessageType.StartGame,
                 "create_room" => MessageType.CreateRoom,
                 "join_room" => MessageType.JoinRoom,
+                "chat_room" => MessageType.ChatRoom,
                 "confirm_response"  => MessageType.ConfirmResponse,
                 "move" => MessageType.Move,
                 "restart" => MessageType.Restart,

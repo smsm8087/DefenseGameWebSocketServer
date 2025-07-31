@@ -81,36 +81,6 @@ namespace DefenseGameWebSocketServer.Manager
             _playerManager.AddOrUpdatePlayer(new Player(playerId,0,0,job_type));
         }
 
-        private string AssignJobToPlayer()
-        {
-            lock (_jobLock)
-            {
-                Random random = new Random();
-                
-                if (_assignedJobs.Count == 0)
-                {
-                    int randomIndex = random.Next(_availableJobs.Count);
-                    string assignedJob = _availableJobs[randomIndex];
-                    _assignedJobs.Add(assignedJob);
-                    return assignedJob;
-                }
-                else
-                {
-                    var remainingJobs = _availableJobs.Where(job => !_assignedJobs.Contains(job)).ToList();
-                    
-                    if (remainingJobs.Count == 0)
-                    {
-                        remainingJobs = _availableJobs.ToList();
-                        _assignedJobs.Clear();
-                    }
-                    
-                    int randomIndex = random.Next(remainingJobs.Count);
-                    string assignedJob = remainingJobs[randomIndex];
-                    _assignedJobs.Add(assignedJob);
-                    return assignedJob;
-                }
-            }
-        }
         public async Task TryConnectGame()
         {
             if (_cts == null) _cts = new CancellationTokenSource();
@@ -124,11 +94,10 @@ namespace DefenseGameWebSocketServer.Manager
         }
         public async Task InitializeGame(List<RoomInfo> roomInfos)
         {
-            List<string> playerIds = roomInfos.Select(info => info.playerId).ToList();
             //씬로딩완료 게임 이니셜라이징
-            for (int i = 0; i < playerIds.Count; i++)
+            for (int i = 0; i < roomInfos.Count; i++)
             {
-                await SettingGame(playerIds[i]);
+                await SettingGame(roomInfos[i].playerId, roomInfos[i].jobType);
             }
 
             await _broadcaster.BroadcastAsync(new
@@ -143,10 +112,9 @@ namespace DefenseGameWebSocketServer.Manager
             });
             TryStartWave(this.waveId);
         }
-        public async Task SettingGame(string playerId)
+        public async Task SettingGame(string playerId, string job_type)
         {
-            string assignedJob = AssignJobToPlayer();
-            SetPlayerData(playerId, assignedJob);
+            SetPlayerData(playerId, job_type);
 
             if (_playerManager.TryGetPlayer(playerId, out Player player))
             {
@@ -351,6 +319,18 @@ namespace DefenseGameWebSocketServer.Manager
         {
             switch (msgType)
             {
+                case MessageType.DeSelectCharacter:
+                    {
+                        var deselectCharacterHandler = new DeSelectCharacterHandler();
+                        await deselectCharacterHandler.HandleAsync(playerId, rawMessage, _room, _broadcaster);
+                    }
+                break;
+                case MessageType.SelectCharacter:
+                    {
+                        var selectCharacterHandler = new SelectCharacterHandler();
+                        await selectCharacterHandler.HandleAsync(playerId, rawMessage, _room, _broadcaster);
+                    }
+                break;
                 case MessageType.OutRoom:
                     {
                         var outRoomHandler = new OutRoomHandler();
@@ -385,6 +365,12 @@ namespace DefenseGameWebSocketServer.Manager
                 {
                     var joinRoomHandler = new JoinRoomHandler();
                     await joinRoomHandler.HandleAsync(playerId, rawMessage, _broadcaster);
+                }
+                break;
+                case MessageType.ChatRoom:
+                {
+                    var chatRoomHandler = new ChatRoomHandler();
+                    await chatRoomHandler.HandleAsync(playerId, rawMessage, _broadcaster);
                 }
                 break;
                 case MessageType.Move:
