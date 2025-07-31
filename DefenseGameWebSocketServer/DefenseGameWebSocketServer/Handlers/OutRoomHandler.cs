@@ -22,12 +22,13 @@ public class OutRoomHandler
             this.message = message;
         }
     }
+
     public async Task HandleAsync(string playerId, string rawMessage, Room room, WebSocketBroadcaster broadcaster)
     {
         var msg = JsonSerializer.Deserialize<OutRoomMessage>(rawMessage);
         if (room == null)
         {
-            LogManager.Error("[OutRoomHandler] 플레이어가 속한 방을 찾을 수 없음", room.RoomCode, playerId);
+            LogManager.Error("[OutRoomHandler] 플레이어가 속한 방을 찾을 수 없음", room?.RoomCode, playerId);
             return;
         }
         if (msg == null)
@@ -36,31 +37,51 @@ public class OutRoomHandler
             return;
         }
         RoomInfo roomInfo = room.GetRoomInfo(playerId);
-        if(roomInfo == null)
+        if (roomInfo == null)
         {
             LogManager.Error("[OutRoomHandler] 방에 참여하지 않았습니다", room.RoomCode, playerId);
         }
-        //방에서 플레이어 제거
-        if(!RoomManager.Instance.RemovePlayer(room.RoomCode, playerId))
-        {
-            LogManager.Error("[OutRoomHandler] 플레이어 제거 실패", room.RoomCode, playerId);
-            return;
-        }
 
-        //방에 참여한 플레이어가 없으면 방 제거
-        if( room.GetPlayerCount() == 0)
-        {
-            RoomManager.Instance.RemoveRoom(room.RoomCode);
-            LogManager.Info("[OutRoomHandler] 방 제거", room.RoomCode, playerId);
-        }
-        else
-        {
-            //방에 참여한 플레이어가 있으면 방 정보 브로드캐스트
-            await broadcaster.BroadcastAsync(new GetRoomInfoHandler.GetRoomInfoMessage(playerId, room.RoomCode, room.RoomInfos));
-        }
+        // Confirm 팝업 띄우기 테스트
+        var notificationService = new NotificationService(broadcaster);
+        await notificationService.SendConfirmAsync(
+            playerId,
+            "정말 방을 나가시겠습니까?",
+            onOk: async () =>
+            {
+                //방에서 플레이어 제거
+                if (!RoomManager.Instance.RemovePlayer(room.RoomCode, playerId))
+                {
+                    LogManager.Error("[OutRoomHandler] 플레이어 제거 실패", room.RoomCode, playerId);
+                    return;
+                }
 
-        await broadcaster.SendToAsync(playerId ,new OutRoomMessage(playerId, room.RoomCode, "success"));
-        //방에서 플레이어 제거 후 브로드캐스터에 플레이어 제거
-        broadcaster.Unregister(playerId);
+                //방에 참여한 플레이어가 없으면 방 제거
+                if (room.GetPlayerCount() == 0)
+                {
+                    RoomManager.Instance.RemoveRoom(room.RoomCode);
+                    LogManager.Info("[OutRoomHandler] 방 제거", room.RoomCode, playerId);
+                }
+                else
+                {
+                    //방에 참여한 플레이어가 있으면 방 정보 브로드캐스트
+                    await broadcaster.BroadcastAsync(
+                        new GetRoomInfoHandler.GetRoomInfoMessage(playerId, room.RoomCode, room.RoomInfos));
+                }
+
+                await broadcaster.SendToAsync(playerId, new OutRoomMessage(playerId, room.RoomCode, "success"));
+                //방에서 플레이어 제거 후 브로드캐스터에 플레이어 제거
+                broadcaster.Unregister(playerId);
+            },
+            onCancel: () =>
+            {
+                {
+                    _ = broadcaster.SendToAsync(
+                        playerId,
+                        new OutRoomMessage(playerId, room.RoomCode, "cancel")
+                    );
+                }
+            }
+        );
     }
 }

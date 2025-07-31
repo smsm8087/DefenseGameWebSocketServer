@@ -20,5 +20,12 @@ public class JoinRoomHandler
             roomCode = msg.roomCode,
             playerId = playerId
         });
+        
+        //테스트
+        var notificationService = new NotificationService(broadcaster);
+        await notificationService.SendNoticeAsync(
+            playerId,
+            $"[{msg.roomCode}] 방 입장에 성공했습니다!"
+        );
     }
 }

@@ -19,5 +19,12 @@ public class CreateRoomHandler
         {
             type = "room_created",
         });
+        
+        //테스트
+        var notificationService = new NotificationService(broadcaster);
+        await notificationService.SendNoticeAsync(
+            playerId,
+            "방이 성공적으로 생성되었습니다!"
+        );
     }
 }
