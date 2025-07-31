@@ -1,4 +1,4 @@
-﻿using DefenseGameWebSocketServer.Manager;
+using DefenseGameWebSocketServer.Manager;
 using DefenseGameWebSocketServer.Model;
 using DefenseGameWebSocketServer.Models;
 using System.Text.Json;
@@ -25,12 +25,13 @@ public class OutRoomHandler
             this.hostId = hostId;
         }
     }
+
     public async Task HandleAsync(string playerId, string rawMessage, Room room, WebSocketBroadcaster broadcaster)
     {
         var msg = JsonSerializer.Deserialize<OutRoomMessage>(rawMessage);
         if (room == null)
         {
-            LogManager.Error("[OutRoomHandler] 플레이어가 속한 방을 찾을 수 없음", room.RoomCode, playerId);
+            LogManager.Error("[OutRoomHandler] 플레이어가 속한 방을 찾을 수 없음", room?.RoomCode, playerId);
             return;
         }
         if (msg == null)
@@ -39,7 +40,7 @@ public class OutRoomHandler
             return;
         }
         RoomInfo roomInfo = room.GetRoomInfo(playerId);
-        if(roomInfo == null)
+        if (roomInfo == null)
         {
             LogManager.Error("[OutRoomHandler] 방에 참여하지 않았습니다", room.RoomCode, playerId);
         }

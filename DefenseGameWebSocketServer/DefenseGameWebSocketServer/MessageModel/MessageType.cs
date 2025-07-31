@@ -1,4 +1,4 @@
-﻿namespace DefenseGameWebSocketServer.Model
+namespace DefenseGameWebSocketServer.Model
 {
     public class BaseMessage
     {
@@ -16,6 +16,7 @@
         StartGame,
         CreateRoom,
         JoinRoom,
+        ConfirmResponse,
         ChatRoom,
         Move,
         Restart,
@@ -46,6 +47,7 @@
                 "create_room" => MessageType.CreateRoom,
                 "join_room" => MessageType.JoinRoom,
                 "chat_room" => MessageType.ChatRoom,
+                "confirm_response"  => MessageType.ConfirmResponse,
                 "move" => MessageType.Move,
                 "restart" => MessageType.Restart,
                 "player_animation" => MessageType.PlayerAnimation,

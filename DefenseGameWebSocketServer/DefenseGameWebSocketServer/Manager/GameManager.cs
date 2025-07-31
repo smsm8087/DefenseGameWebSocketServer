@@ -1,6 +1,8 @@
 ﻿using DefenseGameWebSocketServer.Handlers;
+using DefenseGameWebSocketServer.Managers;
 using DefenseGameWebSocketServer.Model;
 using DefenseGameWebSocketServer.Models;
+using System.Text.Json;
 
 namespace DefenseGameWebSocketServer.Manager
 {
@@ -39,6 +41,7 @@ namespace DefenseGameWebSocketServer.Manager
         };
         private readonly HashSet<string> _assignedJobs = new HashSet<string>();
         private readonly object _jobLock = new object();
+        private readonly NotificationService _notificationService;
 
         public GameManager(Room room, WebSocketBroadcaster broadcaster, int wave_id)
         {
@@ -59,6 +62,18 @@ namespace DefenseGameWebSocketServer.Manager
             _enemyManager = new EnemyManager((IWebSocketBroadcaster)broadcaster, _bulletManager, _playerManager);
             _waveScheduler = new WaveScheduler((IWebSocketBroadcaster)broadcaster, _cts, _hasPlayerCount,_getPlayerCount, _getPlayerList, _sharedHpManager, _enemyManager, _playerManager, async ()=> await GameClear());
             _room = room;
+            _notificationService = new NotificationService(_broadcaster);
+
+        }
+        
+        public Task NotifyPlayer(string playerId, string message)
+        {
+            return _notificationService.SendNoticeAsync(playerId, message);
+        }
+
+        public Task AskPlayerConfirm(string playerId, string question, Action onOk, Action onCancel)
+        {
+            return _notificationService.SendConfirmAsync(playerId, question, onOk, onCancel);
         }
 
         public void SetPlayerData(string playerId, string nickName, string job_type)
@@ -435,6 +450,22 @@ namespace DefenseGameWebSocketServer.Manager
                 {
                     var cancelRevivalHandler = new CancelRevivalHandler();
                     await cancelRevivalHandler.HandleAsync(playerId, rawMessage, _broadcaster, _revivalManager);
+                }
+                    break;
+                case MessageType.ConfirmResponse:
+                {
+                    var resp = JsonSerializer.Deserialize<ConfirmResponse>(rawMessage);
+                    if (ConfirmationManager.TryRemove(resp.requestId, out var ctx))
+                    {
+                        if (resp.approved) ctx.OnApproved?.Invoke();
+                        else               ctx.OnRejected?.Invoke();
+
+                        LogManager.Info(
+                            $"[ConfirmResponse] ReqId={resp.requestId}, approved={resp.approved}",
+                            roomCode: _room.RoomCode,
+                            playerId: playerId
+                        );
+                    }
                 }
                     break;
             }
