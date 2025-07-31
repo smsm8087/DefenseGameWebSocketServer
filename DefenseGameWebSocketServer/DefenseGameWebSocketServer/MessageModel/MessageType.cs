@@ -7,6 +7,7 @@
     
     public enum MessageType
     {
+        KickUser,
         DeSelectCharacter,
         SelectCharacter,
         OutRoom,
@@ -35,6 +36,7 @@
         {
             return type switch
             {
+                "kick_user" => MessageType.KickUser,
                 "deselect_character" => MessageType.DeSelectCharacter,
                 "select_character" => MessageType.SelectCharacter,
                 "out_room" => MessageType.OutRoom,

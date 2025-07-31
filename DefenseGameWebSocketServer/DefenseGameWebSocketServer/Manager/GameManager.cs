@@ -61,9 +61,9 @@ namespace DefenseGameWebSocketServer.Manager
             _room = room;
         }
 
-        public void SetPlayerData(string playerId, string job_type)
+        public void SetPlayerData(string playerId, string nickName, string job_type)
         {
-            _playerManager.AddOrUpdatePlayer(new Player(playerId,0,0,job_type));
+            _playerManager.AddOrUpdatePlayer(new Player(playerId, nickName , 0,0,job_type));
         }
 
         public async Task TryConnectGame()
@@ -82,7 +82,7 @@ namespace DefenseGameWebSocketServer.Manager
             //씬로딩완료 게임 이니셜라이징
             for (int i = 0; i < roomInfos.Count; i++)
             {
-                await SettingGame(roomInfos[i].playerId, roomInfos[i].jobType);
+                await SettingGame(roomInfos[i].playerId, roomInfos[i].nickName, roomInfos[i].jobType);
             }
 
             await _broadcaster.BroadcastAsync(new
@@ -97,9 +97,9 @@ namespace DefenseGameWebSocketServer.Manager
             });
             TryStartWave(this.waveId);
         }
-        public async Task SettingGame(string playerId, string job_type)
+        public async Task SettingGame(string playerId, string nickName, string job_type)
         {
-            SetPlayerData(playerId, job_type);
+            SetPlayerData(playerId, nickName, job_type);
 
             if (_playerManager.TryGetPlayer(playerId, out Player player))
             {
@@ -116,6 +116,7 @@ namespace DefenseGameWebSocketServer.Manager
                     playerInfo = new PlayerInfo
                     {
                         id = playerId,
+                        nickname = player.nickname,
                         job_type = player.jobType,
                         currentHp = player.currentHp,
                         currentUlt = player.currentUlt,
@@ -304,6 +305,12 @@ namespace DefenseGameWebSocketServer.Manager
         {
             switch (msgType)
             {
+                case MessageType.KickUser:
+                    {
+                        var kickUserHandler = new KickUserHandler();
+                        await kickUserHandler.HandleAsync(playerId, rawMessage, _room, _broadcaster);
+                    }
+                    break;
                 case MessageType.DeSelectCharacter:
                     {
                         var deselectCharacterHandler = new DeSelectCharacterHandler();

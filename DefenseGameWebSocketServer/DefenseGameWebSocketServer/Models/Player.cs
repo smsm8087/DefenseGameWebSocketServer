@@ -59,9 +59,10 @@ public class Player
     public DateTime? InvulnerabilityEndTime { get; set; } = null;
     public RevivalManager? RevivalManagerReference { get; set; }
     
-    public Player(string id, float x, float y, string job_type)
+    public Player(string id, string nickName, float x, float y, string job_type)
     {
         this.id = id;
+        this.nickname = nickName;
         this.x = x;
         this.y = y;
         this.jobType = job_type;

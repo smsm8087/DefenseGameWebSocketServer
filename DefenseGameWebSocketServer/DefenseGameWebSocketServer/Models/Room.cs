@@ -11,6 +11,13 @@ namespace DefenseGameWebSocketServer.Models
         public bool isReady = false;
         public bool isLoading = false;
     }
+    public class ChatInfo
+    {
+        public string playerId;
+        public string nickName;
+        public List<string> message;
+        public DateTime time;
+    }
     public class Room
     {
         public string RoomCode { get; set; }
@@ -22,12 +29,14 @@ namespace DefenseGameWebSocketServer.Models
         public GameManager _gameManager { get; private set; }
         public WaveScheduler _waveScheduler { get; private set; }
         public EnemyManager _enemyManager { get; private set; }
+        public Dictionary<string, ChatInfo> ChatListDict;
 
         private int wave_id = 1;//임시
         public Room()
         {
             broadCaster = new WebSocketBroadcaster();
             _gameManager = new GameManager(this, broadCaster, wave_id);
+            ChatListDict = new Dictionary<string, ChatInfo>();
         }
         public RoomInfo GetRoomInfo(string playerId)
         {
@@ -54,6 +63,20 @@ namespace DefenseGameWebSocketServer.Models
         public int GetPlayerCount()
         {
             return RoomInfos.Count;
-        }   
+        }
+        public void AddChatLog(string playerId, string message)
+        {
+            if(!ChatListDict.ContainsKey(playerId))
+            {
+                ChatListDict[playerId] = new ChatInfo
+                {
+                    playerId = playerId,
+                    nickName = RoomInfos.Find(x => x.playerId == playerId).nickName ?? "",
+                    message = new List<string>(),
+                    time = DateTime.Now,
+                };
+            }
+            ChatListDict[playerId].message.Add(message);
+        }
     }
 }
