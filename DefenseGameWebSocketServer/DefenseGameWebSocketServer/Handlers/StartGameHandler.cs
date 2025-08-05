@@ -34,20 +34,12 @@ public class StartGameHandler
             return;
         }
        
-        List<string> playerIds = msg.players;
-        if (playerIds == null || playerIds.Count == 0)
+        //전부다 준비완료상태인지 확인
+        if (!room.AllPlayersReady())
         {
-            LogManager.Error("[StartGameHandler] 플레이어 목록이 비어있음", room.RoomCode, playerId);
+            var notificationService = new NotificationService(broadcaster);
+            await notificationService.BroadCastNoticeAsync("준비가 안된 인원이 있습니다.");
             return;
-        }
-        // 플레이어가 방에 있는지 확인
-        foreach (var id in playerIds)
-        {
-            if (!RoomManager.Instance.ExistPlayer(roomCode, id))
-            {
-                LogManager.Error($"[StartGameHandler] 플레이어 {id}가 방에 존재하지 않음", room.RoomCode, playerId);
-                return;
-            }
         }
         await gameManager.TryConnectGame();
     }

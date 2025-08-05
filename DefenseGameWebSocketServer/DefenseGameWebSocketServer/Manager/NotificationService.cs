@@ -21,6 +21,11 @@ namespace DefenseGameWebSocketServer.Manager
             LogManager.Info($"[Notice] to {playerId}: {message}", playerId: playerId);
             return _broadcaster.SendToAsync(playerId, notice);
         }
+        public Task BroadCastNoticeAsync(string message)
+        {
+            var notice = new NoticeMessage(message);
+            return _broadcaster.BroadcastAsync(notice);
+        }
 
         public Task SendConfirmAsync(string playerId, string question, System.Action onOk, System.Action onCancel)
         {
