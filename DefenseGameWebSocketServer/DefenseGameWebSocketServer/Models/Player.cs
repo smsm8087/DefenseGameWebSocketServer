@@ -58,6 +58,10 @@ public class Player
     public bool IsInvulnerable { get; set; } = false;
     public DateTime? InvulnerabilityEndTime { get; set; } = null;
     public RevivalManager? RevivalManagerReference { get; set; }
+    public Dictionary<int, DateTime> SkillCooldowns { get; private set; } = new();
+    private float _damageReductionPct = 0f;
+    private DateTime? _damageReductionEnd = null;
+
     
     public Player(string id, string nickName, float x, float y, string job_type)
     {
@@ -183,24 +187,38 @@ public class Player
         this.currentUlt += addUlt;
         if (this.currentUlt > 100) this.currentUlt = 100; // 최대 ULT 게이지는 100
     }
+    private void UpdateDamageReduction()
+    {
+        if (_damageReductionEnd.HasValue && DateTime.UtcNow >= _damageReductionEnd.Value)
+        {
+            _damageReductionEnd = null;
+            _damageReductionPct = 0f;
+        }
+    }
     public void TakeDamage(int damage)
     {
-        if (IsInvulnerable) 
+        // 피해감소 만료 체크
+        UpdateDamageReduction();
+
+        if (IsInvulnerable)
         {
             Console.WriteLine($"[Player] {id} 무적 상태로 데미지 무시: {damage}");
-            return; // 무적 상태에서는 데미지 무시
+            return;
         }
-        
+
+        // 피해감소 적용
+        if (_damageReductionPct > 0f && damage > 0)
+        {
+            damage = (int)MathF.Max(0, damage * (1f - _damageReductionPct));
+        }
+
         this.currentHp -= damage;
-        if (this.currentHp <= 0) 
+        if (this.currentHp <= 0)
         {
             this.currentHp = 0;
-            if (!IsDead)
-            {
-                Die();
-            }
+            if (!IsDead) Die();
         }
-        
+
         if (RevivalManagerReference != null)
         {
             var revivalsToCancel = RevivalManagerReference.GetRevivalTargetsByReviver(id);
@@ -281,5 +299,20 @@ public class Player
         float dx = DeathPositionX - targetX;
         float dy = DeathPositionY - targetY;
         return (float)Math.Sqrt(dx * dx + dy * dy);
+    }
+    public bool CanUseSkill(int skillId, float cooldown)
+    {
+        if (!SkillCooldowns.ContainsKey(skillId)) return true;
+        return DateTime.UtcNow >= SkillCooldowns[skillId].AddSeconds(cooldown);
+    }
+    public void SetSkillCooldown(int skillId)
+    {
+        SkillCooldowns[skillId] = DateTime.UtcNow;
+    }
+    public void ApplyDamageReduction(float pct, float durationSeconds)
+    {
+        if (pct <= 0f || durationSeconds <= 0f) return;
+        _damageReductionPct = Math.Clamp(pct, 0f, 0.9f);
+        _damageReductionEnd = DateTime.UtcNow.AddSeconds(durationSeconds);
     }
 }

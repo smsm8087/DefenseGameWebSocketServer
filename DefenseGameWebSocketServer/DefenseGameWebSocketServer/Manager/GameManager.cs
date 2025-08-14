@@ -468,6 +468,12 @@ namespace DefenseGameWebSocketServer.Manager
                     }
                 }
                     break;
+                case MessageType.UseSkill:
+                {
+                    var useSkillHandler = new UseSkillHandler(_playerManager, _enemyManager, _broadcaster);
+                    await useSkillHandler.HandleAsync(playerId, rawMessage);
+                }
+                    break;
             }
         }
     }

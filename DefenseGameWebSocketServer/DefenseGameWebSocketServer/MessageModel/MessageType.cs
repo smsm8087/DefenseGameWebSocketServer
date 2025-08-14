@@ -28,6 +28,7 @@ namespace DefenseGameWebSocketServer.Model
         StartRevival,
         UpdateRevival,
         CancelRevival,
+        UseSkill,
         Unknown,
     }
 
@@ -58,6 +59,7 @@ namespace DefenseGameWebSocketServer.Model
                 "start_revival" => MessageType.StartRevival,
                 "update_revival" => MessageType.UpdateRevival,
                 "cancel_revival" => MessageType.CancelRevival,
+                "use_skill" => MessageType.UseSkill,
                 _ => MessageType.Unknown,
             };
         }

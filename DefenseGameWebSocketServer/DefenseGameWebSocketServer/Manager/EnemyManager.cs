@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Linq;
 
 
 namespace DefenseGameWebSocketServer.Manager
@@ -305,6 +306,10 @@ namespace DefenseGameWebSocketServer.Manager
             var msg = new SpawnEnemyMessage(enemyId,x, y, enemyDataId);
             Console.WriteLine($"[EnemyManager] 먼지 몬스터 소환 at ({x}, {y})");
             await _broadcaster.BroadcastAsync(msg);
+        }
+        public List<Enemy> GetEnemiesSnapshot()
+        {
+            lock (_enemies) { return _enemies.ToList(); }
         }
     }
 }

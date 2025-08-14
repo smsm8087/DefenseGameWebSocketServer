@@ -13,6 +13,7 @@ namespace DefenseGameWebSocketServer.Manager
         {
             _tableDict["card_data"] = CsvLoader.Load<CardData>("Data/card_data.csv");
             _tableDict["player_data"] = CsvLoader.Load<PlayerData>("Data/player_data.csv");
+            _tableDict["skill_data"] = CsvLoader.Load<SkillData>("Data/skill_data.csv");
             _tableDict["enemy_data"] = CsvLoader.Load<EnemyData>("Data/enemy_data.csv");
             _tableDict["wave_data"] = CsvLoader.Load<WaveData>("Data/wave_data.csv");
             _tableDict["wave_round_data"] = CsvLoader.Load<WaveRoundData>("Data/wave_round_data.csv");

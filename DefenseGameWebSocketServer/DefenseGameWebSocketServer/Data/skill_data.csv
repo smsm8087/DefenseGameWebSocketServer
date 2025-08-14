@@ -1,0 +1,3 @@
+﻿id,job,skill_type,desc_ko,default_key,cooldown,cast_time,aoe_radius,taunt_duration,dash_distance,dash_speed,damage_multiplier,knockback_distance,stun_duration,damage_reduction
+1,tank,TAUNT,반경 5 내 모든 적을 3초간 자신을 타겟,Q,10,0,5,3,0,0,0,0,0,0
+2,tank,DASH_ATTACK,지정 방향으로 돌진: 넉백+0.5초 기절+공격력 200% 데미지 돌진중 피해감소 20%,W,10,0,0,0,6,18,2,2.5,0.5,0.2
